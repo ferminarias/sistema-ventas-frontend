@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+NEXT_PUBLIC_API_URL=https://sistemas-de-ventas-production.up.railway.app/api
 
 export const analyticsService = {
   async getMetrics() {
