@@ -65,8 +65,4 @@ export default function ClienteDashboardPage() {
       </div>
     </div>
   );
-}
-
-export async function generateStaticParams() {
-  return [];
 } 
