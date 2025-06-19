@@ -43,6 +43,7 @@ class AuthService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
+        credentials: "include",
       })
 
       const data = await handleResponse<{ user: User; token: string }>(response)
@@ -92,6 +93,7 @@ class AuthService {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(userData),
+      credentials: "include",
     })
 
     return handleResponse<User>(response)
@@ -101,6 +103,7 @@ class AuthService {
   async getAllUsers(): Promise<User[]> {
     const response = await fetch(`${API_BASE}/api/users`, {
       headers: getAuthHeaders(),
+      credentials: "include",
     })
 
     return handleResponse<User[]>(response)
@@ -112,6 +115,7 @@ class AuthService {
       method: "PUT",
       headers: getAuthHeaders(),
       body: JSON.stringify(userData),
+      credentials: "include",
     })
 
     return handleResponse<User>(response)
@@ -122,6 +126,7 @@ class AuthService {
     const response = await fetch(`${API_BASE}/api/users/${userId}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
+      credentials: "include",
     })
 
     return handleResponse<void>(response)
