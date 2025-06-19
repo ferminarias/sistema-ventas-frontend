@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:5000/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:5000';
+const API_URL = `${API_BASE}/api`;
 
 // Función para obtener el token
 function getToken(): string | null {
@@ -137,7 +138,7 @@ export const ventasApi = {
             }
 
             // Construir la URL completa para la descarga
-            const downloadUrl = `${API_URL.replace('/api', '')}/${data.path}`;
+            const downloadUrl = `${API_BASE}/${data.path}`;
             console.log('URL de descarga:', downloadUrl);
 
             // Crear un enlace temporal y hacer clic en él

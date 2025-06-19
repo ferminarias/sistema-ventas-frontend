@@ -7,6 +7,8 @@ import { useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { ventasApi } from "@/lib/api"
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:5000';
+
 interface DashboardHeaderProps {
   cliente?: string
 }
@@ -18,7 +20,7 @@ export function DashboardHeader({ cliente }: DashboardHeaderProps) {
   const handleExport = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`http://localhost:5000/api/exportar-excel${cliente ? `?cliente=${cliente}` : ''}`, {
+      const response = await fetch(`${API_BASE}/api/exportar-excel${cliente ? `?cliente=${cliente}` : ''}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -29,7 +31,7 @@ export function DashboardHeader({ cliente }: DashboardHeaderProps) {
       if (!response.ok) throw new Error("Error al exportar")
 
       const data = await response.json()
-      const downloadUrl = `http://localhost:5000/${data.path}`
+      const downloadUrl = `${API_BASE}/${data.path}`
       window.open(downloadUrl, '_blank')
 
       toast({

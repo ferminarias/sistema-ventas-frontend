@@ -31,6 +31,8 @@ import { Info } from "lucide-react"
 import { clientService } from '@/services/client-service'
 import { ClienteVentasCharts } from '@/components/cliente-ventas-charts'
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:3000';
+
 // Registrar componentes de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler)
 
@@ -733,7 +735,7 @@ export default function ReportesPage() {
                         const data = await analyticsService.exportData(filters);
                         if (option.format === "excel" || option.format === "pdf" || option.format === "csv") {
                           if (!data.path) throw new Error("No se recibió la ruta del archivo");
-                          const downloadUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/${data.path}`;
+                          const downloadUrl = `${API_BASE}/${data.path}`;
                           const link = document.createElement("a");
                           link.href = downloadUrl;
                           link.download = data.path.split("/").pop() || `reporte.${option.format}`;

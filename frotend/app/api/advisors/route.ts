@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = 'http://localhost:5000/api/advisors';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:5000';
+const BACKEND_URL = `${API_BASE}/api/advisors`;
 
 export async function GET(req: NextRequest) {
   const { search } = new URL(req.url);
