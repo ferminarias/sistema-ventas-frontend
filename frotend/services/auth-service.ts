@@ -1,8 +1,7 @@
 import type { AuthResponse, CreateUserRequest, LoginCredentials, User } from "@/types/auth"
 import { ApiError } from "@/lib/api-error"
 
-// URL base de la API de Flask
-NEXT_PUBLIC_API_URL=https://sistemas-de-ventas-production.up.railway.app/api
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 // Función para manejar las respuestas de la API
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -38,7 +37,7 @@ const AUTH_KEY = "auth_user"
 class AuthService {
   async login(email: string, password: string): Promise<User> {
     try {
-      const response = await fetch(`${API_URL}/api/login`, {
+      const response = await fetch(`${API_BASE}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -89,7 +88,7 @@ class AuthService {
 
   // Crear un nuevo usuario (solo admin)
   async createUser(userData: CreateUserRequest): Promise<User> {
-    const response = await fetch(`${API_URL}/api/users`, {
+    const response = await fetch(`${API_BASE}/api/users`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(userData),
@@ -100,7 +99,7 @@ class AuthService {
 
   // Obtener todos los usuarios (solo admin)
   async getAllUsers(): Promise<User[]> {
-    const response = await fetch(`${API_URL}/api/users`, {
+    const response = await fetch(`${API_BASE}/api/users`, {
       headers: getAuthHeaders(),
     })
 
@@ -109,7 +108,7 @@ class AuthService {
 
   // Actualizar un usuario (solo admin)
   async updateUser(userId: string, userData: Partial<CreateUserRequest>): Promise<User> {
-    const response = await fetch(`${API_URL}/api/users/${userId}`, {
+    const response = await fetch(`${API_BASE}/api/users/${userId}`, {
       method: "PUT",
       headers: getAuthHeaders(),
       body: JSON.stringify(userData),
@@ -120,7 +119,7 @@ class AuthService {
 
   // Eliminar un usuario (solo admin)
   async deleteUser(userId: string): Promise<void> {
-    const response = await fetch(`${API_URL}/api/users/${userId}`, {
+    const response = await fetch(`${API_BASE}/api/users/${userId}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
     })

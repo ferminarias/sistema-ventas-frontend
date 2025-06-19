@@ -1,4 +1,4 @@
-NEXT_PUBLIC_API_URL=https://sistemas-de-ventas-production.up.railway.app/api
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export const analyticsService = {
   async getMetrics() {
