@@ -2,7 +2,7 @@ import type { AuthResponse, CreateUserRequest, LoginCredentials, User } from "@/
 import { ApiError } from "@/lib/api-error"
 
 // URL base de la API de Flask
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 // Función para manejar las respuestas de la API
 async function handleResponse<T>(response: Response): Promise<T> {
