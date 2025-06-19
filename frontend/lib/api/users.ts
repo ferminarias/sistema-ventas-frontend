@@ -1,11 +1,10 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const API_URL = `${API_BASE}/api`;
 
 export const usersApi = {
   async getUsers(token: string | null) {
     if (!token) throw new Error("Token requerido");
     console.log("Token enviado:", token); // Debug log
-    const res = await fetch(`${API_URL}/api/users`, {
+    const res = await fetch(`${API_BASE}/api/users`, {
       headers: { 
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json"
@@ -21,7 +20,7 @@ export const usersApi = {
   async createUser(user: any, token: string | null) {
     if (!token) throw new Error("Token requerido");
     console.log("[DEBUG] Creando usuario:", user); // Debug log
-    const res = await fetch(`${API_URL}/api/users`, {
+    const res = await fetch(`${API_BASE}/api/users`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(user),
@@ -35,7 +34,7 @@ export const usersApi = {
   },
   async updateUser(id: number, user: any, token: string | null) {
     if (!token) throw new Error("Token requerido");
-    const res = await fetch(`${API_URL}/api/users/${id}`, {
+    const res = await fetch(`${API_BASE}/api/users/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(user),
@@ -45,7 +44,7 @@ export const usersApi = {
   },
   async deleteUser(id: number, token: string | null) {
     if (!token) throw new Error("Token requerido");
-    const res = await fetch(`${API_URL}/api/users/${id}`, {
+    const res = await fetch(`${API_BASE}/api/users/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -53,7 +52,7 @@ export const usersApi = {
   },
   async changePassword(id: number, password: string, token: string | null) {
     if (!token) throw new Error("Token requerido");
-    const res = await fetch(`${API_URL}/api/users/${id}`, {
+    const res = await fetch(`${API_BASE}/api/users/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ password }),

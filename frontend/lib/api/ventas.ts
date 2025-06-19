@@ -1,5 +1,4 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const API_URL = `${API_BASE}/api`;
 
 // Función para obtener el token
 function getToken(): string | null {
@@ -32,7 +31,7 @@ export const ventasApi = {
     // Obtener todas las ventas o filtrar por cliente
     async getVentas(cliente?: string): Promise<Venta[]> {
         try {
-            const url = cliente ? `${API_URL}/ventas?cliente=${cliente}` : `${API_URL}/ventas`;
+            const url = cliente ? `${API_BASE}/api/ventas?cliente=${cliente}` : `${API_BASE}/api/ventas`;
             console.log('Haciendo petición GET a:', url);
             
             const token = getToken();
@@ -89,7 +88,7 @@ export const ventasApi = {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const response = await fetch(`${API_URL}/ventas`, {
+        const response = await fetch(`${API_BASE}/api/ventas`, {
             method: 'POST',
             headers,
             body: JSON.stringify(venta),
@@ -116,7 +115,7 @@ export const ventasApi = {
             }
 
             console.log('Iniciando exportación a Excel...');
-            const url = cliente ? `${API_URL}/exportar-excel?cliente=${encodeURIComponent(cliente)}` : `${API_URL}/exportar-excel`;
+            const url = cliente ? `${API_BASE}/api/exportar-excel?cliente=${encodeURIComponent(cliente)}` : `${API_BASE}/api/exportar-excel`;
             console.log('URL de exportación:', url);
             
             const response = await fetch(url, {
