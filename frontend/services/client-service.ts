@@ -2,7 +2,7 @@ import type { Client, CreateClientRequest, UpdateClientRequest } from "@/types/c
 import type { User } from "@/types/auth"
 import { ApiError } from "@/lib/api-error"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
 const API_URL = API_BASE;
 
 // Función para logging de debug

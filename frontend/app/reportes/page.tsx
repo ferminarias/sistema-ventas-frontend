@@ -31,7 +31,7 @@ import { Info } from "lucide-react"
 import { clientService } from '@/services/client-service'
 import { ClienteVentasCharts } from '@/components/cliente-ventas-charts'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
 
 // Registrar componentes de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler)
