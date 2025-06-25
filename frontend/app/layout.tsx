@@ -10,6 +10,8 @@ export const metadata = {
   description: "Dashboard de ventas y gestión de clientes",
 };
 
+export const dynamic = 'force-dynamic';
+
 const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
