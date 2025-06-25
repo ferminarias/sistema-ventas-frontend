@@ -112,10 +112,10 @@ export function VentasTable() {
   // Filtrar ventas por término de búsqueda
   const filteredVentas = ventasData.filter(
     (venta) =>
-      venta.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      venta.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      venta.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      venta.asesor.toLowerCase().includes(searchTerm.toLowerCase()),
+      venta.nombre?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+      venta.apellido?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+      venta.email?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+      venta.asesor?.toString().toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   // Ordenar ventas
