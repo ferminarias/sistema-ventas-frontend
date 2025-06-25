@@ -1,7 +1,8 @@
 {
-  "name": "login-sistema-ventas",
+  "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "description": "Sistema de ventas frontend - force rebuild",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
