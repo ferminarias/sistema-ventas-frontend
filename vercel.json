@@ -7,6 +7,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/clientes/:id", "destination": "/clientes/[id]" }
+    { "source": "/clientes/:id", "destination": "/frontend/clientes/:id" },
+    { "source": "/(.*)", "destination": "/frontend/$1" }
   ]
 }
