@@ -8,11 +8,5 @@
   ],
   "rewrites": [
     { "source": "/clientes/:id", "destination": "/clientes/[id]" }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "frontend/$1"
-    }
   ]
 }
