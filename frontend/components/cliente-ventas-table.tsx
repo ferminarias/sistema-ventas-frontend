@@ -25,8 +25,11 @@ export function ClienteVentasTable({ cliente }: ClienteVentasTableProps) {
   // Filtrar ventas por término de búsqueda
   const filteredVentas = ventas.filter(
     (venta) =>
-      (venta.producto?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-      (venta.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+      (venta.nombre?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (venta.apellido?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (venta.email?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (venta.asesor?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (venta.cliente?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
   )
 
   // Ordenar ventas
