@@ -8,6 +8,14 @@ import { Toaster } from "@/components/ui/toaster";
 export const metadata = {
   title: "Sistema de Ventas NODS",
   description: "Dashboard de ventas y gestión de clientes",
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/logo.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/logo.png',
+    shortcut: '/favicon.ico',
+  },
 };
 
 export const dynamic = 'force-dynamic';
