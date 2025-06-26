@@ -20,6 +20,17 @@ export function ClienteVentasTable({ cliente }: ClienteVentasTableProps) {
   const [sortBy, setSortBy] = useState("fecha_venta")
   const [sortOrder, setSortOrder] = useState("desc")
 
+  // Validación defensiva para cliente
+  if (!cliente || cliente === "null" || cliente === "undefined") {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">Cargando información del cliente...</div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   const { ventas, loading, error } = useVentas(cliente.toLowerCase())
 
   // Filtrar ventas por término de búsqueda

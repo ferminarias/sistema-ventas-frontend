@@ -15,6 +15,25 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const [activeTab, setActiveTab] = useState("mensual")
   const chartRef = useRef<HTMLCanvasElement>(null)
   const pieChartRef = useRef<HTMLCanvasElement>(null)
+
+  // Validación defensiva para cliente
+  if (!cliente || cliente === "null" || cliente === "undefined") {
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">Cargando gráficos del cliente...</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">Cargando gráficos del cliente...</div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   const { ventas } = useVentas(cliente.toLowerCase())
 
   // Agrupar ventas por mes y por asesor

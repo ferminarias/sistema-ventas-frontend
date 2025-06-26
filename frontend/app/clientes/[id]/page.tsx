@@ -68,7 +68,7 @@ export default function ClienteDashboardPage() {
         </Card>
         <ClienteVentasStats cliente={String(client.id)} />
         <ClienteVentasCharts cliente={String(client.id)} nombreCliente={client.name} />
-        <ClienteVentasTable cliente={String(client.id)} />
+        <ClienteVentasTable cliente={client.name || String(client.id)} />
       </div>
     </div>
   );

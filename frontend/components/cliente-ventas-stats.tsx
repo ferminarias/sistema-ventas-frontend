@@ -9,6 +9,11 @@ interface ClienteVentasStatsProps {
 }
 
 export function ClienteVentasStats({ cliente }: ClienteVentasStatsProps) {
+  // Validación defensiva para cliente
+  if (!cliente || cliente === "null" || cliente === "undefined") {
+    return <div className="text-center p-4">Cargando métricas del cliente...</div>
+  }
+
   const { ventas, loading, error } = useVentas(cliente.toLowerCase())
 
   // Calcular métricas reales
