@@ -32,6 +32,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(true)
+  const [isAdminOpen, setIsAdminOpen] = useState(false)
   const [clients, setClients] = useState<Client[]>([])
 
   // Obtener clientes al montar el sidebar
@@ -104,29 +105,39 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             </Button>
 
             {user.role === "admin" && (
-              <>
-                <div className="px-4 py-2 text-sm font-medium text-muted-foreground">
-                  Administración
-                </div>
-                <Button asChild variant={pathname === "/admin/usuarios" ? "default" : "ghost"} className="w-full justify-start pl-8">
-                  <Link href="/admin/usuarios">
-                    <UserCog className="mr-2 h-4 w-4" />
-                    Gestión de Usuarios
-                  </Link>
-                </Button>
-                <Button asChild variant={pathname === "/admin/clientes" ? "default" : "ghost"} className="w-full justify-start pl-8">
-                  <Link href="/admin/clientes">
-                    <Building2 className="mr-2 h-4 w-4" />
-                    Gestión de Clientes
-                  </Link>
-                </Button>
-                <Button asChild variant={pathname === "/admin/asesores" ? "default" : "ghost"} className="w-full justify-start pl-8">
-                  <Link href="/admin/asesores">
-                    <UserCog className="mr-2 h-4 w-4" />
-                    Gestión de Asesores
-                  </Link>
-                </Button>
-              </>
+              <Collapsible open={isAdminOpen} onOpenChange={setIsAdminOpen} className="w-full">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between">
+                    <div className="flex items-center">
+                      <UserCog className="mr-2 h-4 w-4" />
+                      Administración
+                    </div>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${isAdminOpen ? "rotate-180" : ""}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pl-6 pt-1">
+                  <div className="flex flex-col space-y-1">
+                    <Button asChild variant={pathname === "/admin/usuarios" ? "default" : "ghost"} className="w-full justify-start">
+                      <Link href="/admin/usuarios">
+                        <UserCog className="mr-2 h-4 w-4" />
+                        Gestión de Usuarios
+                      </Link>
+                    </Button>
+                    <Button asChild variant={pathname === "/admin/clientes" ? "default" : "ghost"} className="w-full justify-start">
+                      <Link href="/admin/clientes">
+                        <Building2 className="mr-2 h-4 w-4" />
+                        Gestión de Clientes
+                      </Link>
+                    </Button>
+                    <Button asChild variant={pathname === "/admin/asesores" ? "default" : "ghost"} className="w-full justify-start">
+                      <Link href="/admin/asesores">
+                        <UserCog className="mr-2 h-4 w-4" />
+                        Gestión de Asesores
+                      </Link>
+                    </Button>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             )}
 
             <Button asChild variant={pathname === "/reportes" ? "default" : "ghost"} className="w-full justify-start">
