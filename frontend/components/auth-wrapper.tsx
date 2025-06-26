@@ -27,10 +27,34 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const currentUser = await authService.getCurrentUser()
+        setLoading(true)
+        
+        // Timeout para evitar que se quede cargando indefinidamente en móviles
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Authentication timeout')), 10000) // 10 segundos
+        })
+        
+        const authPromise = authService.getCurrentUser()
+        
+        const currentUser = await Promise.race([authPromise, timeoutPromise]) as User | null
         setUser(currentUser)
+        
+        // Si no hay usuario, limpiar localStorage por si hay datos corruptos
+        if (!currentUser && typeof window !== "undefined") {
+          localStorage.removeItem("auth_user")
+          localStorage.removeItem("token")
+        }
+        
       } catch (error) {
+        console.error('Auth check failed:', error)
         setUser(null)
+        
+        // Limpiar localStorage en caso de error (especialmente útil en móviles)
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("auth_user")
+          localStorage.removeItem("token")
+        }
+        
       } finally {
         setLoading(false)
       }

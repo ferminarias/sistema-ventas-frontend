@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Settings, Building2, Users, Loader2, Shield, FileText } from "lucide-react"
+import { Plus, Edit, Trash2, Settings, Building2, Users, Loader2, Shield, FileText, MoreHorizontal } from "lucide-react"
 import { CreateClientDialog } from "./create-client-dialog"
 import { EditClientDialog } from "./edit-client-dialog"
 import { ConfigureFormDialog } from "./configure-form-dialog"
@@ -253,11 +253,21 @@ export function ClientManagement({ user }: ClientManagementProps) {
                     <div className="flex items-center space-x-2">
                       <Button
                         variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/admin/clientes/${cliente.id}/campos`)}
+                        title="Configurar campos personalizados"
+                      >
+                        <Settings className="h-4 w-4 mr-1" />
+                        Campos
+                      </Button>
+                      <Button
+                        variant="ghost"
                         size="icon"
                         onClick={() => {
                           setSelectedClient(cliente);
                           setShowFormDialog(true);
                         }}
+                        title="Configurar formulario"
                       >
                         <FileText className="h-4 w-4" />
                       </Button>
@@ -268,6 +278,7 @@ export function ClientManagement({ user }: ClientManagementProps) {
                           setSelectedClient(cliente);
                           setShowEditDialog(true);
                         }}
+                        title="Editar cliente"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -276,6 +287,7 @@ export function ClientManagement({ user }: ClientManagementProps) {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDeleteClient(cliente.id)}
+                          title="Eliminar cliente"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

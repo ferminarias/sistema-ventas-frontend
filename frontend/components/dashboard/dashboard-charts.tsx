@@ -1,5 +1,6 @@
 "use client"
 
+// Gráficos mejorados con soporte retina - v2025.01
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useEffect, useRef, useState } from "react"

@@ -77,13 +77,50 @@ class AuthService {
 
     try {
       const userJson = localStorage.getItem(AUTH_KEY)
-      if (!userJson) {
+      const token = getToken()
+      
+      if (!userJson || !token) {
         return null
       }
-      return JSON.parse(userJson)
+
+      const user = JSON.parse(userJson)
+      
+      // Verificar si el token sigue siendo válido (especialmente importante en móviles)
+      const isValid = await this.verifyToken()
+      
+      if (!isValid) {
+        // Token inválido, limpiar storage
+        localStorage.removeItem(AUTH_KEY)
+        localStorage.removeItem("token")
+        return null
+      }
+      
+      return user
     } catch (error) {
       console.error("Error parsing user from localStorage:", error)
+      // Limpiar localStorage en caso de error
+      localStorage.removeItem(AUTH_KEY)
+      localStorage.removeItem("token")
       return null
+    }
+  }
+
+  // Verificar si el token actual es válido
+  async verifyToken(): Promise<boolean> {
+    const token = getToken()
+    if (!token) return false
+
+    try {
+      const response = await fetch(`${API_BASE}/api/verify-token`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      })
+      
+      return response.ok
+    } catch (error) {
+      console.error("Token verification failed:", error)
+      return false
     }
   }
 
