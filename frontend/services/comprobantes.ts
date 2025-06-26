@@ -32,17 +32,39 @@ class ComprobantesService {
     const backendFilters = await response.json()
     console.log("🔄 FILTROS BACKEND RAW:", backendFilters)
 
+    // Función helper para extraer valores de objetos {label, value}
+    const extractValue = (obj: any): any => {
+      if (obj && typeof obj === 'object' && 'value' in obj) {
+        return obj.value
+      }
+      if (obj && typeof obj === 'object' && 'label' in obj) {
+        return obj.label
+      }
+      return obj
+    }
+
     // Mapeo correcto usando 'name' en lugar de 'nombre'
     const cleanedFilters: FiltrosDisponibles = {
-      clientes: (backendFilters.clientes || []).map((cliente: any) => ({
-        id: cliente.id || 0,
-        name: cliente.name || cliente.nombre || 'Sin nombre'
-      })),
-      asesores: (backendFilters.asesores || []).map((asesor: any) => ({
-        id: asesor.id || 0,
-        name: asesor.name || asesor.nombre || 'Sin nombre'
-      })),
-      tipos_archivo: backendFilters.tipos_archivo || [],
+      clientes: (backendFilters.clientes || []).map((cliente: any) => {
+        const id = extractValue(cliente.id) || extractValue(cliente) || 0
+        const name = extractValue(cliente.name) || extractValue(cliente.nombre) || extractValue(cliente) || 'Sin nombre'
+        return {
+          id: typeof id === 'number' ? id : (typeof id === 'string' ? parseInt(id) : 0),
+          name: typeof name === 'string' ? name : String(name)
+        }
+      }),
+      asesores: (backendFilters.asesores || []).map((asesor: any) => {
+        const id = extractValue(asesor.id) || extractValue(asesor) || 0
+        const name = extractValue(asesor.name) || extractValue(asesor.nombre) || extractValue(asesor) || 'Sin nombre'
+        return {
+          id: typeof id === 'number' ? id : (typeof id === 'string' ? parseInt(id) : 0),
+          name: typeof name === 'string' ? name : String(name)
+        }
+      }),
+      tipos_archivo: (backendFilters.tipos_archivo || []).map((tipo: any) => {
+        const value = extractValue(tipo)
+        return typeof value === 'string' ? value : String(value)
+      }),
       rango_fechas: backendFilters.rango_fechas || {
         fecha_min: '2020-01-01',
         fecha_max: new Date().toISOString().split('T')[0]
@@ -80,13 +102,40 @@ class ComprobantesService {
     const backendResponse = await response.json()
     console.log("🔄 MAPEO BACKEND RESPONSE:", backendResponse)
 
+    // Función helper para extraer valores de objetos {label, value}
+    const extractValue = (obj: any): any => {
+      if (obj && typeof obj === 'object' && 'value' in obj) {
+        return obj.value
+      }
+      if (obj && typeof obj === 'object' && 'label' in obj) {
+        return obj.label
+      }
+      return obj
+    }
+
+    // Función para limpiar un objeto de propiedades {label, value}
+    const cleanObject = (obj: any): any => {
+      if (!obj || typeof obj !== 'object') return obj
+      if (Array.isArray(obj)) return obj.map(cleanObject)
+      
+      const cleaned: any = {}
+      for (const [key, value] of Object.entries(obj)) {
+        cleaned[key] = extractValue(value)
+        // Si sigue siendo un objeto, aplicar recursivamente
+        if (cleaned[key] && typeof cleaned[key] === 'object' && !Array.isArray(cleaned[key])) {
+          cleaned[key] = cleanObject(cleaned[key])
+        }
+      }
+      return cleaned
+    }
+
     // Mapear la respuesta del backend a la estructura esperada por el frontend
     const mappedResponse: ComprobanteSearchResponse = {
-      comprobantes: backendResponse.resultados || [],
-      total: backendResponse.pagination?.total_results || 0,
-      page: backendResponse.pagination?.current_page || 1,
-      limit: backendResponse.pagination?.results_per_page || 20,
-      total_pages: backendResponse.pagination?.total_pages || 1
+      comprobantes: (backendResponse.resultados || []).map((comprobante: any) => cleanObject(comprobante)),
+      total: extractValue(backendResponse.pagination?.total_results) || 0,
+      page: extractValue(backendResponse.pagination?.current_page) || 1,
+      limit: extractValue(backendResponse.pagination?.results_per_page) || 20,
+      total_pages: extractValue(backendResponse.pagination?.total_pages) || 1
     }
 
     console.log("✅ RESPONSE MAPEADA:", mappedResponse)
