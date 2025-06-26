@@ -32,42 +32,15 @@ class ComprobantesService {
     const backendFilters = await response.json()
     console.log("🔄 FILTROS BACKEND RAW:", backendFilters)
 
-    // Solo limpiar objetos problemáticos, mantener datos válidos
+    // DEBUG: Pasar datos tal como vienen del backend para ver el problema
+    console.log("🔍 ESTRUCTURA EXACTA clientes:", backendFilters.clientes)
+    console.log("🔍 ESTRUCTURA EXACTA tipos_archivo:", backendFilters.tipos_archivo)
+    
+    // Mapeo directo sin validaciones para debug
     const cleanedFilters: FiltrosDisponibles = {
-      clientes: (backendFilters.clientes || []).map((cliente: any) => {
-        // Si cliente.nombre es un objeto {label, value}, extraer el valor correcto
-        let nombre = cliente.nombre
-        if (typeof nombre === 'object' && nombre !== null) {
-          if (nombre.label) nombre = nombre.label
-          else if (nombre.value) nombre = nombre.value
-          else nombre = JSON.stringify(nombre)
-        }
-        return {
-          id: cliente.id || 0,
-          nombre: nombre || 'Sin nombre'
-        }
-      }),
-      asesores: (backendFilters.asesores || []).map((asesor: any) => {
-        let nombre = asesor.nombre
-        if (typeof nombre === 'object' && nombre !== null) {
-          if (nombre.label) nombre = nombre.label
-          else if (nombre.value) nombre = nombre.value
-          else nombre = JSON.stringify(nombre)
-        }
-        return {
-          id: asesor.id || 0,
-          nombre: nombre || 'Sin nombre'
-        }
-      }),
-      tipos_archivo: (backendFilters.tipos_archivo || []).map((tipo: any) => {
-        // Si tipo es un objeto {label, value}, extraer el valor correcto
-        if (typeof tipo === 'object' && tipo !== null) {
-          if (tipo.label) return tipo.label
-          if (tipo.value) return tipo.value
-          return JSON.stringify(tipo)
-        }
-        return tipo || 'unknown'
-      }),
+      clientes: backendFilters.clientes || [],
+      asesores: backendFilters.asesores || [],
+      tipos_archivo: backendFilters.tipos_archivo || [],
       rango_fechas: backendFilters.rango_fechas || {
         fecha_min: '2020-01-01',
         fecha_max: new Date().toISOString().split('T')[0]
