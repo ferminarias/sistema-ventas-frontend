@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -84,6 +84,12 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
   const [showPreview, setShowPreview] = useState(false)
   const { toast } = useToast()
 
+  // Debug log cuando cambia el estado de fields
+  React.useEffect(() => {
+    console.log(`🎨 ESTADO ACTUALIZADO - fields.length: ${fields.length}`)
+    console.log(`🎨 Campos en estado:`, fields.map(f => `${f.id}:${f.label}`))
+  }, [fields])
+
   const form = useForm<FieldFormData>({
     resolver: zodResolver(fieldSchema),
     defaultValues: {
@@ -105,15 +111,24 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
   const loadFields = async () => {
     try {
       setLoading(true)
+      console.log(`🔄 Iniciando carga de campos para cliente ${clientId}`)
       const clientFields = await clientFieldsService.getClientFields(clientId)
+      console.log(`📊 Campos obtenidos del backend:`, clientFields)
+      console.log(`📈 Cantidad total de campos:`, clientFields.length)
+      
       setFields(clientFields)
+      console.log(`✅ Estado actualizado con ${clientFields.length} campos`)
+      
+      return clientFields // Retornar los campos para verificación
+      
     } catch (error) {
-      console.error('Error loading fields:', error)
+      console.error('❌ Error loading fields:', error)
       toast({
         title: "Error",
         description: "Error al cargar los campos del cliente",
         variant: "destructive",
       })
+      return []
     } finally {
       setLoading(false)
     }
@@ -189,20 +204,21 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
 
   const handleQuickAddField = async (fieldType: 'imagen' | 'documento' | 'firma') => {
     try {
-      console.log(`Agregando campo rápido: ${fieldType} para cliente ${clientId}`)
+      console.log(`🚀 Agregando campo rápido: ${fieldType} para cliente ${clientId}`)
       const newField = await clientFieldsService.addQuickField(clientId, fieldType)
-      console.log('Campo agregado exitosamente:', newField)
+      console.log('✅ Campo agregado exitosamente:', newField)
+      
+      // INMEDIATAMENTE recargar campos
+      const updatedFields = await loadFields()
+      console.log(`🔄 Campos recargados - Cantidad actual: ${updatedFields.length}`)
       
       toast({
         title: "Campo agregado",
         description: `Campo "${fieldType}" agregado exitosamente`,
       })
       
-      // Recargar campos y esperar a que se complete
-      await loadFields()
-      console.log('Campos recargados después de agregar:', fields.length)
     } catch (error: any) {
-      console.error('Error completo al agregar campo rápido:', error)
+      console.error('❌ Error completo al agregar campo rápido:', error)
       toast({
         title: "Error",
         description: error.message || `Error al agregar campo ${fieldType}`,
@@ -320,6 +336,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
   }
 
   if (loading) {
+    console.log(`⏳ COMPONENTE CARGANDO - clientId: ${clientId}`)
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
@@ -331,6 +348,8 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
       </Card>
     )
   }
+
+  console.log(`🎯 RENDERIZANDO COMPONENTE - Cliente: ${clientName}, Campos: ${fields.length}`)
 
   return (
     <div className="space-y-6">
@@ -374,10 +393,10 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
             <Button
               variant="outline" 
               size="sm"
-              onClick={() => handleQuickAddField('file' as any)}
+              onClick={() => handleQuickAddField('firma')}
             >
-              <FileText className="mr-1 h-3 w-3" />
-              + File (Test)
+              <Edit className="mr-1 h-3 w-3" />
+              + Test Firma
             </Button>
             <Button
               variant="outline"

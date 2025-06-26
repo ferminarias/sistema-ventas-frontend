@@ -28,6 +28,12 @@ export function DynamicNuevaVentaForm() {
   const [loadingFields, setLoadingFields] = useState(false)
   const [asesores, setAsesores] = useState<{ id: number, name: string }[]>([])
 
+  // Debug: Watch state changes for clientFields
+  useEffect(() => {
+    console.log(`🎨 NUEVA VENTA - clientFields cambió. Cantidad: ${clientFields.length}`)
+    console.log(`🎨 Campos disponibles:`, clientFields.map(f => `${f.id}:${f.label}`))
+  }, [clientFields])
+
   // Cargar clientes al montar el componente
   useEffect(() => {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
