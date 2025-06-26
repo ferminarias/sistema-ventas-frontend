@@ -34,8 +34,8 @@ export interface ComprobanteFilters {
 }
 
 export interface FiltrosDisponibles {
-  clientes: { id: number; nombre: string }[]
-  asesores: { id: number; nombre: string }[]
+  clientes: { id: number; name: string }[]
+  asesores: { id: number; name: string }[]
   tipos_archivo: string[]
   rango_fechas: {
     fecha_min: string

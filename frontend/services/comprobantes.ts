@@ -32,14 +32,16 @@ class ComprobantesService {
     const backendFilters = await response.json()
     console.log("🔄 FILTROS BACKEND RAW:", backendFilters)
 
-    // DEBUG: Pasar datos tal como vienen del backend para ver el problema
-    console.log("🔍 ESTRUCTURA EXACTA clientes:", backendFilters.clientes)
-    console.log("🔍 ESTRUCTURA EXACTA tipos_archivo:", backendFilters.tipos_archivo)
-    
-    // Mapeo directo sin validaciones para debug
+    // Mapeo correcto usando 'name' en lugar de 'nombre'
     const cleanedFilters: FiltrosDisponibles = {
-      clientes: backendFilters.clientes || [],
-      asesores: backendFilters.asesores || [],
+      clientes: (backendFilters.clientes || []).map((cliente: any) => ({
+        id: cliente.id || 0,
+        name: cliente.name || cliente.nombre || 'Sin nombre'
+      })),
+      asesores: (backendFilters.asesores || []).map((asesor: any) => ({
+        id: asesor.id || 0,
+        name: asesor.name || asesor.nombre || 'Sin nombre'
+      })),
       tipos_archivo: backendFilters.tipos_archivo || [],
       rango_fechas: backendFilters.rango_fechas || {
         fecha_min: '2020-01-01',
