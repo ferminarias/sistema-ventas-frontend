@@ -213,14 +213,28 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
 
   const onSubmit = async (data: FieldFormData) => {
     try {
+      console.log('📝 Datos del formulario recibidos:', data)
+      
+      // Validación manual
+      if (!data.id || !data.label || !data.type) {
+        console.error('❌ Faltan campos requeridos:', { id: data.id, label: data.label, type: data.type })
+        toast({
+          title: "Error de validación",
+          description: "ID, etiqueta y tipo son requeridos",
+          variant: "destructive",
+        })
+        return
+      }
+
       const fieldData = {
         ...data,
-        options: data.type === 'select' && data.options 
+        options: (data.type === 'select' || data.type === 'radio') && data.options 
           ? data.options.split(',').map(opt => opt.trim()).filter(opt => opt.length > 0)
           : undefined
       }
 
-      console.log('Enviando datos del campo:', fieldData)
+      console.log('📝 Datos procesados para enviar:', fieldData)
+      console.log('📝 Cliente ID:', clientId)
 
       if (editingField) {
         await clientFieldsService.updateClientField(clientId, editingField.id, fieldData)
@@ -358,12 +372,38 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
               + Documento
             </Button>
             <Button
+              variant="outline" 
+              size="sm"
+              onClick={() => handleQuickAddField('file' as any)}
+            >
+              <FileText className="mr-1 h-3 w-3" />
+              + File (Test)
+            </Button>
+            <Button
               variant="outline"
               size="sm" 
               onClick={() => handleQuickAddField('firma')}
             >
               <Edit className="mr-1 h-3 w-3" />
               + Firma
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                try {
+                  const debugInfo = await clientFieldsService.debugCheck();
+                  console.log('🔍 Debug info:', debugInfo);
+                  toast({
+                    title: "Debug Info",
+                    description: "Ver consola para detalles del debug",
+                  });
+                } catch (error) {
+                  console.error('❌ Error en debug:', error);
+                }
+              }}
+            >
+              🔍 Debug
             </Button>
           </div>
           <Button onClick={handleAddField}>

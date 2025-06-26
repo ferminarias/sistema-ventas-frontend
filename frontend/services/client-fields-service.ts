@@ -75,9 +75,20 @@ class ClientFieldsService {
     console.log(`Response status al agregar campo personalizado:`, response.status)
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Error al agregar campo personalizado:', errorData);
-      throw new Error(errorData.message || 'Error al agregar campo personalizado');
+      const errorText = await response.text();
+      console.error(`❌ Error ${response.status} al agregar campo personalizado:`);
+      console.error(`❌ Request body enviado:`, JSON.stringify(field, null, 2));
+      console.error(`❌ Response headers:`, Object.fromEntries(response.headers.entries()));
+      console.error(`❌ Response body:`, errorText);
+      
+      let errorData = {};
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        console.error(`❌ No es JSON válido:`, errorText);
+      }
+      
+      throw new Error((errorData as any).message || errorText || 'Error al agregar campo personalizado');
     }
     
     const data = await response.json();
@@ -167,9 +178,19 @@ class ClientFieldsService {
     console.log(`Response status para ${fieldType}:`, response.status)
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error(`Error ${response.status} al agregar campo ${fieldType}:`, errorData);
-      throw new Error(errorData.message || `Error ${response.status} al agregar campo ${fieldType}`);
+      const errorText = await response.text();
+      console.error(`❌ Error ${response.status} para ${fieldType}:`);
+      console.error(`❌ Response headers:`, Object.fromEntries(response.headers.entries()));
+      console.error(`❌ Response body:`, errorText);
+      
+      let errorData = {};
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        console.error(`❌ No es JSON válido:`, errorText);
+      }
+      
+      throw new Error((errorData as any).message || errorText || `Error ${response.status} al agregar campo ${fieldType}`);
     }
     
     const data = await response.json();
