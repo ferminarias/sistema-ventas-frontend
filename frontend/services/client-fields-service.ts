@@ -41,21 +41,30 @@ export interface ClientFieldsResponse {
 class ClientFieldsService {
   // Obtener campos de un cliente
   async getClientFields(clientId: number): Promise<ClientField[]> {
+    console.log(`Obteniendo campos para cliente ${clientId}...`)
+    
     const response = await fetch(`${API_BASE}/api/clientes/${clientId}/campos`, {
       headers: getAuthHeaders(false),
       credentials: 'include',
     });
     
+    console.log(`Response status al obtener campos:`, response.status)
+    
     if (!response.ok) {
-      throw new Error('Error al obtener campos del cliente');
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Error al obtener campos:', errorData);
+      throw new Error(errorData.message || 'Error al obtener campos del cliente');
     }
     
     const data: ClientFieldsResponse = await response.json();
+    console.log(`Campos obtenidos:`, data.fields?.length || 0, 'campos')
     return data.fields.sort((a, b) => a.order - b.order);
   }
 
   // Agregar campo personalizado
   async addClientField(clientId: number, field: Omit<ClientField, 'default' | 'order'>): Promise<ClientField> {
+    console.log(`Agregando campo personalizado para cliente ${clientId}:`, field)
+    
     const response = await fetch(`${API_BASE}/api/clientes/${clientId}/campos`, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -63,11 +72,17 @@ class ClientFieldsService {
       body: JSON.stringify(field),
     });
     
+    console.log(`Response status al agregar campo personalizado:`, response.status)
+    
     if (!response.ok) {
-      throw new Error('Error al agregar campo personalizado');
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Error al agregar campo personalizado:', errorData);
+      throw new Error(errorData.message || 'Error al agregar campo personalizado');
     }
     
-    return response.json();
+    const data = await response.json();
+    console.log('Campo personalizado agregado exitosamente:', data);
+    return data;
   }
 
   // Editar campo existente
@@ -141,17 +156,25 @@ class ClientFieldsService {
 
   // Agregar campo predefinido (nueva funcionalidad del backend)
   async addQuickField(clientId: number, fieldType: 'imagen' | 'documento' | 'firma'): Promise<ClientField> {
+    console.log(`Llamando endpoint: ${API_BASE}/api/clientes/${clientId}/campos/quick-add/${fieldType}`)
+    
     const response = await fetch(`${API_BASE}/api/clientes/${clientId}/campos/quick-add/${fieldType}`, {
       method: 'POST',
       headers: getAuthHeaders(),
       credentials: 'include',
     });
     
+    console.log(`Response status para ${fieldType}:`, response.status)
+    
     if (!response.ok) {
-      throw new Error(`Error al agregar campo ${fieldType}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error(`Error ${response.status} al agregar campo ${fieldType}:`, errorData);
+      throw new Error(errorData.message || `Error ${response.status} al agregar campo ${fieldType}`);
     }
     
-    return response.json();
+    const data = await response.json();
+    console.log(`Data recibida para ${fieldType}:`, data);
+    return data;
   }
 
   // Verificar configuración de campos (endpoint de debug)

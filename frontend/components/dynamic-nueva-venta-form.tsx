@@ -68,6 +68,7 @@ export function DynamicNuevaVentaForm() {
     }
 
     const loadClientData = async () => {
+      console.log(`🔄 Cargando datos para cliente ${selectedCliente}...`)
       setLoadingFields(true)
       try {
         // Cargar campos del cliente y asesores en paralelo
@@ -83,6 +84,7 @@ export function DynamicNuevaVentaForm() {
           headers.Authorization = `Bearer ${token}`
         }
         
+        console.log(`📡 Llamando a clientFieldsService.getClientFields(${selectedCliente})`)
         const [fields, asesorRes] = await Promise.all([
           clientFieldsService.getClientFields(selectedCliente),
           fetch(`${API_BASE}/api/advisors?client_id=${selectedCliente}`, { 
@@ -91,7 +93,14 @@ export function DynamicNuevaVentaForm() {
           })
         ])
 
+        console.log(`📝 Campos recibidos en nueva venta:`, fields)
+        console.log(`📊 Cantidad de campos:`, fields.length)
         setClientFields(fields)
+        
+        // Debug adicional después de setear los campos
+        setTimeout(() => {
+          console.log(`⏱️ Estado después de setClientFields:`, clientFields.length)
+        }, 100)
         
         const asesoresData = await asesorRes.json()
         if (Array.isArray(asesoresData)) {
@@ -99,8 +108,10 @@ export function DynamicNuevaVentaForm() {
         } else {
           setAsesores([])
         }
+        
+        console.log(`✅ Datos cargados - Campos: ${fields.length}, Asesores: ${asesoresData.length || 0}`)
       } catch (error) {
-        console.error('Error loading client data:', error)
+        console.error('❌ Error loading client data:', error)
         toast({
           title: "Error",
           description: "Error al cargar los datos del cliente",
@@ -221,6 +232,9 @@ export function DynamicNuevaVentaForm() {
 
   // Agrupar campos en grillas de 2 columnas, excepto textarea y file que van solos
   const renderFields = () => {
+    console.log(`🎨 Renderizando campos - Total: ${clientFields.length}`)
+    console.log(`🎨 Campos a renderizar:`, clientFields.map(f => `${f.id}(${f.type})`))
+    
     const fields = [...clientFields]
     const fieldRows = []
     let i = 0
@@ -245,19 +259,24 @@ export function DynamicNuevaVentaForm() {
       }
     }
 
+    console.log(`🎨 Filas de campos creadas: ${fieldRows.length}`)
+
     return fieldRows.map((row, rowIndex) => (
       <div 
         key={rowIndex} 
         className={`grid gap-6 ${row.length === 2 ? 'sm:grid-cols-2' : 'grid-cols-1'}`}
       >
-        {row.map(field => (
-          <DynamicField
-            key={field.id}
-            field={field}
-            control={form.control}
-            disabled={isSubmitting}
-          />
-        ))}
+        {row.map(field => {
+          console.log(`🎨 Renderizando campo individual: ${field.id}`)
+          return (
+            <DynamicField
+              key={field.id}
+              field={field}
+              control={form.control}
+              disabled={isSubmitting}
+            />
+          )
+        })}
       </div>
     ))
   }
@@ -306,7 +325,11 @@ export function DynamicNuevaVentaForm() {
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <span className="ml-2">Cargando campos...</span>
               </div>
-            ) : clientFields.length > 0 ? (
+            ) : (() => {
+              console.log(`🔍 Decidiendo qué mostrar - clientFields.length: ${clientFields.length}`)
+              console.log(`🔍 clientFields:`, clientFields)
+              return clientFields.length > 0
+            })() ? (
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   {/* Campos dinámicos del cliente */}

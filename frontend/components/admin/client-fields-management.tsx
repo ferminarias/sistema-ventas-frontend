@@ -189,17 +189,23 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
 
   const handleQuickAddField = async (fieldType: 'imagen' | 'documento' | 'firma') => {
     try {
-      await clientFieldsService.addQuickField(clientId, fieldType)
+      console.log(`Agregando campo rápido: ${fieldType} para cliente ${clientId}`)
+      const newField = await clientFieldsService.addQuickField(clientId, fieldType)
+      console.log('Campo agregado exitosamente:', newField)
+      
       toast({
         title: "Campo agregado",
         description: `Campo "${fieldType}" agregado exitosamente`,
       })
-      await loadFields() // Recargar campos sin mostrar spinner general
-    } catch (error) {
-      console.error('Error adding quick field:', error)
+      
+      // Recargar campos y esperar a que se complete
+      await loadFields()
+      console.log('Campos recargados después de agregar:', fields.length)
+    } catch (error: any) {
+      console.error('Error completo al agregar campo rápido:', error)
       toast({
         title: "Error",
-        description: `Error al agregar campo ${fieldType}`,
+        description: error.message || `Error al agregar campo ${fieldType}`,
         variant: "destructive",
       })
     }
@@ -214,6 +220,8 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
           : undefined
       }
 
+      console.log('Enviando datos del campo:', fieldData)
+
       if (editingField) {
         await clientFieldsService.updateClientField(clientId, editingField.id, fieldData)
         toast({
@@ -221,7 +229,8 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
           description: `El campo "${data.label}" ha sido actualizado`,
         })
       } else {
-        await clientFieldsService.addClientField(clientId, fieldData)
+        const newField = await clientFieldsService.addClientField(clientId, fieldData)
+        console.log('Campo agregado exitosamente:', newField)
         toast({
           title: "Campo agregado",
           description: `El campo "${data.label}" ha sido agregado`,
@@ -229,45 +238,71 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
       }
 
       setIsDialogOpen(false)
-      loadFields()
-    } catch (error) {
-      console.error('Error saving field:', error)
+      await loadFields() // Esperar a que se recarguen los campos
+    } catch (error: any) {
+      console.error('Error completo al guardar campo:', error)
       toast({
         title: "Error",
-        description: "Error al guardar el campo",
+        description: error.message || "Error al guardar el campo",
         variant: "destructive",
       })
     }
   }
 
   const renderFieldPreview = () => {
-    const watchedValues = form.watch()
-    if (!watchedValues.id || !watchedValues.label) return null
+    try {
+      const watchedValues = form.watch()
+      if (!watchedValues.id || !watchedValues.label) return null
 
-    const previewField: ClientField = {
-      id: watchedValues.id,
-      label: watchedValues.label,
-      type: watchedValues.type,
-      required: watchedValues.required,
-      default: false,
-      order: 999,
-      placeholder: watchedValues.placeholder,
-      help_text: watchedValues.help_text,
-      options: watchedValues.type === 'select' && watchedValues.options 
-        ? watchedValues.options.split(',').map(opt => opt.trim()).filter(opt => opt.length > 0)
-        : undefined
+      const previewField: ClientField = {
+        id: watchedValues.id,
+        label: watchedValues.label,
+        type: watchedValues.type,
+        required: watchedValues.required,
+        default: false,
+        order: 999,
+        placeholder: watchedValues.placeholder,
+        help_text: watchedValues.help_text,
+        options: watchedValues.type === 'select' && watchedValues.options 
+          ? watchedValues.options.split(',').map(opt => opt.trim()).filter(opt => opt.length > 0)
+          : undefined
+      }
+
+      return (
+        <div className="mt-4 p-4 border rounded-lg bg-muted/50">
+          <h4 className="text-sm font-medium mb-2">Vista previa:</h4>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{previewField.label}</span>
+              {previewField.required && (
+                <Badge variant="destructive" className="text-xs">Requerido</Badge>
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Tipo: {fieldTypeLabels[previewField.type]} • ID: {previewField.id}
+            </div>
+            {previewField.placeholder && (
+              <div className="text-xs text-muted-foreground">
+                Placeholder: {previewField.placeholder}
+              </div>
+            )}
+            {previewField.help_text && (
+              <div className="text-xs text-muted-foreground">
+                Ayuda: {previewField.help_text}
+              </div>
+            )}
+            {previewField.options && previewField.options.length > 0 && (
+              <div className="text-xs text-muted-foreground">
+                Opciones: {previewField.options.join(', ')}
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    } catch (error) {
+      console.error('Error in renderFieldPreview:', error)
+      return null
     }
-
-    return (
-      <div className="mt-4 p-4 border rounded-lg bg-muted/50">
-        <h4 className="text-sm font-medium mb-2">Vista previa:</h4>
-        <DynamicField 
-          field={previewField} 
-          control={form.control}
-          disabled={true}
-        />
-      </div>
-    )
   }
 
   if (loading) {
@@ -420,12 +455,35 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
           <CardContent>
             <div className="space-y-4">
               {fields.map(field => (
-                <DynamicField
-                  key={field.id}
-                  field={field}
-                  control={form.control}
-                  disabled={true}
-                />
+                <div key={field.id} className="space-y-2 p-3 border rounded">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{field.label}</span>
+                    {field.required && (
+                      <Badge variant="destructive" className="text-xs">Requerido</Badge>
+                    )}
+                    {field.default && (
+                      <Badge variant="secondary" className="text-xs">Por defecto</Badge>
+                    )}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Tipo: {fieldTypeLabels[field.type]} • ID: {field.id}
+                  </div>
+                  {field.placeholder && (
+                    <div className="text-xs text-muted-foreground">
+                      Placeholder: {field.placeholder}
+                    </div>
+                  )}
+                  {field.help_text && (
+                    <div className="text-xs text-muted-foreground">
+                      Ayuda: {field.help_text}
+                    </div>
+                  )}
+                  {field.options && field.options.length > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      Opciones: {field.options.join(', ')}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </CardContent>

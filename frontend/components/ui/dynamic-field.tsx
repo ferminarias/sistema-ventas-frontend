@@ -24,6 +24,18 @@ interface DynamicFieldProps {
 }
 
 export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
+  // Protección contra control null/undefined
+  if (!control) {
+    console.error('DynamicField: control is null or undefined')
+    return (
+      <div className="p-3 border rounded bg-muted/50">
+        <p className="text-sm font-medium">{field.label}</p>
+        <p className="text-xs text-muted-foreground">Tipo: {field.type}</p>
+        {field.required && <p className="text-xs text-red-500">Campo requerido</p>}
+      </div>
+    )
+  }
+
   const renderFieldByType = (fieldProps: any) => {
     switch (field.type) {
       case 'text':
@@ -167,28 +179,38 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
     }
   };
 
-  return (
-    <FormField
-      control={control}
-      name={field.id}
-      render={({ field: fieldProps }) => (
-        <FormItem>
-          <FormLabel className="flex items-center gap-1">
-            {field.label}
-            {field.required && <span className="text-red-500">*</span>}
-          </FormLabel>
-          
-          {field.help_text && field.type !== 'file' && (
-            <p className="text-sm text-muted-foreground">{field.help_text}</p>
-          )}
-          
-          <FormControl>
-            {renderFieldByType(fieldProps)}
-          </FormControl>
-          
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
+  try {
+    return (
+      <FormField
+        control={control}
+        name={field.id}
+        render={({ field: fieldProps }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-1">
+              {field.label}
+              {field.required && <span className="text-red-500">*</span>}
+            </FormLabel>
+            
+            {field.help_text && field.type !== 'file' && (
+              <p className="text-sm text-muted-foreground">{field.help_text}</p>
+            )}
+            
+            <FormControl>
+              {renderFieldByType(fieldProps)}
+            </FormControl>
+            
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  } catch (error) {
+    console.error('Error in DynamicField:', error)
+    return (
+      <div className="p-3 border rounded bg-red-50 border-red-200">
+        <p className="text-sm font-medium text-red-700">Error en campo: {field.label}</p>
+        <p className="text-xs text-red-600">Tipo: {field.type}</p>
+      </div>
+    )
+  }
 } 
