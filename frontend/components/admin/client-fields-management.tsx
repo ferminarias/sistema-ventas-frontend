@@ -115,6 +115,10 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
       const clientFields = await clientFieldsService.getClientFields(clientId)
       console.log(`📊 Campos obtenidos del backend:`, clientFields)
       console.log(`📈 Cantidad total de campos:`, clientFields.length)
+      console.log(`🔍 DETALLE DE CADA CAMPO:`)
+      clientFields.forEach((field, index) => {
+        console.log(`  ${index + 1}. ID: ${field.id}, Label: ${field.label}, Type: ${field.type}, Default: ${field.default}`)
+      })
       
       setFields(clientFields)
       console.log(`✅ Estado actualizado con ${clientFields.length} campos`)
@@ -207,10 +211,23 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
       console.log(`🚀 Agregando campo rápido: ${fieldType} para cliente ${clientId}`)
       const newField = await clientFieldsService.addQuickField(clientId, fieldType)
       console.log('✅ Campo agregado exitosamente:', newField)
+      console.log('🔍 CAMPO CREADO - Respuesta completa:', JSON.stringify(newField, null, 2))
       
-      // INMEDIATAMENTE recargar campos
-      const updatedFields = await loadFields()
-      console.log(`🔄 Campos recargados - Cantidad actual: ${updatedFields.length}`)
+      // FORZAR múltiples intentos de recarga
+      console.log('🔄 Recarga #1...')
+      const updatedFields1 = await loadFields()
+      console.log(`🔄 Campos recargados #1 - Cantidad: ${updatedFields1.length}`)
+      
+      // Esperar un momento y volver a cargar
+      setTimeout(async () => {
+        console.log('🔄 Recarga #2 (después de 500ms)...')
+        const updatedFields2 = await loadFields()
+        console.log(`🔄 Campos recargados #2 - Cantidad: ${updatedFields2.length}`)
+        
+        // Forzar re-render usando key change
+        setFields([...updatedFields2])
+        console.log('🔄 FORZANDO RE-RENDER con spread operator')
+      }, 500)
       
       toast({
         title: "Campo agregado",
