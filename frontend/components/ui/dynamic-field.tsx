@@ -69,7 +69,7 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
             disabled={disabled}
           >
             <SelectTrigger>
-              <SelectValue placeholder={field.placeholder || `Seleccionar ${field.label.toLowerCase()}`} />
+              <SelectValue placeholder={field.placeholder || `Seleccionar ${typeof field.label === 'string' ? field.label.toLowerCase() : 'opción'}`} />
             </SelectTrigger>
             <SelectContent>
               {field.options?.map((option) => (
@@ -140,7 +140,7 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
               htmlFor={field.id}
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              {field.placeholder || field.label}
+              {field.placeholder || (typeof field.label === 'string' ? field.label : JSON.stringify(field.label))}
             </label>
           </div>
         );
