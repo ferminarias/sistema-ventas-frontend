@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart3, FileSpreadsheet, Home, Plus, Settings, Users, LogOut, UserCog, Building2, Moon, UserPlus } from "lucide-react"
+import { BarChart3, FileSpreadsheet, Home, Plus, Settings, Users, LogOut, UserCog, Building2, Moon, UserPlus, FileSearch } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -146,6 +146,15 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
               </Collapsible>
             )}
 
+            {(user.role === "admin" || user.role === "supervisor") && (
+              <Button asChild variant={pathname === "/comprobantes" ? "default" : "ghost"} className="w-full justify-start">
+                <Link href="/comprobantes">
+                  <FileSearch className="mr-2 h-4 w-4" />
+                  Búsqueda de Comprobantes
+                </Link>
+              </Button>
+            )}
+
             <Button asChild variant={pathname === "/reportes" ? "default" : "ghost"} className="w-full justify-start">
               <Link href="/reportes">
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
@@ -157,11 +166,10 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
         <div className="mt-auto p-4">
           <div className="flex items-center gap-4">
             <Avatar>
-              <AvatarImage src={user.avatar} alt={user.username} />
-              <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
+              <AvatarFallback>{(user.username || user.name || "U")[0].toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <span className="text-sm font-medium">{user.username}</span>
+              <span className="text-sm font-medium">{user.username || "Usuario"}</span>
               <span className="text-xs text-muted-foreground">{user.role}</span>
             </div>
           </div>

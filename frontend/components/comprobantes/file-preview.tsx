@@ -1,0 +1,156 @@
+"use client"
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Download, FileText, Calendar, User, CreditCard, X } from "lucide-react"
+import type { Comprobante } from "@/types/comprobante"
+import { comprobantesService } from "@/services/comprobantes"
+import { formatCurrency, formatDate } from "@/lib/utils"
+import { useState } from "react"
+
+interface FilePreviewProps {
+  comprobante: Comprobante
+  open: boolean
+  onClose: () => void
+}
+
+export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
+  const [downloading, setDownloading] = useState(false)
+
+  const handleDownload = async () => {
+    setDownloading(true)
+    try {
+      await comprobantesService.downloadFile(comprobante.archivo_adjunto, comprobante.archivo_nombre)
+    } catch (error) {
+      console.error("Error al descargar:", error)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl max-h-[90vh] bg-[#1a1a1a] border-gray-700 text-white">
+        <DialogHeader>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <FileText className="h-5 w-5" />
+              Vista Previa - {comprobante.numero_comprobante}
+            </DialogTitle>
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-400 hover:text-white">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Información del comprobante */}
+          <div className="bg-[#2a2a2a] border border-gray-700 rounded-lg p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-gray-300">Tipo:</span>
+                  <Badge
+                    className={`
+                      ${comprobante.tipo_comprobante === "FACTURA" ? "bg-blue-600 text-white" : ""}
+                      ${comprobante.tipo_comprobante === "BOLETA" ? "bg-green-600 text-white" : ""}
+                      ${comprobante.tipo_comprobante === "NOTA_CREDITO" ? "bg-orange-600 text-white" : ""}
+                      ${comprobante.tipo_comprobante === "NOTA_DEBITO" ? "bg-red-600 text-white" : ""}
+                    `}
+                  >
+                    {comprobante.tipo_comprobante}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-400" />
+                  <span className="font-semibold text-gray-300">Fecha:</span>
+                  <span className="text-white">{formatDate(comprobante.fecha_emision)}</span>
+                </div>
+
+                {comprobante.fecha_vencimiento && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <span className="font-semibold text-gray-300">Vencimiento:</span>
+                    <span className="text-white">{formatDate(comprobante.fecha_vencimiento)}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-gray-400" />
+                  <span className="font-semibold text-gray-300">Cliente:</span>
+                  <span className="text-white">{comprobante.cliente.nombre}</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-gray-300">Documento:</span>
+                  <span className="text-white">{comprobante.cliente.documento}</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-gray-400" />
+                  <span className="font-semibold text-gray-300">Total:</span>
+                  <span className="text-white text-xl font-bold">{formatCurrency(comprobante.venta.total)}</span>
+                  <Badge
+                    className={`
+                      ${comprobante.venta.estado === "PAGADO" ? "bg-green-600 text-white" : ""}
+                      ${comprobante.venta.estado === "PENDIENTE" ? "bg-yellow-600 text-white" : ""}
+                      ${comprobante.venta.estado === "ANULADO" ? "bg-red-600 text-white" : ""}
+                    `}
+                  >
+                    {comprobante.venta.estado}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Vista previa del archivo */}
+          <div className="bg-[#2a2a2a] border border-gray-700 rounded-lg overflow-hidden">
+            <div className="bg-[#1a1a1a] p-4 border-b border-gray-700 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-gray-400" />
+                <span className="font-medium text-white">{comprobante.archivo_nombre}</span>
+                <span className="text-sm text-gray-400">({(comprobante.archivo_tamaño / 1024).toFixed(1)} KB)</span>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleDownload}
+                disabled={downloading}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                {downloading ? "Descargando..." : "Descargar"}
+              </Button>
+            </div>
+
+            <div className="h-96 flex items-center justify-center bg-[#0a0a0a]">
+              {comprobante.archivo_tipo === "application/pdf" ? (
+                <iframe
+                  src={comprobantesService.getFileUrl(comprobante.archivo_adjunto)}
+                  className="w-full h-full"
+                  title={`Vista previa de ${comprobante.numero_comprobante}`}
+                />
+              ) : comprobante.archivo_tipo.startsWith("image/") ? (
+                <img
+                  src={comprobantesService.getFileUrl(comprobante.archivo_adjunto) || "/placeholder.svg"}
+                  alt={`Comprobante ${comprobante.numero_comprobante}`}
+                  className="max-w-full max-h-full object-contain"
+                />
+              ) : (
+                <div className="text-center text-gray-400">
+                  <FileText className="h-16 w-16 mx-auto mb-4" />
+                  <p>Vista previa no disponible para este tipo de archivo</p>
+                  <p className="text-sm">Tipo: {comprobante.archivo_tipo}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+} 
