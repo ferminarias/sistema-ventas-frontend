@@ -94,8 +94,8 @@ export default function BusquedaComprobantesPage() {
               Actualizar
             </Button>
             <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-              <Download className="h-4 w-4 mr-2" />
-              Exportar Excel
+              <FileSearch className="h-4 w-4 mr-2" />
+              Gestionar Archivos
             </Button>
           </div>
         </div>

@@ -142,9 +142,9 @@ class ComprobantesService {
     return mappedResponse
   }
 
-  // Descargar archivo
+  // Descargar archivo usando el nuevo endpoint
   async downloadFile(filename: string, originalName?: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api/comprobantes/download/${filename}`, {
+    const response = await fetch(`${API_BASE_URL}/api/comprobantes/descargar/${filename}`, {
       headers: getAuthHeaders(),
       credentials: "include"
     })
@@ -164,9 +164,31 @@ class ComprobantesService {
     document.body.removeChild(a)
   }
 
-  // Obtener URL de preview
+  // Obtener URL de preview para mostrar archivos directamente
+  getPreviewUrl(filename: string): string {
+    const token = localStorage.getItem("token")
+    return `${API_BASE_URL}/api/comprobantes/preview/${filename}?token=${token}`
+  }
+
+  // Detectar si un archivo es imagen
+  isImageFile(filename: string): boolean {
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']
+    return imageExtensions.some(ext => filename.toLowerCase().endsWith(ext))
+  }
+
+  // Detectar si un archivo es PDF
+  isPdfFile(filename: string): boolean {
+    return filename.toLowerCase().endsWith('.pdf')
+  }
+
+  // Verificar si un archivo se puede previsualizar
+  canPreview(filename: string): boolean {
+    return this.isImageFile(filename) || this.isPdfFile(filename)
+  }
+
+  // Mantener compatibilidad con getFileUrl
   getFileUrl(filename: string): string {
-    return `${API_BASE_URL}/api/comprobantes/preview/${filename}`
+    return this.getPreviewUrl(filename)
   }
 }
 

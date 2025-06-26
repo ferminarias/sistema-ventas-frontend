@@ -19,11 +19,23 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
   const [downloading, setDownloading] = useState<string | null>(null)
 
   const handleDownload = async (comprobante: Comprobante) => {
-    setDownloading(comprobante.id)
+    const fileId = comprobante.id || comprobante.venta_id?.toString() || ''
+    setDownloading(fileId)
     try {
-      await comprobantesService.downloadFile(comprobante.archivo_adjunto, comprobante.archivo_nombre)
+      await comprobantesService.downloadFile(comprobante.archivo_adjunto || '', comprobante.archivo_nombre)
     } catch (error) {
       console.error("Error al descargar:", error)
+    } finally {
+      setDownloading(null)
+    }
+  }
+
+  const handleDownloadFile = async (archivo: import("@/types/comprobante").ArchivoComprobante) => {
+    setDownloading(archivo.filename)
+    try {
+      await comprobantesService.downloadFile(archivo.filename, archivo.original_name)
+    } catch (error) {
+      console.error("Error al descargar archivo:", error)
     } finally {
       setDownloading(null)
     }
@@ -68,76 +80,120 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
       <div className="space-y-3">
         {comprobantes.map((comprobante) => (
           <div
-            key={comprobante.id}
+            key={comprobante.venta_id || comprobante.id}
             className="bg-gray-700 border border-gray-600 rounded-lg p-4 hover:bg-gray-600 transition-colors"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex-1 space-y-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 space-y-3">
+                {/* Header principal */}
                 <div className="flex items-center gap-3">
-                  <h3 className="text-white font-semibold text-lg">{typeof comprobante.numero_comprobante === 'string' ? comprobante.numero_comprobante : JSON.stringify(comprobante.numero_comprobante)}</h3>
-                  <Badge
-                    className={`
-                      ${comprobante.tipo_comprobante === "FACTURA" ? "bg-blue-600 text-white" : ""}
-                      ${comprobante.tipo_comprobante === "BOLETA" ? "bg-green-600 text-white" : ""}
-                      ${comprobante.tipo_comprobante === "NOTA_CREDITO" ? "bg-orange-600 text-white" : ""}
-                      ${comprobante.tipo_comprobante === "NOTA_DEBITO" ? "bg-red-600 text-white" : ""}
-                    `}
-                  >
-                    {typeof comprobante.tipo_comprobante === 'string' ? comprobante.tipo_comprobante : JSON.stringify(comprobante.tipo_comprobante)}
+                  <h3 className="text-white font-semibold text-lg">
+                    {comprobante.nombre} {comprobante.apellido}
+                  </h3>
+                  <Badge className="bg-blue-600 text-white">
+                    Venta #{comprobante.venta_id}
                   </Badge>
                 </div>
 
+                {/* Información de la venta */}
                 <div className="flex items-center gap-6 text-sm text-gray-400">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    {formatDate(comprobante.fecha_emision)}
+                    {formatDate(comprobante.fecha_venta)}
                   </div>
                   <div className="flex items-center gap-1">
                     <User className="h-4 w-4" />
-                    {typeof comprobante.cliente.nombre === 'string' ? comprobante.cliente.nombre : JSON.stringify(comprobante.cliente.nombre)}
+                    {comprobante.cliente_nombre}
                   </div>
                   <div className="flex items-center gap-1">
-                    <CreditCard className="h-4 w-4" />
-                    <span className="text-white font-semibold">{formatCurrency(typeof comprobante.venta.total === 'number' ? comprobante.venta.total : 0)}</span>
+                    <Settings className="h-4 w-4" />
+                    {comprobante.asesor}
                   </div>
-                  <Badge
-                    className={`
-                      ${comprobante.venta.estado === "PAGADO" ? "bg-green-600 text-white" : ""}
-                      ${comprobante.venta.estado === "PENDIENTE" ? "bg-yellow-600 text-white" : ""}
-                      ${comprobante.venta.estado === "ANULADO" ? "bg-red-600 text-white" : ""}
-                    `}
-                  >
-                    {typeof comprobante.venta.estado === 'string' ? comprobante.venta.estado : JSON.stringify(comprobante.venta.estado)}
-                  </Badge>
                 </div>
 
+                {/* Información del cliente */}
                 <div className="text-xs text-gray-500">
-                  Cliente: {typeof comprobante.cliente.documento === 'string' ? comprobante.cliente.documento : JSON.stringify(comprobante.cliente.documento)} • Archivo: {typeof comprobante.archivo_nombre === 'string' ? comprobante.archivo_nombre : JSON.stringify(comprobante.archivo_nombre)}
+                  Email: {comprobante.email} • Teléfono: {comprobante.telefono}
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setPreviewFile(comprobante)}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                >
-                  <Eye className="h-4 w-4 mr-1" />
-                  Ver
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => handleDownload(comprobante)}
-                  disabled={downloading === comprobante.id}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                  <Download className="h-4 w-4 mr-1" />
-                  {downloading === comprobante.id ? "..." : "Descargar"}
-                </Button>
-                <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white hover:bg-gray-700">
-                  <Settings className="h-4 w-4" />
-                </Button>
+                {/* Preview de archivos */}
+                {comprobante.archivos && comprobante.archivos.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-300">Archivos adjuntos:</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {comprobante.archivos.map((archivo, index) => (
+                        <div key={index} className="bg-gray-800 border border-gray-600 rounded-lg p-3">
+                          {/* Preview de imagen */}
+                          {comprobantesService.isImageFile(archivo.filename) && (
+                            <div className="mb-2">
+                              <img 
+                                src={comprobantesService.getPreviewUrl(archivo.filename)} 
+                                alt={archivo.original_name}
+                                className="w-full h-32 object-cover rounded border border-gray-600"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none'
+                                }}
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Preview de PDF */}
+                          {comprobantesService.isPdfFile(archivo.filename) && (
+                            <div className="mb-2">
+                              <div className="w-full h-32 bg-red-100 rounded border border-gray-600 flex items-center justify-center">
+                                <FileText className="h-12 w-12 text-red-600" />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Información del archivo */}
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-white truncate">{archivo.original_name}</p>
+                            <p className="text-xs text-gray-400">
+                              {archivo.tipo} • {archivo.size_mb.toFixed(1)} MB
+                            </p>
+                            
+                            {/* Botones de acción */}
+                            <div className="flex gap-1 mt-2">
+                              {comprobantesService.canPreview(archivo.filename) && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                                                     onClick={() => setPreviewFile({ 
+                                     ...comprobante, 
+                                     archivo_adjunto: archivo.filename, 
+                                     archivo_nombre: archivo.original_name,
+                                     id: comprobante.id || comprobante.venta_id?.toString() || archivo.filename
+                                   } as Comprobante)}
+                                  className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs px-2 py-1"
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  Ver
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                onClick={() => handleDownloadFile(archivo)}
+                                disabled={downloading === archivo.filename}
+                                className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1"
+                              >
+                                <Download className="h-3 w-3 mr-1" />
+                                {downloading === archivo.filename ? "..." : "Descargar"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Fallback para estructura antigua */}
+                {(!comprobante.archivos || comprobante.archivos.length === 0) && comprobante.archivo_nombre && (
+                  <div className="text-xs text-gray-500">
+                    Archivo: {typeof comprobante.archivo_nombre === 'string' ? comprobante.archivo_nombre : JSON.stringify(comprobante.archivo_nombre)}
+                  </div>
+                )}
               </div>
             </div>
           </div>

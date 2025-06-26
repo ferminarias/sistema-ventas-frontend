@@ -1,26 +1,48 @@
+export interface ArchivoComprobante {
+  field_id: string
+  filename: string
+  original_name: string
+  file_url: string
+  tipo: string
+  uploaded_at: string
+  size_mb: number
+}
+
 export interface Comprobante {
-  id: string
-  numero_comprobante: string
-  tipo_comprobante: "FACTURA" | "BOLETA" | "NOTA_CREDITO" | "NOTA_DEBITO"
-  fecha_emision: string
+  venta_id: number
+  nombre: string
+  apellido: string
+  email: string
+  telefono: string
+  fecha_venta: string
+  cliente_id: number
+  cliente_nombre: string
+  asesor: string
+  archivos: ArchivoComprobante[]
+  
+  // Mantener propiedades antiguas para compatibilidad
+  id?: string
+  numero_comprobante?: string
+  tipo_comprobante?: "FACTURA" | "BOLETA" | "NOTA_CREDITO" | "NOTA_DEBITO"
+  fecha_emision?: string
   fecha_vencimiento?: string
-  cliente: {
+  cliente?: {
     id: string
     nombre: string
     documento: string
     email?: string
   }
-  venta: {
+  venta?: {
     id: string
     total: number
     estado: "PENDIENTE" | "PAGADO" | "ANULADO"
   }
-  archivo_adjunto: string
-  archivo_nombre: string
-  archivo_tipo: string
-  archivo_tamaño: number
-  created_at: string
-  updated_at: string
+  archivo_adjunto?: string
+  archivo_nombre?: string
+  archivo_tipo?: string
+  archivo_tamaño?: number
+  created_at?: string
+  updated_at?: string
 }
 
 export interface ComprobanteFilters {

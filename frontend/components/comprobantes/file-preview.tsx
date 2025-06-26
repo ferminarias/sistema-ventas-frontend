@@ -21,7 +21,7 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
   const handleDownload = async () => {
     setDownloading(true)
     try {
-      await comprobantesService.downloadFile(comprobante.archivo_adjunto, comprobante.archivo_nombre)
+      await comprobantesService.downloadFile(comprobante.archivo_adjunto || '', comprobante.archivo_nombre)
     } catch (error) {
       console.error("Error al descargar:", error)
     } finally {
@@ -128,23 +128,26 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
             </div>
 
             <div className="h-96 flex items-center justify-center bg-gray-900">
-              {comprobante.archivo_tipo === "application/pdf" ? (
+              {comprobante.archivo_adjunto && comprobantesService.isPdfFile(comprobante.archivo_adjunto) ? (
                 <iframe
-                  src={comprobantesService.getFileUrl(comprobante.archivo_adjunto)}
+                  src={comprobantesService.getPreviewUrl(comprobante.archivo_adjunto)}
                   className="w-full h-full"
-                  title={`Vista previa de ${comprobante.numero_comprobante}`}
+                  title={`Vista previa de ${comprobante.numero_comprobante || comprobante.venta_id}`}
                 />
-              ) : comprobante.archivo_tipo.startsWith("image/") ? (
+              ) : comprobante.archivo_adjunto && comprobantesService.isImageFile(comprobante.archivo_adjunto) ? (
                 <img
-                  src={comprobantesService.getFileUrl(comprobante.archivo_adjunto) || "/placeholder.svg"}
-                  alt={`Comprobante ${typeof comprobante.numero_comprobante === 'string' ? comprobante.numero_comprobante : 'N/A'}`}
+                  src={comprobantesService.getPreviewUrl(comprobante.archivo_adjunto)}
+                  alt={`Comprobante ${comprobante.numero_comprobante || comprobante.venta_id || 'N/A'}`}
                   className="max-w-full max-h-full object-contain"
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.svg"
+                  }}
                 />
               ) : (
                 <div className="text-center text-gray-400">
                   <FileText className="h-16 w-16 mx-auto mb-4" />
                   <p>Vista previa no disponible para este tipo de archivo</p>
-                  <p className="text-sm">Tipo: {typeof comprobante.archivo_tipo === 'string' ? comprobante.archivo_tipo : JSON.stringify(comprobante.archivo_tipo)}</p>
+                  <p className="text-sm">Archivo: {comprobante.archivo_nombre || 'No disponible'}</p>
                 </div>
               )}
             </div>
