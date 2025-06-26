@@ -587,9 +587,9 @@ export default function ReportesPage() {
                   { number: pipeline.closed, label: "Cerradas", value: "" },
                 ].map((stage, index) => (
                   <div key={index} className="text-center p-4 bg-slate-700/50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-400 mb-2">{stage.number}</div>
-                    <div className="text-slate-400 text-sm mb-2">{stage.label}</div>
-                    <div className="text-white text-sm font-medium">{stage.value}</div>
+                    <div className="text-2xl font-bold text-blue-400 mb-2">{typeof stage.number === 'string' || typeof stage.number === 'number' ? stage.number : JSON.stringify(stage.number)}</div>
+                    <div className="text-slate-400 text-sm mb-2">{typeof stage.label === 'string' ? stage.label : JSON.stringify(stage.label)}</div>
+                    <div className="text-white text-sm font-medium">{typeof stage.value === 'string' ? stage.value : JSON.stringify(stage.value)}</div>
                   </div>
                 ))}
               </div>

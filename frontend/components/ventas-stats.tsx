@@ -49,7 +49,7 @@ export function VentasStats() {
             <stat.icon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stat.value}</div>
+            <div className="text-2xl font-bold">{typeof stat.value === 'string' || typeof stat.value === 'number' ? stat.value : JSON.stringify(stat.value)}</div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
               <ArrowUp className="mr-1 h-4 w-4 text-emerald-500" />
               {stat.description}

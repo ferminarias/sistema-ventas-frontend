@@ -74,7 +74,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
             <div className="flex items-center justify-between">
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-white font-semibold text-lg">{comprobante.numero_comprobante}</h3>
+                  <h3 className="text-white font-semibold text-lg">{typeof comprobante.numero_comprobante === 'string' ? comprobante.numero_comprobante : JSON.stringify(comprobante.numero_comprobante)}</h3>
                   <Badge
                     className={`
                       ${comprobante.tipo_comprobante === "FACTURA" ? "bg-blue-600 text-white" : ""}
@@ -83,7 +83,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                       ${comprobante.tipo_comprobante === "NOTA_DEBITO" ? "bg-red-600 text-white" : ""}
                     `}
                   >
-                    {comprobante.tipo_comprobante}
+                    {typeof comprobante.tipo_comprobante === 'string' ? comprobante.tipo_comprobante : JSON.stringify(comprobante.tipo_comprobante)}
                   </Badge>
                 </div>
 
@@ -94,11 +94,11 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                   </div>
                   <div className="flex items-center gap-1">
                     <User className="h-4 w-4" />
-                    {comprobante.cliente.nombre}
+                    {typeof comprobante.cliente.nombre === 'string' ? comprobante.cliente.nombre : JSON.stringify(comprobante.cliente.nombre)}
                   </div>
                   <div className="flex items-center gap-1">
                     <CreditCard className="h-4 w-4" />
-                    <span className="text-white font-semibold">{formatCurrency(comprobante.venta.total)}</span>
+                    <span className="text-white font-semibold">{formatCurrency(typeof comprobante.venta.total === 'number' ? comprobante.venta.total : 0)}</span>
                   </div>
                   <Badge
                     className={`
@@ -107,12 +107,12 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                       ${comprobante.venta.estado === "ANULADO" ? "bg-red-600 text-white" : ""}
                     `}
                   >
-                    {comprobante.venta.estado}
+                    {typeof comprobante.venta.estado === 'string' ? comprobante.venta.estado : JSON.stringify(comprobante.venta.estado)}
                   </Badge>
                 </div>
 
                 <div className="text-xs text-gray-500">
-                  Cliente: {comprobante.cliente.documento} • Archivo: {comprobante.archivo_nombre}
+                  Cliente: {typeof comprobante.cliente.documento === 'string' ? comprobante.cliente.documento : JSON.stringify(comprobante.cliente.documento)} • Archivo: {typeof comprobante.archivo_nombre === 'string' ? comprobante.archivo_nombre : JSON.stringify(comprobante.archivo_nombre)}
                 </div>
               </div>
 

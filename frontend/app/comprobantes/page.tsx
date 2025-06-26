@@ -123,7 +123,7 @@ export default function BusquedaComprobantesPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileSearch className="h-5 w-5 text-gray-400" />
-                <h2 className="text-lg font-semibold text-white">Lista de Comprobantes {data && `(${data.total})`}</h2>
+                <h2 className="text-lg font-semibold text-white">Lista de Comprobantes {data && `(${typeof data.total === 'number' ? data.total : JSON.stringify(data.total)})`}</h2>
               </div>
               {data && data.total > 0 && (
                 <span className="text-sm text-gray-400">Gestiona todos los comprobantes del sistema</span>
@@ -139,14 +139,14 @@ export default function BusquedaComprobantesPage() {
           {data && data.total_pages > 1 && (
             <div className="p-6 border-t border-gray-800 flex items-center justify-between">
               <span className="text-sm text-gray-400">
-                Página {data.page} de {data.total_pages} • {data.total} comprobantes total
+                Página {typeof data.page === 'number' ? data.page : JSON.stringify(data.page)} de {typeof data.total_pages === 'number' ? data.total_pages : JSON.stringify(data.total_pages)} • {typeof data.total === 'number' ? data.total : JSON.stringify(data.total)} comprobantes total
               </span>
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={data.page === 1}
-                  onClick={() => handleSearch({ ...currentFilters, page: data.page - 1 })}
+                  disabled={typeof data.page === 'number' ? data.page === 1 : false}
+                  onClick={() => handleSearch({ ...currentFilters, page: typeof data.page === 'number' ? data.page - 1 : 1 })}
                   className="border-gray-700 text-gray-300 hover:bg-gray-800"
                 >
                   Anterior
@@ -154,8 +154,8 @@ export default function BusquedaComprobantesPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={data.page === data.total_pages}
-                  onClick={() => handleSearch({ ...currentFilters, page: data.page + 1 })}
+                  disabled={typeof data.page === 'number' && typeof data.total_pages === 'number' ? data.page === data.total_pages : false}
+                  onClick={() => handleSearch({ ...currentFilters, page: typeof data.page === 'number' ? data.page + 1 : 2 })}
                   className="border-gray-700 text-gray-300 hover:bg-gray-800"
                 >
                   Siguiente

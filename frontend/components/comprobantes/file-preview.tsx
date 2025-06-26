@@ -36,7 +36,7 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2 text-white">
               <FileText className="h-5 w-5" />
-              Vista Previa - {comprobante.numero_comprobante}
+              Vista Previa - {typeof comprobante.numero_comprobante === 'string' ? comprobante.numero_comprobante : JSON.stringify(comprobante.numero_comprobante)}
             </DialogTitle>
             <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-400 hover:text-white">
               <X className="h-4 w-4" />
@@ -59,7 +59,7 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
                       ${comprobante.tipo_comprobante === "NOTA_DEBITO" ? "bg-red-600 text-white" : ""}
                     `}
                   >
-                    {comprobante.tipo_comprobante}
+                    {typeof comprobante.tipo_comprobante === 'string' ? comprobante.tipo_comprobante : JSON.stringify(comprobante.tipo_comprobante)}
                   </Badge>
                 </div>
 
@@ -82,18 +82,18 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-gray-400" />
                   <span className="font-semibold text-gray-300">Cliente:</span>
-                  <span className="text-white">{comprobante.cliente.nombre}</span>
+                  <span className="text-white">{typeof comprobante.cliente.nombre === 'string' ? comprobante.cliente.nombre : JSON.stringify(comprobante.cliente.nombre)}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-gray-300">Documento:</span>
-                  <span className="text-white">{comprobante.cliente.documento}</span>
+                  <span className="text-white">{typeof comprobante.cliente.documento === 'string' ? comprobante.cliente.documento : JSON.stringify(comprobante.cliente.documento)}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-gray-400" />
                   <span className="font-semibold text-gray-300">Total:</span>
-                  <span className="text-white text-xl font-bold">{formatCurrency(comprobante.venta.total)}</span>
+                  <span className="text-white text-xl font-bold">{formatCurrency(typeof comprobante.venta.total === 'number' ? comprobante.venta.total : 0)}</span>
                   <Badge
                     className={`
                       ${comprobante.venta.estado === "PAGADO" ? "bg-green-600 text-white" : ""}
@@ -101,7 +101,7 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
                       ${comprobante.venta.estado === "ANULADO" ? "bg-red-600 text-white" : ""}
                     `}
                   >
-                    {comprobante.venta.estado}
+                    {typeof comprobante.venta.estado === 'string' ? comprobante.venta.estado : JSON.stringify(comprobante.venta.estado)}
                   </Badge>
                 </div>
               </div>
@@ -113,8 +113,8 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
             <div className="bg-[#1a1a1a] p-4 border-b border-gray-700 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-gray-400" />
-                <span className="font-medium text-white">{comprobante.archivo_nombre}</span>
-                <span className="text-sm text-gray-400">({(comprobante.archivo_tamaño / 1024).toFixed(1)} KB)</span>
+                <span className="font-medium text-white">{typeof comprobante.archivo_nombre === 'string' ? comprobante.archivo_nombre : JSON.stringify(comprobante.archivo_nombre)}</span>
+                <span className="text-sm text-gray-400">({(typeof comprobante.archivo_tamaño === 'number' ? comprobante.archivo_tamaño / 1024 : 0).toFixed(1)} KB)</span>
               </div>
               <Button
                 size="sm"
@@ -137,14 +137,14 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
               ) : comprobante.archivo_tipo.startsWith("image/") ? (
                 <img
                   src={comprobantesService.getFileUrl(comprobante.archivo_adjunto) || "/placeholder.svg"}
-                  alt={`Comprobante ${comprobante.numero_comprobante}`}
+                  alt={`Comprobante ${typeof comprobante.numero_comprobante === 'string' ? comprobante.numero_comprobante : 'N/A'}`}
                   className="max-w-full max-h-full object-contain"
                 />
               ) : (
                 <div className="text-center text-gray-400">
                   <FileText className="h-16 w-16 mx-auto mb-4" />
                   <p>Vista previa no disponible para este tipo de archivo</p>
-                  <p className="text-sm">Tipo: {comprobante.archivo_tipo}</p>
+                  <p className="text-sm">Tipo: {typeof comprobante.archivo_tipo === 'string' ? comprobante.archivo_tipo : JSON.stringify(comprobante.archivo_tipo)}</p>
                 </div>
               )}
             </div>

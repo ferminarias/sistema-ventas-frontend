@@ -42,7 +42,7 @@ export function MetricsCards({ selectedClient }: MetricsCardsProps) {
             {metric.icon}
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">{metric.value}</div>
+            <div className="text-3xl font-bold text-white">{typeof metric.value === 'string' || typeof metric.value === 'number' ? metric.value : JSON.stringify(metric.value)}</div>
             <div className={`text-xs mt-2 ${metric.color}`}>{metric.change}</div>
           </CardContent>
         </Card>

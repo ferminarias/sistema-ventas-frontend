@@ -79,7 +79,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
               </SelectItem>
               {filtrosDisponibles?.clientes?.map((cliente: any) => (
                 <SelectItem key={cliente.id} value={cliente.id.toString()} className="text-white hover:bg-gray-700">
-                  {cliente.nombre}
+                  {typeof cliente.nombre === 'string' ? cliente.nombre : JSON.stringify(cliente.nombre)}
                 </SelectItem>
               ))}
             </SelectContent>
