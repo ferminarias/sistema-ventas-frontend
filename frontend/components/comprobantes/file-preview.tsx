@@ -31,7 +31,7 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] bg-[#1a1a1a] border-gray-700 text-white">
+      <DialogContent className="max-w-5xl max-h-[90vh] bg-gray-800 border-gray-600 text-white">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2 text-white">
@@ -46,7 +46,7 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
 
         <div className="space-y-6">
           {/* Información del comprobante */}
-          <div className="bg-[#2a2a2a] border border-gray-700 rounded-lg p-6">
+          <div className="bg-gray-700 border border-gray-600 rounded-lg p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
@@ -109,8 +109,8 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
           </div>
 
           {/* Vista previa del archivo */}
-          <div className="bg-[#2a2a2a] border border-gray-700 rounded-lg overflow-hidden">
-            <div className="bg-[#1a1a1a] p-4 border-b border-gray-700 flex items-center justify-between">
+          <div className="bg-gray-700 border border-gray-600 rounded-lg overflow-hidden">
+            <div className="bg-gray-800 p-4 border-b border-gray-600 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-gray-400" />
                 <span className="font-medium text-white">{typeof comprobante.archivo_nombre === 'string' ? comprobante.archivo_nombre : JSON.stringify(comprobante.archivo_nombre)}</span>
@@ -127,7 +127,7 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
               </Button>
             </div>
 
-            <div className="h-96 flex items-center justify-center bg-[#0a0a0a]">
+            <div className="h-96 flex items-center justify-center bg-gray-900">
               {comprobante.archivo_tipo === "application/pdf" ? (
                 <iframe
                   src={comprobantesService.getFileUrl(comprobante.archivo_adjunto)}

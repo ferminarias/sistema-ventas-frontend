@@ -33,7 +33,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
     return (
       <div className="space-y-3">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="bg-[#2a2a2a] border border-gray-700 rounded-lg p-4 animate-pulse">
+          <div key={i} className="bg-gray-700 border border-gray-600 rounded-lg p-4 animate-pulse">
             <div className="flex items-center justify-between">
               <div className="space-y-2 flex-1">
                 <div className="h-4 bg-gray-600 rounded w-1/4"></div>
@@ -53,7 +53,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
   if (comprobantes.length === 0) {
     return (
-      <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-12 text-center">
+      <div className="bg-gray-800 border border-gray-700 rounded-lg p-12 text-center">
         <FileText className="h-12 w-12 text-gray-500 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-white mb-2">No se encontraron comprobantes</h3>
         <p className="text-gray-400">
@@ -69,7 +69,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
         {comprobantes.map((comprobante) => (
           <div
             key={comprobante.id}
-            className="bg-[#2a2a2a] border border-gray-700 rounded-lg p-4 hover:bg-[#333333] transition-colors"
+            className="bg-gray-700 border border-gray-600 rounded-lg p-4 hover:bg-gray-600 transition-colors"
           >
             <div className="flex items-center justify-between">
               <div className="flex-1 space-y-2">

@@ -42,7 +42,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
   }
 
   return (
-    <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-6">
+    <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
       <div className="flex items-center gap-2 mb-6">
         <Filter className="h-5 w-5 text-gray-400" />
         <h3 className="text-lg font-semibold text-white">Filtros de Búsqueda</h3>
@@ -58,7 +58,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             placeholder="Buscar por nombre, documento, etc."
             value={filters.busqueda || ""}
             onChange={(e) => handleInputChange("busqueda", e.target.value)}
-            className="bg-[#2a2a2a] border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
+            className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-500"
           />
         </div>
 
@@ -70,10 +70,10 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             value={filters.cliente_id?.toString() || "all"}
             onValueChange={(value) => handleInputChange("cliente_id", value === "all" ? "" : value)}
           >
-            <SelectTrigger className="bg-[#2a2a2a] border-gray-700 text-white focus:border-purple-500">
+            <SelectTrigger className="bg-gray-700 border-gray-600 text-white focus:border-purple-500">
               <SelectValue placeholder="Seleccionar cliente" />
             </SelectTrigger>
-            <SelectContent className="bg-[#2a2a2a] border-gray-700">
+            <SelectContent className="bg-gray-700 border-gray-600">
               <SelectItem value="all" className="text-white hover:bg-gray-700">
                 Todos los clientes
               </SelectItem>
@@ -94,10 +94,10 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             value={filters.tipo_archivo || "all"}
             onValueChange={(value) => handleInputChange("tipo_archivo", value === "all" ? "" : value)}
           >
-            <SelectTrigger className="bg-[#2a2a2a] border-gray-700 text-white focus:border-purple-500">
+            <SelectTrigger className="bg-gray-700 border-gray-600 text-white focus:border-purple-500">
               <SelectValue placeholder="Seleccionar tipo" />
             </SelectTrigger>
-            <SelectContent className="bg-[#2a2a2a] border-gray-700">
+            <SelectContent className="bg-gray-700 border-gray-600">
               <SelectItem value="all" className="text-white hover:bg-gray-700">
                 Todos los tipos
               </SelectItem>
@@ -121,7 +121,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             onChange={(e) => handleInputChange("fecha_inicio", e.target.value)}
             min={filtrosDisponibles?.rango_fechas?.fecha_min}
             max={filtrosDisponibles?.rango_fechas?.fecha_max}
-            className="bg-[#2a2a2a] border-gray-700 text-white focus:border-purple-500"
+            className="bg-gray-700 border-gray-600 text-white focus:border-purple-500"
           />
         </div>
 
@@ -136,7 +136,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             onChange={(e) => handleInputChange("fecha_fin", e.target.value)}
             min={filtrosDisponibles?.rango_fechas?.fecha_min}
             max={filtrosDisponibles?.rango_fechas?.fecha_max}
-            className="bg-[#2a2a2a] border-gray-700 text-white focus:border-purple-500"
+            className="bg-gray-700 border-gray-600 text-white focus:border-purple-500"
           />
         </div>
 
@@ -148,10 +148,10 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             value={filters.limit?.toString() || "20"}
             onValueChange={(value) => handleInputChange("limit", value)}
           >
-            <SelectTrigger className="bg-[#2a2a2a] border-gray-700 text-white focus:border-purple-500">
+            <SelectTrigger className="bg-gray-700 border-gray-600 text-white focus:border-purple-500">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-[#2a2a2a] border-gray-700">
+            <SelectContent className="bg-gray-700 border-gray-600">
               <SelectItem value="10" className="text-white hover:bg-gray-700">10</SelectItem>
               <SelectItem value="20" className="text-white hover:bg-gray-700">20</SelectItem>
               <SelectItem value="50" className="text-white hover:bg-gray-700">50</SelectItem>

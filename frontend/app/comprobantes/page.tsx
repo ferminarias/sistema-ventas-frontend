@@ -57,7 +57,7 @@ export default function BusquedaComprobantesPage() {
   // Mostrar loading mientras se verifica autenticación
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
           <p className="text-gray-400">Verificando permisos...</p>
@@ -72,9 +72,9 @@ export default function BusquedaComprobantesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
-      <div className="bg-[#1a1a1a] border-b border-gray-800 p-6">
+      <div className="bg-gray-800 border-b border-gray-700 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <FileSearch className="h-8 w-8 text-purple-500" />
@@ -118,8 +118,8 @@ export default function BusquedaComprobantesPage() {
         )}
 
         {/* Resultados */}
-        <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg">
-          <div className="p-6 border-b border-gray-800">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg">
+                      <div className="p-6 border-b border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileSearch className="h-5 w-5 text-gray-400" />
@@ -137,7 +137,7 @@ export default function BusquedaComprobantesPage() {
 
           {/* Paginación simple */}
           {data && data.total_pages > 1 && (
-            <div className="p-6 border-t border-gray-800 flex items-center justify-between">
+            <div className="p-6 border-t border-gray-700 flex items-center justify-between">
               <span className="text-sm text-gray-400">
                 Página {typeof data.page === 'number' ? data.page : JSON.stringify(data.page)} de {typeof data.total_pages === 'number' ? data.total_pages : JSON.stringify(data.total_pages)} • {typeof data.total === 'number' ? data.total : JSON.stringify(data.total)} comprobantes total
               </span>
@@ -167,7 +167,7 @@ export default function BusquedaComprobantesPage() {
 
         {/* Estado inicial */}
         {!data && !loading && !error && (
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-12 text-center">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-12 text-center">
             <FileSearch className="h-12 w-12 text-gray-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-white mb-2">Buscar Comprobantes</h3>
             <p className="text-gray-400">Utiliza los filtros de arriba para buscar comprobantes específicos</p>
