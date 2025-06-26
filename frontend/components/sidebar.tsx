@@ -105,12 +105,9 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
 
             {user.role === "admin" && (
               <>
-                <Button asChild variant={pathname === "/admin" ? "default" : "ghost"} className="w-full justify-start">
-                  <Link href="/admin">
-                    <UserCog className="mr-2 h-4 w-4" />
-                    Administración
-                  </Link>
-                </Button>
+                <div className="px-4 py-2 text-sm font-medium text-muted-foreground">
+                  Administración
+                </div>
                 <Button asChild variant={pathname === "/admin/usuarios" ? "default" : "ghost"} className="w-full justify-start pl-8">
                   <Link href="/admin/usuarios">
                     <UserCog className="mr-2 h-4 w-4" />
@@ -123,8 +120,8 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                     Gestión de Clientes
                   </Link>
                 </Button>
-                <Button asChild variant={pathname === "/asesores" ? "default" : "ghost"} className="w-full justify-start pl-8">
-                  <Link href="/asesores">
+                <Button asChild variant={pathname === "/admin/asesores" ? "default" : "ghost"} className="w-full justify-start pl-8">
+                  <Link href="/admin/asesores">
                     <UserCog className="mr-2 h-4 w-4" />
                     Gestión de Asesores
                   </Link>

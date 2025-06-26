@@ -108,8 +108,11 @@ export default function ReportesPage() {
   console.log("=== REPORTES PAGE RENDER ===");
   const [selectedPeriod, setSelectedPeriod] = useState("30d")
   const [selectedClient, setSelectedClient] = useState<string>("all")
-  const [startDate, setStartDate] = useState("2024-01-01");
-  const [endDate, setEndDate] = useState("2024-12-31");
+  
+  // Usar el año actual de forma dinámica
+  const currentYear = new Date().getFullYear();
+  const [startDate, setStartDate] = useState(`${currentYear}-01-01`);
+  const [endDate, setEndDate] = useState(`${currentYear}-12-31`);
 
   // Estados para datos reales
   const [metrics, setMetrics] = useState<any>(null)
