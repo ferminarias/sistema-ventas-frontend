@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -20,7 +21,7 @@ import {
 } from "chart.js"
 import { Line, Bar, Scatter } from "react-chartjs-2"
 import { analyticsService } from "@/services/analytics-service"
-import { Loader2 } from "lucide-react"
+import { Loader2, ArrowLeft } from "lucide-react"
 import {
   Tooltip as UiTooltip,
   TooltipTrigger,
@@ -106,6 +107,7 @@ const generateHeatmap = () => {
 
 export default function ReportesPage() {
   console.log("=== REPORTES PAGE RENDER ===");
+  const router = useRouter()
   const [selectedPeriod, setSelectedPeriod] = useState("30d")
   const [selectedClient, setSelectedClient] = useState<string>("all")
   
@@ -315,6 +317,18 @@ export default function ReportesPage() {
     <TooltipProvider>
       <div className={`min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white transition-opacity duration-500 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
         <div className="p-6 max-w-7xl mx-auto">
+          {/* Botón de volver atrás */}
+          <div className="flex items-center gap-4 mb-6">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => router.back()}
+              className="shrink-0 bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700 hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-4xl font-bold text-white">📊 Reportes y Análisis</h1>
+          </div>
           {/* Métricas principales */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             {[0,1,2,3].map(i => (
