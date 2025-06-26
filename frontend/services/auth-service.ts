@@ -105,13 +105,13 @@ class AuthService {
     }
   }
 
-  // Verificar si el token actual es válido
+  // Verificar si el token actual es válido usando el endpoint /me
   async verifyToken(): Promise<boolean> {
     const token = getToken()
     if (!token) return false
 
     try {
-      const response = await fetch(`${API_BASE}/api/verify-token`, {
+      const response = await fetch(`${API_BASE}/api/me`, {
         method: "GET",
         headers: getAuthHeaders(),
         credentials: "include",
