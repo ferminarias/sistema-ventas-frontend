@@ -92,7 +92,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                           variant={pathname === `/clientes/${client.id}` ? "default" : "ghost"}
                           className="w-full justify-start"
                         >
-                          <Link href={`/clientes/${client.id}`}>{client.name}</Link>
+                          <Link href={`/clientes/${client.id}`}>{typeof client.name === 'string' ? client.name : JSON.stringify(client.name)}</Link>
                         </Button>
                       ))
                     ) : (

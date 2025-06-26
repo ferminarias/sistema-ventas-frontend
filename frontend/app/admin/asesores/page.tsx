@@ -135,7 +135,7 @@ export default function AsesoresPage() {
               {asesores.map((asesor) => (
                 <TableRow key={asesor.id}>
                   <TableCell>{asesor.id}</TableCell>
-                  <TableCell>{asesor.name}</TableCell>
+                                      <TableCell>{typeof asesor.name === 'string' ? asesor.name : JSON.stringify(asesor.name)}</TableCell>
                   <TableCell>{asesor.client_name}</TableCell>
                   <TableCell>
                     <Button

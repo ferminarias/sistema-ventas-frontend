@@ -68,7 +68,7 @@ const HeatmapCell = ({ day, intensity, week, date, sales, avg, isActive, onHover
           className={`aspect-square rounded-sm flex items-center justify-center text-xs font-medium cursor-pointer transition-all duration-300 ${intensityClasses[intensity]} ${isActive ? 'ring-2 ring-blue-400 scale-105 z-10' : ''} animate-fade-in`}
           style={{ animationDelay: `${(week * 7 + ["L","M","X","J","V","S","D"].indexOf(day)) * 30}ms` }}
           onMouseEnter={onHover}
-          onMouseLeave={() => onHover && onHover(undefined)}
+          onMouseLeave={() => onHover && onHover()}
           onClick={onClick}
         >
           {day}
@@ -473,13 +473,13 @@ export default function ReportesPage() {
                               .join("")}
                           </div>
                           <div>
-                            <h4 className="text-white font-medium">{advisor.name}</h4>
+                            <h4 className="text-white font-medium">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
                             <div className="text-slate-400 text-sm">Asesor Senior</div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-white font-bold">{advisor.sales} ventas</div>
-                          <div className="text-slate-400 text-sm">{advisor.percentage}% del total</div>
+                          <div className="text-white font-bold">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)} ventas</div>
+                          <div className="text-slate-400 text-sm">{typeof advisor.percentage === 'string' || typeof advisor.percentage === 'number' ? advisor.percentage : JSON.stringify(advisor.percentage)}% del total</div>
                         </div>
                       </div>
                     ))
@@ -510,13 +510,13 @@ export default function ReportesPage() {
                             {advisor.name.split(" ").map((n: string) => n[0]).join("")}
                           </div>
                           <div>
-                            <h4 className="text-white font-medium">{advisor.name}</h4>
-                            <div className="text-slate-400 text-sm">Especialista {clientIdToName[advisor.client] || advisor.client}</div>
+                            <h4 className="text-white font-medium">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
+                            <div className="text-slate-400 text-sm">Especialista {typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-white font-bold">{advisor.sales} ventas</div>
-                          <div className="text-slate-400 text-sm">{clientIdToName[advisor.client] || advisor.client}</div>
+                          <div className="text-white font-bold">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)} ventas</div>
+                          <div className="text-slate-400 text-sm">{typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
                         </div>
                       </div>
                     ))
@@ -549,13 +549,13 @@ export default function ReportesPage() {
                           {(clientIdToName[client.name] || client.name)[0]}
                         </div>
                         <div>
-                          <h4 className="text-white font-medium">{clientIdToName[client.name] || client.name}</h4>
-                          <div className="text-slate-400 text-sm">Frecuencia: {client.frequency} días</div>
-                          <div className="text-slate-400 text-xs">Asesor: {client.advisor}</div>
+                          <h4 className="text-white font-medium">{typeof client.name === 'string' ? (clientIdToName[client.name] || client.name) : JSON.stringify(client.name)}</h4>
+                          <div className="text-slate-400 text-sm">Frecuencia: {typeof client.frequency === 'string' || typeof client.frequency === 'number' ? client.frequency : JSON.stringify(client.frequency)} días</div>
+                          <div className="text-slate-400 text-xs">Asesor: {typeof client.advisor === 'string' ? client.advisor : JSON.stringify(client.advisor)}</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-white font-bold">{client.sales} ventas</div>
+                        <div className="text-white font-bold">{typeof client.sales === 'string' || typeof client.sales === 'number' ? client.sales : JSON.stringify(client.sales)} ventas</div>
                       </div>
                     </div>
                   ))

@@ -160,8 +160,12 @@ export function DynamicNuevaVentaForm() {
           schemaObj[field.id] = fieldSchema.refine(val => val && val.length > 0, {
             message: `${field.label} es requerido`,
           })
+        } else if (field.type === 'text' || field.type === 'email' || field.type === 'tel' || field.type === 'textarea') {
+          schemaObj[field.id] = z.string().min(1, `${field.label} es requerido`)
         } else {
-          schemaObj[field.id] = fieldSchema.min(1, `${field.label} es requerido`)
+          schemaObj[field.id] = fieldSchema.refine(val => val !== undefined && val !== null && val !== '', {
+            message: `${field.label} es requerido`,
+          })
         }
       } else {
         schemaObj[field.id] = fieldSchema.optional()
@@ -308,7 +312,7 @@ export function DynamicNuevaVentaForm() {
             <SelectContent>
               {clientesDisponibles.map((cliente) => (
                 <SelectItem key={cliente.id} value={String(cliente.id)}>
-                  {cliente.name}
+                  {typeof cliente.name === 'string' ? cliente.name : JSON.stringify(cliente.name)}
                 </SelectItem>
               ))}
             </SelectContent>

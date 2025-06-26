@@ -199,15 +199,15 @@ export function VentasTable() {
             <TableBody>
               {paginatedVentas.length > 0 ? (
                 paginatedVentas.map((venta) => (
-                  <TableRow key={venta.id}>
-                    <TableCell>{venta.id}</TableCell>
-                    <TableCell>{venta.nombre}</TableCell>
-                    <TableCell>{venta.apellido}</TableCell>
-                    <TableCell className="hidden md:table-cell">{venta.email}</TableCell>
-                    <TableCell className="hidden md:table-cell">{venta.telefono}</TableCell>
-                    <TableCell>{venta.asesor}</TableCell>
-                    <TableCell>{venta.fecha}</TableCell>
-                  </TableRow>
+                                  <TableRow key={venta.id}>
+                  <TableCell>{venta.id}</TableCell>
+                  <TableCell>{typeof venta.nombre === 'string' ? venta.nombre : JSON.stringify(venta.nombre)}</TableCell>
+                  <TableCell>{typeof venta.apellido === 'string' ? venta.apellido : JSON.stringify(venta.apellido)}</TableCell>
+                  <TableCell className="hidden md:table-cell">{typeof venta.email === 'string' ? venta.email : JSON.stringify(venta.email)}</TableCell>
+                  <TableCell className="hidden md:table-cell">{typeof venta.telefono === 'string' ? venta.telefono : JSON.stringify(venta.telefono)}</TableCell>
+                  <TableCell>{typeof venta.asesor === 'string' ? venta.asesor : JSON.stringify(venta.asesor)}</TableCell>
+                  <TableCell>{typeof venta.fecha === 'string' ? venta.fecha : JSON.stringify(venta.fecha)}</TableCell>
+                </TableRow>
                 ))
               ) : (
                 <TableRow>

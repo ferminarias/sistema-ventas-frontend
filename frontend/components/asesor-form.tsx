@@ -163,7 +163,7 @@ export function AsesorForm({ onSuccess, asesorExistente }: AsesorFormProps) {
                             />
                           </FormControl>
                           <FormLabel className="font-normal">
-                            {cliente.name}
+                            {typeof cliente.name === 'string' ? cliente.name : JSON.stringify(cliente.name)}
                           </FormLabel>
                         </FormItem>
                       )

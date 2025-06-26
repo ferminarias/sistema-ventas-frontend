@@ -139,13 +139,13 @@ export function ClienteVentasTable({ cliente }: ClienteVentasTableProps) {
                 paginatedVentas.map((venta) => (
                   <TableRow key={venta.id}>
                     <TableCell>{venta.id}</TableCell>
-                    <TableCell>{venta.nombre}</TableCell>
-                    <TableCell>{venta.apellido}</TableCell>
-                    <TableCell>{venta.email}</TableCell>
-                    <TableCell>{venta.telefono}</TableCell>
-                    <TableCell>{venta.asesor}</TableCell>
-                    <TableCell>{venta.fecha_venta}</TableCell>
-                    <TableCell>{venta.cliente}</TableCell>
+                    <TableCell>{typeof venta.nombre === 'string' ? venta.nombre : JSON.stringify(venta.nombre)}</TableCell>
+                    <TableCell>{typeof venta.apellido === 'string' ? venta.apellido : JSON.stringify(venta.apellido)}</TableCell>
+                    <TableCell>{typeof venta.email === 'string' ? venta.email : JSON.stringify(venta.email)}</TableCell>
+                    <TableCell>{typeof venta.telefono === 'string' ? venta.telefono : JSON.stringify(venta.telefono)}</TableCell>
+                    <TableCell>{typeof venta.asesor === 'string' ? venta.asesor : JSON.stringify(venta.asesor)}</TableCell>
+                    <TableCell>{typeof venta.fecha_venta === 'string' ? venta.fecha_venta : JSON.stringify(venta.fecha_venta)}</TableCell>
+                    <TableCell>{typeof venta.cliente === 'string' ? venta.cliente : JSON.stringify(venta.cliente)}</TableCell>
                   </TableRow>
                 ))
               ) : (

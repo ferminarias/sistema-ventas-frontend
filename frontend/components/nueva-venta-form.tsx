@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ventasApi } from "@/lib/api"
+import { ventasApi } from "@/lib/api/ventas"
 import { useAuth } from "@/contexts/auth-context"
 
 const formSchema = z.object({
@@ -142,7 +142,7 @@ export function NuevaVentaForm() {
             </SelectTrigger>
             <SelectContent>
               {clientesDisponibles.map((cliente) => (
-                <SelectItem key={cliente.id} value={String(cliente.id)}>{cliente.name}</SelectItem>
+                                          <SelectItem key={cliente.id} value={String(cliente.id)}>{typeof cliente.name === 'string' ? cliente.name : JSON.stringify(cliente.name)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -226,7 +226,7 @@ export function NuevaVentaForm() {
                     <SelectContent>
                       {asesores.length > 0 ? (
                         asesores.map((asesor) => (
-                          <SelectItem key={asesor.id} value={asesor.name}>{asesor.name}</SelectItem>
+                          <SelectItem key={asesor.id} value={asesor.name}>{typeof asesor.name === 'string' ? asesor.name : JSON.stringify(asesor.name)}</SelectItem>
                         ))
                       ) : (
                         <div className="text-gray-400 px-4 py-2">No hay asesores para este cliente</div>
