@@ -32,38 +32,50 @@ class ComprobantesService {
     const backendFilters = await response.json()
     console.log("🔄 FILTROS BACKEND RAW:", backendFilters)
 
-    // Validar y mapear cada campo para evitar objetos {label, value}
+    // Solo limpiar objetos problemáticos, mantener datos válidos
     const cleanedFilters: FiltrosDisponibles = {
-      clientes: (backendFilters.clientes || []).map((cliente: any) => ({
-        id: typeof cliente.id === 'number' ? cliente.id : 0,
-        nombre: typeof cliente.nombre === 'string' ? cliente.nombre : String(cliente.nombre || 'Sin nombre')
-      })),
-      asesores: (backendFilters.asesores || []).map((asesor: any) => ({
-        id: typeof asesor.id === 'number' ? asesor.id : 0,
-        nombre: typeof asesor.nombre === 'string' ? asesor.nombre : String(asesor.nombre || 'Sin nombre')
-      })),
-      tipos_archivo: (backendFilters.tipos_archivo || []).map((tipo: any) => 
-        typeof tipo === 'string' ? tipo : String(tipo || 'unknown')
-      ),
-      rango_fechas: {
-        fecha_min: typeof backendFilters.rango_fechas?.fecha_min === 'string' 
-          ? backendFilters.rango_fechas.fecha_min 
-          : '2020-01-01',
-        fecha_max: typeof backendFilters.rango_fechas?.fecha_max === 'string' 
-          ? backendFilters.rango_fechas.fecha_max 
-          : new Date().toISOString().split('T')[0]
+      clientes: (backendFilters.clientes || []).map((cliente: any) => {
+        // Si cliente.nombre es un objeto {label, value}, extraer el valor correcto
+        let nombre = cliente.nombre
+        if (typeof nombre === 'object' && nombre !== null) {
+          if (nombre.label) nombre = nombre.label
+          else if (nombre.value) nombre = nombre.value
+          else nombre = JSON.stringify(nombre)
+        }
+        return {
+          id: cliente.id || 0,
+          nombre: nombre || 'Sin nombre'
+        }
+      }),
+      asesores: (backendFilters.asesores || []).map((asesor: any) => {
+        let nombre = asesor.nombre
+        if (typeof nombre === 'object' && nombre !== null) {
+          if (nombre.label) nombre = nombre.label
+          else if (nombre.value) nombre = nombre.value
+          else nombre = JSON.stringify(nombre)
+        }
+        return {
+          id: asesor.id || 0,
+          nombre: nombre || 'Sin nombre'
+        }
+      }),
+      tipos_archivo: (backendFilters.tipos_archivo || []).map((tipo: any) => {
+        // Si tipo es un objeto {label, value}, extraer el valor correcto
+        if (typeof tipo === 'object' && tipo !== null) {
+          if (tipo.label) return tipo.label
+          if (tipo.value) return tipo.value
+          return JSON.stringify(tipo)
+        }
+        return tipo || 'unknown'
+      }),
+      rango_fechas: backendFilters.rango_fechas || {
+        fecha_min: '2020-01-01',
+        fecha_max: new Date().toISOString().split('T')[0]
       },
-      estadisticas: {
-        total_comprobantes: typeof backendFilters.estadisticas?.total_comprobantes === 'number' 
-          ? backendFilters.estadisticas.total_comprobantes 
-          : 0,
-        total_clientes: typeof backendFilters.estadisticas?.total_clientes === 'number' 
-          ? backendFilters.estadisticas.total_clientes 
-          : 0,
-        tipos_mas_comunes: (backendFilters.estadisticas?.tipos_mas_comunes || []).map((tipo: any) => ({
-          tipo: typeof tipo.tipo === 'string' ? tipo.tipo : String(tipo.tipo || 'unknown'),
-          cantidad: typeof tipo.cantidad === 'number' ? tipo.cantidad : 0
-        }))
+      estadisticas: backendFilters.estadisticas || {
+        total_comprobantes: 0,
+        total_clientes: 0,
+        tipos_mas_comunes: []
       }
     }
 
