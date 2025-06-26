@@ -69,7 +69,7 @@ const fieldTypeLabels = {
   email: 'Email',
   tel: 'Teléfono',
   date: 'Fecha',
-  file: 'Archivo',
+  file: 'Archivo/Imagen',
   textarea: 'Texto largo',
   select: 'Lista desplegable',
   checkbox: 'Casilla de verificación',
@@ -189,13 +189,12 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
 
   const handleQuickAddField = async (fieldType: 'imagen' | 'documento' | 'firma') => {
     try {
-      setLoading(true)
       await clientFieldsService.addQuickField(clientId, fieldType)
       toast({
         title: "Campo agregado",
         description: `Campo "${fieldType}" agregado exitosamente`,
       })
-      loadFields()
+      await loadFields() // Recargar campos sin mostrar spinner general
     } catch (error) {
       console.error('Error adding quick field:', error)
       toast({
@@ -203,8 +202,6 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
         description: `Error al agregar campo ${fieldType}`,
         variant: "destructive",
       })
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -565,7 +562,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
                 )}
               />
 
-              {form.watch('type') === 'select' && (
+              {(form.watch('type') === 'select' || form.watch('type') === 'radio') && (
                 <FormField
                   control={form.control}
                   name="options"
