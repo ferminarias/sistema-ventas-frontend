@@ -320,7 +320,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
           <h4 className="text-sm font-medium mb-2">Vista previa:</h4>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="font-medium">{previewField.label}</span>
+              <span className="font-medium">{typeof previewField.label === 'string' ? previewField.label : JSON.stringify(previewField.label)}</span>
               {previewField.required && (
                 <Badge variant="destructive" className="text-xs">Requerido</Badge>
               )}
@@ -461,7 +461,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
                     <IconComponent className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{field.label}</span>
+                        <span className="font-medium">{typeof field.label === 'string' ? field.label : JSON.stringify(field.label)}</span>
                         {field.required && (
                           <Badge variant="destructive" className="text-xs">Requerido</Badge>
                         )}
@@ -533,7 +533,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
               {fields.map(field => (
                 <div key={field.id} className="space-y-2 p-3 border rounded">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{field.label}</span>
+                    <span className="font-medium">{typeof field.label === 'string' ? field.label : JSON.stringify(field.label)}</span>
                     {field.required && (
                       <Badge variant="destructive" className="text-xs">Requerido</Badge>
                     )}

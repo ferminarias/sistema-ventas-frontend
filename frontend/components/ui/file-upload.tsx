@@ -111,7 +111,7 @@ export function FileUpload({ field, value, onChange, disabled }: FileUploadProps
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium">
-        {field.label}
+        {typeof field.label === 'string' ? field.label : JSON.stringify(field.label)}
         {field.required && <span className="text-red-500 ml-1">*</span>}
       </label>
       

@@ -94,7 +94,7 @@ export function ConfigureFormDialog({ open, client, onClose, onSubmit }: Configu
                       className="h-4 w-4 cursor-pointer text-gray-400"
                       onClick={() => moveField(idx, idx + 1)}
                     />
-                    <span className="text-white text-sm">{field.label}</span>
+                    <span className="text-white text-sm">{typeof field.label === 'string' ? field.label : JSON.stringify(field.label)}</span>
                     <Badge variant="outline" className="ml-2 text-xs">{field.type}</Badge>
                   </div>
                   <Button
@@ -131,7 +131,7 @@ export function ConfigureFormDialog({ open, client, onClose, onSubmit }: Configu
             <form className="space-y-4">
               {fields.map((field) => (
                 <div key={field.id}>
-                  <label className="block text-gray-300 text-sm mb-1">{field.label}</label>
+                  <label className="block text-gray-300 text-sm mb-1">{typeof field.label === 'string' ? field.label : JSON.stringify(field.label)}</label>
                   <Input
                     type={field.type}
                     placeholder={field.placeholder || ""}
