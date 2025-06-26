@@ -56,7 +56,13 @@ export function AsesorForm({ onSuccess, asesorExistente }: AsesorFormProps) {
   })
 
   useEffect(() => {
-    fetch("/api/clientes", { credentials: "include" })
+          fetch("https://sistemas-de-ventas-production.up.railway.app/api/clientes", { 
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem("token")}`
+        },
+        credentials: "include" 
+      })
       .then(res => res.json())
       .then((data) => {
         if (Array.isArray(data)) setClientes(data)

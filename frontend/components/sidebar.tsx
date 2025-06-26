@@ -37,7 +37,13 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
 
   // Obtener clientes al montar el sidebar
   useEffect(() => {
-    fetch("/api/clientes", { credentials: "include" })
+    fetch("https://sistemas-de-ventas-production.up.railway.app/api/clientes", { 
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem("token")}`
+      },
+      credentials: "include" 
+    })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setClients(data);

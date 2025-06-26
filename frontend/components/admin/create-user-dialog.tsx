@@ -20,7 +20,13 @@ interface CreateUserDialogProps {
 
 // Nueva función para obtener clientes
 async function fetchClients() {
-  const res = await fetch("/api/clientes")
+      const res = await fetch("https://sistemas-de-ventas-production.up.railway.app/api/clientes", {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem("token")}`
+      },
+      credentials: 'include'
+    })
   if (!res.ok) throw new Error("Error al obtener clientes")
   return res.json()
 }

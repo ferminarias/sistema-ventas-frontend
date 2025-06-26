@@ -30,7 +30,22 @@ export function DynamicNuevaVentaForm() {
 
   // Cargar clientes al montar el componente
   useEffect(() => {
-    fetch("/api/clientes", { credentials: "include" })
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
+    
+    // Obtener token para autenticación
+    const token = localStorage.getItem("token")
+    const headers: HeadersInit = {
+      'Accept': 'application/json'
+    }
+    
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+    
+    fetch(`${API_BASE}/api/clientes`, { 
+      headers,
+      credentials: "include" 
+    })
       .then(res => res.json())
       .then((data) => {
         if (Array.isArray(data)) setClientes(data)
@@ -56,9 +71,24 @@ export function DynamicNuevaVentaForm() {
       setLoadingFields(true)
       try {
         // Cargar campos del cliente y asesores en paralelo
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
+        
+        // Obtener token para autenticación
+        const token = localStorage.getItem("token")
+        const headers: HeadersInit = {
+          'Accept': 'application/json'
+        }
+        
+        if (token) {
+          headers.Authorization = `Bearer ${token}`
+        }
+        
         const [fields, asesorRes] = await Promise.all([
           clientFieldsService.getClientFields(selectedCliente),
-          fetch(`/api/advisors?client_id=${selectedCliente}`, { credentials: "include" })
+          fetch(`${API_BASE}/api/advisors?client_id=${selectedCliente}`, { 
+            headers,
+            credentials: "include" 
+          })
         ])
 
         setClientFields(fields)

@@ -28,7 +28,13 @@ export default function ClienteDashboardPage() {
 
   useEffect(() => {
     if (!clientId) return;
-    fetch(`/api/clientes`)
+    fetch(`https://sistemas-de-ventas-production.up.railway.app/api/clientes`, {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem("token")}`
+      },
+      credentials: 'include'
+    })
       .then(res => res.json())
       .then((clients: Client[]) => {
         const found = clients.find(c => String(c.id) === String(clientId));

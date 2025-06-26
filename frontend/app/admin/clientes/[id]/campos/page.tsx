@@ -18,7 +18,20 @@ export default function ClientFieldsPage() {
   useEffect(() => {
     const loadCliente = async () => {
       try {
-        const response = await fetch(`/api/clientes/${clientId}`, {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
+        
+        // Obtener token para autenticación
+        const token = localStorage.getItem("token")
+        const headers: HeadersInit = {
+          'Accept': 'application/json'
+        }
+        
+        if (token) {
+          headers.Authorization = `Bearer ${token}`
+        }
+        
+        const response = await fetch(`${API_BASE}/api/clientes/${clientId}`, {
+          headers,
           credentials: 'include'
         })
         
