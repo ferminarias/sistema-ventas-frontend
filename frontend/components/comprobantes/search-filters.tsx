@@ -103,7 +103,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
               </SelectItem>
               {filtrosDisponibles?.tipos_archivo?.map((tipo: string) => (
                 <SelectItem key={tipo} value={tipo} className="text-white hover:bg-gray-700">
-                  {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+                  {tipo && typeof tipo === 'string' ? tipo.charAt(0).toUpperCase() + tipo.slice(1) : tipo}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -166,7 +166,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
         <div className="mt-auto p-4">
           <div className="flex items-center gap-4">
             <Avatar>
-              <AvatarFallback>{(user.username || user.name || "U")[0].toUpperCase()}</AvatarFallback>
+              <AvatarFallback>{String(user.username || user.name || "U")[0].toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
               <span className="text-sm font-medium">{user.username || "Usuario"}</span>

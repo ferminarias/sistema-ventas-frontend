@@ -92,8 +92,8 @@ export function ClienteVentasTable({ cliente }: ClienteVentasTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Registro de Ventas - {cliente.charAt(0).toUpperCase() + cliente.slice(1)}</CardTitle>
-        <CardDescription>Lista completa de todas las ventas registradas para {cliente.charAt(0).toUpperCase() + cliente.slice(1)}</CardDescription>
+        <CardTitle>Registro de Ventas - {cliente}</CardTitle>
+        <CardDescription>Lista completa de todas las ventas registradas para {cliente}</CardDescription>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
