@@ -37,13 +37,29 @@ export function DashboardCharts() {
   useEffect(() => {
     if (!chartRef.current || !pieChartRef.current) return
 
+    // Ajustar resolución para pantallas retina
+    const dpr = window.devicePixelRatio || 1;
+    const width = 500;
+    const height = 300;
+    chartRef.current.width = width * dpr;
+    chartRef.current.height = height * dpr;
+    chartRef.current.style.width = width + "px";
+    chartRef.current.style.height = height + "px";
+    pieChartRef.current.width = width * dpr;
+    pieChartRef.current.height = height * dpr;
+    pieChartRef.current.style.width = width + "px";
+    pieChartRef.current.style.height = height + "px";
+
     const ctx = chartRef.current.getContext("2d")
     const pieCtx = pieChartRef.current.getContext("2d")
     if (!ctx || !pieCtx) return
 
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    pieCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
     // Limpiar canvas
-    ctx.clearRect(0, 0, chartRef.current.width, chartRef.current.height)
-    pieCtx.clearRect(0, 0, pieChartRef.current.width, pieChartRef.current.height)
+    ctx.clearRect(0, 0, width, height)
+    pieCtx.clearRect(0, 0, width, height)
 
     // Datos para el gráfico
     const data = activeTab === "mensual" ? ventasPorMes : ventasPorSemana
@@ -52,24 +68,24 @@ export function DashboardCharts() {
       : ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
 
     // Dibujar gráfico de barras
-    const barWidth = chartRef.current.width / (data.length * 2)
+    const barWidth = width / (data.length * 2)
     const maxValue = Math.max(...data, 1)
     ctx.fillStyle = "#7c3aed"
     data.forEach((value, index) => {
       const x = index * (barWidth * 2) + barWidth / 2
-      const barHeight = (value / maxValue) * (chartRef.current!.height - 40)
-      ctx.fillRect(x, chartRef.current!.height - barHeight - 20, barWidth, barHeight)
+      const barHeight = (value / maxValue) * (height - 40)
+      ctx.fillRect(x, height - barHeight - 20, barWidth, barHeight)
       ctx.fillStyle = "#6b7280"
       ctx.font = "10px sans-serif"
       ctx.textAlign = "center"
-      ctx.fillText(labels[index], x + barWidth / 2, chartRef.current!.height - 5)
-      ctx.fillText(value.toString(), x + barWidth / 2, chartRef.current!.height - barHeight - 25)
+      ctx.fillText(labels[index], x + barWidth / 2, height - 5)
+      ctx.fillText(value.toString(), x + barWidth / 2, height - barHeight - 25)
       ctx.fillStyle = "#7c3aed"
     })
 
     // Dibujar gráfico circular
-    const centerX = pieChartRef.current.width / 2
-    const centerY = pieChartRef.current.height / 2
+    const centerX = width / 2
+    const centerY = height / 2
     const radius = Math.min(centerX, centerY) - 10
     const colors = ["#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe"]
     let startAngle = 0
