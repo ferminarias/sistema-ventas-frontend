@@ -41,7 +41,7 @@ interface ClientFieldsManagementProps {
 const fieldSchema = z.object({
   id: z.string().min(1, "ID es requerido").regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, "ID debe comenzar con letra y contener solo letras, números y _"),
   label: z.string().min(1, "Label es requerido"),
-  type: z.enum(['text', 'number', 'email', 'tel', 'date', 'file', 'textarea', 'select']),
+  type: z.enum(['text', 'number', 'email', 'tel', 'date', 'file', 'textarea', 'select', 'checkbox', 'radio']),
   required: z.boolean(),
   placeholder: z.string().optional(),
   help_text: z.string().optional(),
@@ -59,6 +59,8 @@ const fieldTypeIcons = {
   file: Upload,
   textarea: FileText,
   select: List,
+  checkbox: Type,
+  radio: List,
 }
 
 const fieldTypeLabels = {
@@ -70,6 +72,8 @@ const fieldTypeLabels = {
   file: 'Archivo',
   textarea: 'Texto largo',
   select: 'Lista desplegable',
+  checkbox: 'Casilla de verificación',
+  radio: 'Botones de radio',
 }
 
 export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsManagementProps) {
@@ -183,6 +187,27 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
     }
   }
 
+  const handleQuickAddField = async (fieldType: 'imagen' | 'documento' | 'firma') => {
+    try {
+      setLoading(true)
+      await clientFieldsService.addQuickField(clientId, fieldType)
+      toast({
+        title: "Campo agregado",
+        description: `Campo "${fieldType}" agregado exitosamente`,
+      })
+      loadFields()
+    } catch (error) {
+      console.error('Error adding quick field:', error)
+      toast({
+        title: "Error",
+        description: `Error al agregar campo ${fieldType}`,
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const onSubmit = async (data: FieldFormData) => {
     try {
       const fieldData = {
@@ -283,6 +308,32 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
             <Eye className="mr-2 h-4 w-4" />
             {showPreview ? 'Ocultar' : 'Mostrar'} Preview
           </Button>
+          <div className="flex gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleQuickAddField('imagen')}
+            >
+              <Upload className="mr-1 h-3 w-3" />
+              + Imagen
+            </Button>
+            <Button
+              variant="outline" 
+              size="sm"
+              onClick={() => handleQuickAddField('documento')}
+            >
+              <FileText className="mr-1 h-3 w-3" />
+              + Documento
+            </Button>
+            <Button
+              variant="outline"
+              size="sm" 
+              onClick={() => handleQuickAddField('firma')}
+            >
+              <Edit className="mr-1 h-3 w-3" />
+              + Firma
+            </Button>
+          </div>
           <Button onClick={handleAddField}>
             <Plus className="mr-2 h-4 w-4" />
             Agregar Campo

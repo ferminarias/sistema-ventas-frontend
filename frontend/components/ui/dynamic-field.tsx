@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -111,6 +113,46 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
             onChange={fieldProps.onChange}
             disabled={disabled}
           />
+        );
+
+      case 'checkbox':
+        return (
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id={field.id}
+              checked={fieldProps.value || false}
+              onCheckedChange={fieldProps.onChange}
+              disabled={disabled}
+            />
+            <label
+              htmlFor={field.id}
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              {field.placeholder || field.label}
+            </label>
+          </div>
+        );
+
+      case 'radio':
+        return (
+          <RadioGroup
+            value={fieldProps.value}
+            onValueChange={fieldProps.onChange}
+            disabled={disabled}
+            className="flex flex-col space-y-2"
+          >
+            {field.options?.map((option) => (
+              <div key={option} className="flex items-center space-x-2">
+                <RadioGroupItem value={option} id={`${field.id}-${option}`} />
+                <label
+                  htmlFor={`${field.id}-${option}`}
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  {option}
+                </label>
+              </div>
+            ))}
+          </RadioGroup>
         );
 
       default:
