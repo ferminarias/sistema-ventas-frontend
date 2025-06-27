@@ -73,3 +73,46 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Utilidades para truncado de texto multilinea */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  /* Mejoras de responsividad para componentes específicos */
+  .responsive-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  
+  @media (min-width: 640px) {
+    .responsive-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .responsive-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+}

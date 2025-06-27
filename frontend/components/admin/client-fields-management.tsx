@@ -375,53 +375,75 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
         <p>Gestión de campos dinámicos</p>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Campos de {clientName}</h2>
-          <p className="text-muted-foreground">
-            Gestiona los campos personalizados para las ventas de este cliente
-          </p>
+      <div className="space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-2xl font-bold truncate">Campos de {clientName}</h2>
+            <p className="text-muted-foreground text-sm">
+              Gestiona los campos personalizados para las ventas de este cliente
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowPreview(!showPreview)}
+              className="flex-1 sm:flex-none"
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              {showPreview ? 'Ocultar' : 'Ver'} Preview
+            </Button>
+            <Button 
+              onClick={handleAddField}
+              className="flex-1 sm:flex-none"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Agregar Campo
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowPreview(!showPreview)}
-          >
-            <Eye className="mr-2 h-4 w-4" />
-            {showPreview ? 'Ocultar' : 'Mostrar'} Preview
-          </Button>
-          <div className="flex gap-1">
+
+        {/* Sección de botones de acción rápida */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="text-sm font-medium text-muted-foreground mb-2 sm:mb-0 sm:mr-3 sm:self-center">
+            Acceso rápido:
+          </div>
+          <div className="flex flex-wrap gap-1">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleQuickAddField('imagen')}
+              className="text-xs"
             >
               <Upload className="mr-1 h-3 w-3" />
-              + Imagen
+              Imagen
             </Button>
             <Button
               variant="outline" 
               size="sm"
               onClick={() => handleQuickAddField('documento')}
+              className="text-xs"
             >
               <FileText className="mr-1 h-3 w-3" />
-              + Documento
+              Documento
             </Button>
             <Button
               variant="outline" 
               size="sm"
               onClick={() => handleQuickAddField('firma')}
+              className="text-xs"
             >
               <Edit className="mr-1 h-3 w-3" />
-              + Test Firma
+              Test Firma
             </Button>
             <Button
               variant="outline"
               size="sm" 
               onClick={() => handleQuickAddField('firma')}
+              className="text-xs"
             >
               <Edit className="mr-1 h-3 w-3" />
-              + Firma
+              Firma
             </Button>
             <Button
               variant="outline"
@@ -438,14 +460,11 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
                   console.error('❌ Error en debug:', error);
                 }
               }}
+              className="text-xs"
             >
               🔍 Debug
             </Button>
           </div>
-          <Button onClick={handleAddField}>
-            <Plus className="mr-2 h-4 w-4" />
-            Agregar Campo
-          </Button>
         </div>
       </div>
 
@@ -455,32 +474,32 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
           return (
             <Card key={field.id} className={field.default ? 'bg-muted/30' : ''}>
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                    <IconComponent className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{typeof field.label === 'string' ? field.label : JSON.stringify(field.label)}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-move shrink-0" />
+                    <IconComponent className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="font-medium truncate">{typeof field.label === 'string' ? field.label : JSON.stringify(field.label)}</span>
                         {field.required && (
-                          <Badge variant="destructive" className="text-xs">Requerido</Badge>
+                          <Badge variant="destructive" className="text-xs shrink-0">Requerido</Badge>
                         )}
                         {field.default && (
-                          <Badge variant="secondary" className="text-xs">Por defecto</Badge>
+                          <Badge variant="secondary" className="text-xs shrink-0">Por defecto</Badge>
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {fieldTypeLabels[field.type]} • ID: {field.id}
                       </div>
                       {field.help_text && (
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {field.help_text}
                         </div>
                       )}
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -567,7 +586,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingField ? 'Editar Campo' : 'Agregar Campo'}
@@ -582,7 +601,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="id"
@@ -616,7 +635,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
                 />
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="type"
@@ -646,7 +665,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
                   control={form.control}
                   name="required"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <FormItem className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border p-3 space-y-2 sm:space-y-0">
                       <div className="space-y-0.5">
                         <FormLabel>Campo Requerido</FormLabel>
                         <div className="text-sm text-muted-foreground">
@@ -687,7 +706,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
                     <FormControl>
                       <Textarea 
                         placeholder="Texto adicional para ayudar al usuario a completar el campo"
-                        className="min-h-[60px]"
+                        className="min-h-[60px] resize-none"
                         {...field} 
                       />
                     </FormControl>
@@ -718,11 +737,19 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
 
               {renderFieldPreview()}
 
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <DialogFooter className="flex flex-col sm:flex-row gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsDialogOpen(false)}
+                  className="flex-1 sm:flex-none order-2 sm:order-1"
+                >
                   Cancelar
                 </Button>
-                <Button type="submit">
+                <Button 
+                  type="submit"
+                  className="flex-1 sm:flex-none order-1 sm:order-2"
+                >
                   {editingField ? 'Actualizar' : 'Agregar'} Campo
                 </Button>
               </DialogFooter>
