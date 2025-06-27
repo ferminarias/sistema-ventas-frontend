@@ -90,7 +90,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
         </div>
         
         {/* Área de navegación con scroll */}
-        <ScrollArea className="flex-1 px-3 py-2 min-h-0">
+        <div className="flex-1 overflow-y-auto px-3 py-2">
           <div className="space-y-2 py-2">
             {/* Dashboard */}
             <Button 
@@ -107,12 +107,15 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             {/* Clientes desplegable */}
             <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full justify-between group hover:bg-accent px-3 py-2 h-auto min-h-[2.5rem] [&_svg:last-child]:!w-5 [&_svg:last-child]:!h-5">
+                <Button variant="ghost" className="w-full justify-between group hover:bg-accent px-3 py-2 h-auto min-h-[2.5rem]">
                   <div className="flex items-center">
                     <Users className="mr-2 h-4 w-4" />
                     <span>Clientes</span>
                   </div>
-                  <ChevronDown className={`!w-5 !h-5 text-gray-400 group-hover:text-white transition-all duration-300 shrink-0 ${isOpen ? "rotate-180" : "rotate-0"}`} />
+                  <ChevronDown 
+                    className={`w-5 h-5 text-gray-400 group-hover:text-white transition-all duration-300 shrink-0 ${isOpen ? "rotate-180" : "rotate-0"}`}
+                    style={{ width: '20px', height: '20px', minWidth: '20px', minHeight: '20px' }}
+                  />
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pl-2 mt-1">
@@ -158,12 +161,15 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             {user.role === "admin" && (
               <Collapsible open={isAdminOpen} onOpenChange={setIsAdminOpen} className="w-full">
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between group hover:bg-accent px-3 py-2 h-auto min-h-[2.5rem] [&_svg:last-child]:!w-5 [&_svg:last-child]:!h-5">
+                  <Button variant="ghost" className="w-full justify-between group hover:bg-accent px-3 py-2 h-auto min-h-[2.5rem]">
                     <div className="flex items-center">
                       <UserCog className="mr-2 h-4 w-4" />
                       <span>Administración</span>
                     </div>
-                    <ChevronDown className={`!w-5 !h-5 text-gray-400 group-hover:text-white transition-all duration-300 shrink-0 ${isAdminOpen ? "rotate-180" : "rotate-0"}`} />
+                    <ChevronDown 
+                      className={`w-5 h-5 text-gray-400 group-hover:text-white transition-all duration-300 shrink-0 ${isAdminOpen ? "rotate-180" : "rotate-0"}`}
+                      style={{ width: '20px', height: '20px', minWidth: '20px', minHeight: '20px' }}
+                    />
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pl-2 mt-1">
@@ -232,7 +238,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
               </Link>
             </Button>
           </div>
-        </ScrollArea>
+        </div>
         
         {/* Footer fijo */}
         <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
