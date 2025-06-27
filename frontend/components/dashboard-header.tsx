@@ -5,7 +5,7 @@ import { FileSpreadsheet, Plus, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
-import { ventasApi } from "@/lib/api"
+import { ventasApi } from "@/lib/api/ventas"
 
 interface DashboardHeaderProps {
   cliente?: string

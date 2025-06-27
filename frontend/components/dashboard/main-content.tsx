@@ -8,7 +8,7 @@ import type { User } from "@/types/auth"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
-import { ventasApi } from "@/lib/api"
+import { ventasApi } from "@/lib/api/ventas"
 
 interface MainContentProps {
   user: User

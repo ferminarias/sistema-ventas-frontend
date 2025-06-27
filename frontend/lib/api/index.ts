@@ -37,4 +37,5 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
   return fetch(url, defaultOptions)
 }
 
-export { API_BASE } 
+export { API_BASE }
+export { ventasApi } from './ventas' 

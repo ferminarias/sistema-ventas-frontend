@@ -102,25 +102,26 @@ export const ventasApi = {
         return response.json();
     },
 
-    // Exportar a Excel
+    // Exportar a Excel usando el endpoint que funciona
     async exportarExcel(cliente?: string): Promise<void> {
         try {
-            const token = getToken();
-            const headers: HeadersInit = {
-                'Accept': 'application/json'
+            console.log('Iniciando exportación a Excel con nuevo endpoint...');
+            
+            const filters = {
+                client: cliente || undefined,
+                format: 'excel'
             };
             
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-
-            console.log('Iniciando exportación a Excel...');
-            const url = cliente ? `${API_BASE}/api/exportar-excel?cliente=${encodeURIComponent(cliente)}` : `${API_BASE}/api/exportar-excel`;
-            console.log('URL de exportación:', url);
+            console.log('Filtros enviados:', filters);
             
-            const response = await fetch(url, {
-                headers,
-                credentials: 'include'
+            const response = await fetch(`${API_BASE}/api/analytics/export`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(filters),
+                credentials: 'include',
             });
 
             if (!response.ok) {
@@ -136,7 +137,7 @@ export const ventasApi = {
                 throw new Error('No se recibió la ruta del archivo');
             }
 
-            // Construir la URL completa para la descarga
+            // Construir la URL completa para la descarga (misma lógica que funciona en reportes)
             const downloadUrl = `${API_BASE}/${data.path}`;
             console.log('URL de descarga:', downloadUrl);
 
