@@ -20,20 +20,7 @@ export function DashboardHeader({ cliente }: DashboardHeaderProps) {
   const handleExport = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`${API_BASE}/api/exportar-excel${cliente ? `?cliente=${cliente}` : ''}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
-      })
-
-      if (!response.ok) throw new Error("Error al exportar")
-
-      const data = await response.json()
-      const downloadUrl = `${API_BASE}/${data.path}`
-      window.open(downloadUrl, '_blank')
-
+      await ventasApi.exportarExcel(cliente)
       toast({
         title: "Éxito",
         description: "Archivo exportado correctamente"

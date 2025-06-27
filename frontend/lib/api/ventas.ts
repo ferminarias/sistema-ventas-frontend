@@ -102,26 +102,26 @@ export const ventasApi = {
         return response.json();
     },
 
-    // Exportar a Excel usando el endpoint que funciona
+    // Exportar a Excel usando el endpoint original con descarga mejorada
     async exportarExcel(cliente?: string): Promise<void> {
         try {
-            console.log('Iniciando exportación a Excel con nuevo endpoint...');
-            
-            const filters = {
-                client: cliente || undefined,
-                format: 'excel'
+            const token = getToken();
+            const headers: HeadersInit = {
+                'Accept': 'application/json'
             };
             
-            console.log('Filtros enviados:', filters);
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            console.log('Iniciando exportación a Excel...');
+            const url = cliente ? `${API_BASE}/api/exportar-excel?cliente=${encodeURIComponent(cliente)}` : `${API_BASE}/api/exportar-excel`;
+            console.log('URL de exportación:', url);
             
-            const response = await fetch(`${API_BASE}/api/analytics/export`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(filters),
-                credentials: 'include',
+            const response = await fetch(url, {
+                method: 'GET',
+                headers,
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -137,11 +137,11 @@ export const ventasApi = {
                 throw new Error('No se recibió la ruta del archivo');
             }
 
-            // Construir la URL completa para la descarga (misma lógica que funciona en reportes)
+            // Construir la URL completa para la descarga
             const downloadUrl = `${API_BASE}/${data.path}`;
             console.log('URL de descarga:', downloadUrl);
 
-            // Crear un enlace temporal y hacer clic en él
+            // Crear un enlace temporal y hacer clic en él (en lugar de window.open)
             const link = document.createElement('a');
             link.href = downloadUrl;
             link.download = data.path.split('/').pop() || 'ventas.xlsx';
