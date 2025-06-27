@@ -1,5 +1,6 @@
 "use client"
 
+// Gráficos mejorados con soporte retina - v2025.01
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useEffect, useRef, useState } from "react"
@@ -82,12 +83,29 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   useEffect(() => {
     if (!chartRef.current || !pieChartRef.current) return
 
+    // Ajustar resolución para pantallas retina
+    const dpr = window.devicePixelRatio || 1;
+    const width = 500;
+    const height = 300;
+    chartRef.current.width = width * dpr;
+    chartRef.current.height = height * dpr;
+    chartRef.current.style.width = width + "px";
+    chartRef.current.style.height = height + "px";
+    pieChartRef.current.width = width * dpr;
+    pieChartRef.current.height = height * dpr;
+    pieChartRef.current.style.width = width + "px";
+    pieChartRef.current.style.height = height + "px";
+
     const ctx = chartRef.current.getContext("2d")
     const pieCtx = pieChartRef.current.getContext("2d")
     if (!ctx || !pieCtx) return
 
-    ctx.clearRect(0, 0, 500, 300)
-    pieCtx.clearRect(0, 0, 500, 300)
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    pieCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Limpiar canvas
+    ctx.clearRect(0, 0, width, height)
+    pieCtx.clearRect(0, 0, width, height)
 
     // Datos para el gráfico
     const data = activeTab === "mensual" ? ventasPorMes : ventasPorSemana
@@ -96,25 +114,23 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       : ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
 
     // Dibujar gráfico de barras
-    const barWidth = 500 / (data.length * 2)
+    const barWidth = width / (data.length * 2)
     const maxValue = Math.max(...data, 1)
     ctx.fillStyle = "#7c3aed"
     data.forEach((value, index) => {
       const x = index * (barWidth * 2) + barWidth / 2
-      const barHeight = (value / maxValue) * 260
-      ctx.fillRect(x, 280 - barHeight, barWidth, barHeight)
+      const barHeight = (value / maxValue) * (height - 40)
+      ctx.fillRect(x, height - barHeight - 20, barWidth, barHeight)
       ctx.fillStyle = "#6b7280"
       ctx.font = "10px sans-serif"
       ctx.textAlign = "center"
-      ctx.fillText(labels[index], x + barWidth / 2, 295)
-      ctx.fillText(value.toString(), x + barWidth / 2, 280 - barHeight - 5)
+      ctx.fillText(labels[index], x + barWidth / 2, height - 5)
+      ctx.fillText(value.toString(), x + barWidth / 2, height - barHeight - 25)
       ctx.fillStyle = "#7c3aed"
     })
 
     // Dibujar gráfico circular mejorado
     if (asesoresValores.length > 0) {
-      const width = 500
-      const height = 300
       const centerX = width * 0.6 // Mover el centro hacia la derecha para dar espacio a la leyenda
       const centerY = height / 2
       const radius = Math.min(centerX - 20, centerY - 20)
@@ -196,7 +212,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       pieCtx.fillStyle = "#9ca3af"
       pieCtx.font = "14px sans-serif"
       pieCtx.textAlign = "center"
-      pieCtx.fillText("No hay datos de asesores", 250, 150)
+      pieCtx.fillText("No hay datos de asesores", width / 2, height / 2)
     }
   }, [activeTab, ventas, asesoresProcesados])
 
