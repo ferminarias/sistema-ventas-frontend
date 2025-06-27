@@ -3,8 +3,8 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Eye, Download, FileText, Calendar, User, CreditCard, Settings } from "lucide-react"
-import type { Comprobante } from "@/types/comprobante"
+import { Eye, Download, FileText, Calendar, User, CreditCard, Settings, X } from "lucide-react"
+import type { Comprobante, ArchivoComprobante } from "@/types/comprobante"
 import { FilePreview } from "./file-preview"
 import { comprobantesService } from "@/services/comprobantes"
 import { formatCurrency, formatDate } from "@/lib/utils"
@@ -17,6 +17,11 @@ interface ResultsListProps {
 export function ResultsList({ comprobantes, loading = false }: ResultsListProps) {
   const [previewFile, setPreviewFile] = useState<Comprobante | null>(null)
   const [downloading, setDownloading] = useState<string | null>(null)
+  
+  // Estados para el modal de vista previa
+  const [showModal, setShowModal] = useState(false)
+  const [currentFile, setCurrentFile] = useState<ArchivoComprobante | null>(null)
+  const [currentVenta, setCurrentVenta] = useState<Comprobante | null>(null)
 
   const handleDownload = async (comprobante: Comprobante) => {
     const fileId = comprobante.id || comprobante.venta_id?.toString() || ''
@@ -39,6 +44,26 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
     } finally {
       setDownloading(null)
     }
+  }
+
+  // Función para abrir el modal de vista previa
+  const handleVerComprobante = (archivo: ArchivoComprobante, venta: Comprobante) => {
+    setCurrentFile(archivo)
+    setCurrentVenta(venta)
+    setShowModal(true)
+  }
+
+  // Función para cerrar el modal
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setCurrentFile(null)
+    setCurrentVenta(null)
+  }
+
+  // Obtener URL de preview con autenticación
+  const getPreviewUrl = (filename: string) => {
+    const token = localStorage.getItem('token')
+    return `https://sistemas-de-ventas-production.up.railway.app/api/comprobantes/preview/${filename}${token ? `?token=${token}` : ''}`
   }
 
   if (loading) {
@@ -154,33 +179,28 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                             </p>
                             
                             {/* Botones de acción */}
-                            <div className="flex gap-1 mt-2">
-                              {comprobantesService.canPreview(archivo.filename) && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                                                     onClick={() => setPreviewFile({ 
-                                     ...comprobante, 
-                                     archivo_adjunto: archivo.filename, 
-                                     archivo_nombre: archivo.original_name,
-                                     id: comprobante.id || comprobante.venta_id?.toString() || archivo.filename
-                                   } as Comprobante)}
-                                  className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs px-2 py-1"
-                                >
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  Ver
-                                </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                onClick={() => handleDownloadFile(archivo)}
-                                disabled={downloading === archivo.filename}
-                                className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1"
-                              >
-                                <Download className="h-3 w-3 mr-1" />
-                                {downloading === archivo.filename ? "..." : "Descargar"}
-                              </Button>
-                            </div>
+                                                         <div className="flex gap-1 mt-2">
+                               {comprobantesService.canPreview(archivo.filename) && (
+                                 <Button
+                                   size="sm"
+                                   variant="outline"
+                                   onClick={() => handleVerComprobante(archivo, comprobante)}
+                                   className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs px-2 py-1"
+                                 >
+                                   <Eye className="h-3 w-3 mr-1" />
+                                   Ver
+                                 </Button>
+                               )}
+                               <Button
+                                 size="sm"
+                                 onClick={() => handleDownloadFile(archivo)}
+                                 disabled={downloading === archivo.filename}
+                                 className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1"
+                               >
+                                 <Download className="h-3 w-3 mr-1" />
+                                 {downloading === archivo.filename ? "..." : "Descargar"}
+                               </Button>
+                             </div>
                           </div>
                         </div>
                       ))}
@@ -202,6 +222,95 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
       {previewFile && (
         <FilePreview comprobante={previewFile} open={!!previewFile} onClose={() => setPreviewFile(null)} />
+      )}
+
+      {/* Modal de vista previa con fondo borroso */}
+      {showModal && currentFile && currentVenta && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={handleCloseModal}
+        >
+          <div 
+            className="bg-gray-800 rounded-xl max-w-5xl max-h-[95vh] overflow-auto border border-gray-600 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header del modal */}
+            <div className="p-4 border-b border-gray-600 flex justify-between items-center bg-gray-900 rounded-t-xl">
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  {currentFile.original_name || currentFile.filename}
+                </h3>
+                <p className="text-sm text-gray-400">
+                  Venta #{currentVenta.venta_id} - {currentVenta.cliente_nombre}
+                </p>
+              </div>
+              <button 
+                onClick={handleCloseModal}
+                className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            {/* Contenido del modal */}
+            <div className="p-6">
+              {currentFile.tipo === 'imagen' ? (
+                <div className="flex justify-center">
+                  <img 
+                    src={getPreviewUrl(currentFile.filename)}
+                    alt={currentFile.original_name || currentFile.filename}
+                    className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
+                    onError={(e) => {
+                      console.error('Error cargando imagen:', e)
+                      e.currentTarget.src = "/placeholder.svg"
+                    }}
+                  />
+                </div>
+              ) : currentFile.filename?.toLowerCase().endsWith('.pdf') ? (
+                <div className="bg-white rounded-lg overflow-hidden">
+                  <iframe 
+                    src={getPreviewUrl(currentFile.filename)}
+                    className="w-full h-[70vh]"
+                    title={currentFile.original_name || currentFile.filename}
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-400">
+                  <FileText className="h-16 w-16 mx-auto mb-4 text-gray-500" />
+                  <p className="text-xl mb-2">Vista previa no disponible</p>
+                  <p className="mb-6">Tipo de archivo: {currentFile.tipo}</p>
+                  <Button
+                    onClick={() => handleDownloadFile(currentFile)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Descargar archivo
+                  </Button>
+                </div>
+              )}
+            </div>
+            
+            {/* Footer con información del archivo */}
+            <div className="p-4 border-t border-gray-600 bg-gray-900 rounded-b-xl">
+              <div className="flex justify-between items-center text-sm text-gray-400">
+                <div className="flex gap-4">
+                  <span>Tipo: {currentFile.tipo}</span>
+                  <span>Tamaño: {currentFile.size_mb?.toFixed(1)} MB</span>
+                  <span>Subido: {formatDate(currentFile.uploaded_at)}</span>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => handleDownloadFile(currentFile)}
+                  disabled={downloading === currentFile.filename}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  {downloading === currentFile.filename ? "Descargando..." : "Descargar"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   )
