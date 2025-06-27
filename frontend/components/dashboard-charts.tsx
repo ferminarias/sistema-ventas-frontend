@@ -1,9 +1,11 @@
 "use client"
 
+// Gráficos mejorados con soporte retina - v2025.01
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useEffect, useRef, useState } from "react"
 import { useVentas } from "@/hooks/useVentas"
+import type { Venta } from "@/lib/api"
 
 // Simulamos la importación de Chart.js
 // En un proyecto real, usaríamos Chart.js o una librería similar
@@ -11,22 +13,50 @@ export function DashboardCharts() {
   const [activeTab, setActiveTab] = useState("mensual")
   const chartRef = useRef<HTMLCanvasElement>(null)
   const pieChartRef = useRef<HTMLCanvasElement>(null)
-  const { ventas } = useVentas()
+  const { ventas, loading, error } = useVentas()
 
   // Agrupar ventas por mes y por asesor
   const ventasPorMes = Array(12).fill(0)
   const ventasPorSemana = Array(7).fill(0)
   const ventasPorAsesor: Record<string, number> = {}
 
-  ventas.forEach((v) => {
-    const fecha = new Date(v.fecha_venta)
+  ventas.forEach((v: Venta) => {
+    const fecha = new Date(v.fecha_venta || v.fecha)
+    if (isNaN(fecha.getTime())) return // Validar fecha válida
+    
     ventasPorMes[fecha.getMonth()]++
     ventasPorSemana[fecha.getDay()]++
-    ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
+    
+    if (v.asesor) {
+      ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
+    }
   })
 
-  const asesoresNombres = Object.keys(ventasPorAsesor)
-  const asesoresValores = Object.values(ventasPorAsesor)
+  // Procesar datos de asesores para optimizar visualización
+  const procesarDatosAsesores = () => {
+    const asesoresArray = Object.entries(ventasPorAsesor)
+      .map(([nombre, ventas]) => ({ nombre, ventas }))
+      .sort((a, b) => b.ventas - a.ventas)
+
+    // Si hay más de 8 asesores, agrupa los menores en "Otros"
+    if (asesoresArray.length > 8) {
+      const topAsesores = asesoresArray.slice(0, 7)
+      const otrosAsesores = asesoresArray.slice(7)
+      const totalOtros = otrosAsesores.reduce((sum, asesor) => sum + asesor.ventas, 0)
+      
+      if (totalOtros > 0) {
+        topAsesores.push({ nombre: `Otros (${otrosAsesores.length})`, ventas: totalOtros })
+      }
+      
+      return topAsesores
+    }
+    
+    return asesoresArray
+  }
+
+  const asesoresProcesados = procesarDatosAsesores()
+  const asesoresNombres = asesoresProcesados.map(a => a.nombre)
+  const asesoresValores = asesoresProcesados.map(a => a.ventas)
 
   useEffect(() => {
     if (!chartRef.current || !pieChartRef.current) return
@@ -55,7 +85,7 @@ export function DashboardCharts() {
     ctx.clearRect(0, 0, width, height)
     pieCtx.clearRect(0, 0, width, height)
 
-    // Datos para el gráfico
+    // Datos para el gráfico de barras
     const data = activeTab === "mensual" ? ventasPorMes : ventasPorSemana
     const labels = activeTab === "mensual"
       ? ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
@@ -77,35 +107,95 @@ export function DashboardCharts() {
       ctx.fillStyle = "#7c3aed"
     })
 
-    // Dibujar gráfico circular
-    const centerX = width / 2
-    const centerY = height / 2
-    const radius = Math.min(centerX, centerY) - 10
-    const colors = ["#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe"]
-    let startAngle = 0
-    const total = asesoresValores.reduce((acc, val) => acc + val, 0) || 1
+    // Dibujar gráfico circular mejorado
+    if (asesoresValores.length > 0) {
+      const centerX = width * 0.6 // Mover el centro hacia la derecha para dar espacio a la leyenda
+      const centerY = height / 2
+      const radius = Math.min(centerX - 20, centerY - 20)
+      
+      // Paleta de colores más amplia y distintiva
+      const colors = [
+        "#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe",
+        "#f59e0b", "#f97316", "#ef4444", "#10b981", "#06b6d4",
+        "#8b5a2b", "#6b7280", "#9ca3af"
+      ]
+      
+      let startAngle = 0
+      const total = asesoresValores.reduce((acc, val) => acc + val, 0) || 1
 
-    asesoresValores.forEach((value, index) => {
-      const sliceAngle = (value / total) * 2 * Math.PI
-      pieCtx.beginPath()
-      pieCtx.moveTo(centerX, centerY)
-      pieCtx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle)
-      pieCtx.closePath()
-      pieCtx.fillStyle = colors[index % colors.length]
-      pieCtx.fill()
-      startAngle += sliceAngle
-    })
+      // Dibujar sectores del gráfico circular
+      asesoresValores.forEach((value, index) => {
+        const sliceAngle = (value / total) * 2 * Math.PI
+        pieCtx.beginPath()
+        pieCtx.moveTo(centerX, centerY)
+        pieCtx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle)
+        pieCtx.closePath()
+        pieCtx.fillStyle = colors[index % colors.length]
+        pieCtx.fill()
+        
+        // Agregar borde a los sectores
+        pieCtx.strokeStyle = "#ffffff"
+        pieCtx.lineWidth = 2
+        pieCtx.stroke()
+        
+        startAngle += sliceAngle
+      })
 
-    // Leyenda
-    asesoresNombres.forEach((legend, index) => {
-      pieCtx.fillStyle = colors[index % colors.length]
-      pieCtx.fillRect(20, 20 + index * 20, 15, 15)
-      pieCtx.fillStyle = "#6b7280"
-      pieCtx.font = "12px sans-serif"
-      pieCtx.textAlign = "left"
-      pieCtx.fillText(legend, 40, 32 + index * 20)
-    })
-  }, [activeTab, ventas])
+      // Dibujar leyenda mejorada en el lado izquierdo
+      const legendStartX = 15
+      const legendStartY = 30
+      const legendItemHeight = 22
+      const maxLegendItems = Math.min(asesoresNombres.length, 10)
+
+      asesoresNombres.slice(0, maxLegendItems).forEach((legend, index) => {
+        const y = legendStartY + index * legendItemHeight
+        
+        // Cuadrado de color
+        pieCtx.fillStyle = colors[index % colors.length]
+        pieCtx.fillRect(legendStartX, y - 8, 12, 12)
+        
+        // Borde del cuadrado
+        pieCtx.strokeStyle = "#ffffff"
+        pieCtx.lineWidth = 1
+        pieCtx.strokeRect(legendStartX, y - 8, 12, 12)
+        
+        // Texto del asesor
+        pieCtx.fillStyle = "#374151"
+        pieCtx.font = "11px sans-serif"
+        pieCtx.textAlign = "left"
+        
+        // Truncar nombre si es muy largo
+        const maxNameLength = 15
+        const displayName = legend.length > maxNameLength 
+          ? legend.substring(0, maxNameLength) + "..." 
+          : legend
+        
+        pieCtx.fillText(displayName, legendStartX + 18, y + 2)
+        
+        // Número de ventas
+        pieCtx.fillStyle = "#6b7280"
+        pieCtx.font = "10px sans-serif"
+        pieCtx.fillText(`(${asesoresValores[index]})`, legendStartX + 18, y + 14)
+      })
+
+      // Si hay más elementos, mostrar indicador
+      if (asesoresNombres.length > maxLegendItems) {
+        const y = legendStartY + maxLegendItems * legendItemHeight
+        pieCtx.fillStyle = "#9ca3af"
+        pieCtx.font = "10px sans-serif"
+        pieCtx.fillText(`+${asesoresNombres.length - maxLegendItems} más...`, legendStartX, y + 2)
+      }
+    } else {
+      // Mostrar mensaje cuando no hay datos
+      pieCtx.fillStyle = "#9ca3af"
+      pieCtx.font = "14px sans-serif"
+      pieCtx.textAlign = "center"
+      pieCtx.fillText("No hay datos de asesores", width / 2, height / 2)
+    }
+  }, [activeTab, ventas, asesoresProcesados])
+
+  if (loading) return <div>Cargando gráficos...</div>
+  if (error) return <div className="text-red-500">{error}</div>
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -128,7 +218,12 @@ export function DashboardCharts() {
       <Card>
         <CardHeader>
           <CardTitle>Distribución por Asesor</CardTitle>
-          <CardDescription>Porcentaje de ventas por asesor</CardDescription>
+          <CardDescription>
+            {asesoresProcesados.length > 8 
+              ? `Top 7 asesores + otros (${asesoresProcesados.length - 1} total)`
+              : `${asesoresProcesados.length} asesores`
+            }
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <canvas ref={pieChartRef} width={500} height={300} className="w-full"></canvas>
