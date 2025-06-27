@@ -18,7 +18,7 @@ export function DashboardLayout({ user, onLogout, children }: DashboardLayoutPro
     <div className="flex min-h-screen flex-col">
       <MobileHeader />
       <div className="flex flex-1 flex-col md:flex-row">
-        <Sidebar user={user} onLogout={onLogout} selectedClient={selectedClient} onClientSelect={setSelectedClient} />
+        <Sidebar user={user} onLogout={onLogout} />
         <main className="flex-1 overflow-auto p-4 md:p-6">
           {children ? children : <MainContent user={user} selectedClient={selectedClient} />}
         </main>
