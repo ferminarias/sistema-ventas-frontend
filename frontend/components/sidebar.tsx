@@ -80,7 +80,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
 
   return (
     <div className="hidden border-r bg-muted/40 lg:block lg:w-64">
-      <div className="flex h-screen flex-col">
+      <div className="flex flex-col" style={{ height: '100vh' }}>
         {/* Header fijo */}
         <div className="flex h-16 items-center justify-center border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
           <Link href="/" className="flex items-center gap-2 font-semibold">
@@ -90,7 +90,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
         </div>
         
         {/* Área de navegación con scroll */}
-        <div className="flex-1 overflow-y-auto px-3 py-2">
+        <div className="flex-1 overflow-y-auto px-3 py-2" style={{ minHeight: 0 }}>
           <div className="space-y-2 py-2">
             {/* Dashboard */}
             <Button 
