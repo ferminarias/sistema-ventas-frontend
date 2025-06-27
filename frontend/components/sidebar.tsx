@@ -79,7 +79,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
   }, [])
 
   return (
-    <div className="hidden border-r bg-muted/40 lg:block lg:w-64 sticky top-0">
+    <div className="hidden border-r bg-muted/40 lg:block lg:w-64 fixed left-0 top-0 z-40">
       <div className="flex flex-col" style={{ height: '100vh' }}>
         {/* Header fijo */}
         <div className="flex h-16 items-center justify-center border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">

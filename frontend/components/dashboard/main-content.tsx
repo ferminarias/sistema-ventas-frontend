@@ -6,6 +6,9 @@ import { VentasStats } from "./ventas-stats"
 import { DashboardCharts } from "./dashboard-charts"
 import type { User } from "@/types/auth"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { useToast } from "@/components/ui/use-toast"
+import { ventasApi } from "@/lib/api"
 
 interface MainContentProps {
   user: User
@@ -14,18 +17,39 @@ interface MainContentProps {
 
 export function MainContent({ user, selectedClient }: MainContentProps) {
   const router = useRouter()
+  const { toast } = useToast()
+  const [isExporting, setIsExporting] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  
   const title = selectedClient ? `Dashboard - ${selectedClient}` : "Dashboard de Ventas"
   const subtitle = selectedClient
     ? `Análisis detallado de ${selectedClient}`
     : "Visualiza y gestiona todas tus ventas en un solo lugar"
 
   const handleRefresh = () => {
-    window.location.reload()
+    setIsRefreshing(true)
+    setTimeout(() => {
+      window.location.reload()
+    }, 500)
   }
 
-  const handleExportExcel = () => {
-    // Implementar exportación a Excel
-    window.open("https://sistemas-de-ventas-production.up.railway.app/api/exportar/excel", "_blank")
+  const handleExportExcel = async () => {
+    setIsExporting(true)
+    try {
+      await ventasApi.exportarExcel(selectedClient || undefined)
+      toast({
+        title: "Exportación completada",
+        description: "El archivo Excel ha sido generado y descargado correctamente.",
+      })
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "No se pudo exportar el archivo Excel.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   const handleNewSale = () => {
@@ -47,17 +71,19 @@ export function MainContent({ user, selectedClient }: MainContentProps) {
               variant="outline" 
               className="border-gray-600 text-white hover:bg-gray-700"
               onClick={handleRefresh}
+              disabled={isRefreshing}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Actualizar
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+              {isRefreshing ? "Actualizando..." : "Actualizar"}
             </Button>
             <Button 
               variant="outline" 
               className="border-gray-600 text-white hover:bg-gray-700"
               onClick={handleExportExcel}
+              disabled={isExporting}
             >
               <FileDown className="h-4 w-4 mr-2" />
-              Exportar Excel
+              {isExporting ? "Exportando..." : "Exportar Excel"}
             </Button>
             <Button 
               className="bg-purple-600 hover:bg-purple-700"
