@@ -28,6 +28,32 @@ interface Client {
   formConfig: any[]
 }
 
+// Mapeo de colores por cliente
+const CLIENT_COLORS: Record<string, string> = {
+  'Anahuac': 'bg-purple-500',
+  'Cesa': 'bg-blue-500', 
+  'Faro': 'bg-green-500',
+  'Aliat': 'bg-orange-500',
+  '1': 'bg-purple-500', // ID numérico para Anahuac
+  '2': 'bg-blue-500',   // ID numérico para Cesa
+  '3': 'bg-green-500',  // ID numérico para Faro
+  '4': 'bg-orange-500', // ID numérico para Aliat
+}
+
+const getClientColor = (clientName: string, clientId: number) => {
+  // Intentar por nombre primero
+  if (CLIENT_COLORS[clientName]) {
+    return CLIENT_COLORS[clientName]
+  }
+  // Luego por ID
+  if (CLIENT_COLORS[String(clientId)]) {
+    return CLIENT_COLORS[String(clientId)]
+  }
+  // Color por defecto basado en ID
+  const colors = ['bg-purple-500', 'bg-blue-500', 'bg-green-500', 'bg-orange-500', 'bg-pink-500', 'bg-cyan-500']
+  return colors[clientId % colors.length]
+}
+
 export function Sidebar({ user, onLogout }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
@@ -54,33 +80,42 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
 
   return (
     <div className="hidden border-r bg-muted/40 lg:block lg:w-64">
-      <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-14 items-center justify-center border-b px-4 lg:h-[60px] lg:px-6">
+      <div className="flex h-screen max-h-screen flex-col">
+        {/* Header fijo */}
+        <div className="flex h-16 items-center justify-center border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <BarChart3 className="h-6 w-6" />
-            <span className="text-lg font-bold">SISTEMA VENTAS NODS</span>
+            <span className="text-sm font-bold">SISTEMA VENTAS NODS</span>
           </Link>
         </div>
-        <ScrollArea className="flex-1 px-2 py-2">
-          <div className="space-y-1 p-2">
-            <Button asChild variant={pathname === "/dashboard" ? "default" : "ghost"} className="w-full justify-start">
+        
+        {/* Área de navegación con scroll */}
+        <ScrollArea className="flex-1 px-3 py-2">
+          <div className="space-y-2 py-2">
+            {/* Dashboard */}
+            <Button 
+              asChild 
+              variant={pathname === "/dashboard" ? "default" : "ghost"} 
+              className="w-full justify-start"
+            >
               <Link href="/dashboard">
                 <Home className="mr-2 h-4 w-4" />
                 Dashboard
               </Link>
             </Button>
 
+            {/* Clientes desplegable */}
             <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full justify-between">
-                  <div className="flex items-center">
+                <Button variant="ghost" className="w-full justify-start group">
+                  <div className="flex items-center flex-1">
                     <Users className="mr-2 h-4 w-4" />
-                    Clientes
+                    <span className="flex-1 text-left">Clientes</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ml-2 ${isOpen ? "rotate-180" : ""}`} />
                   </div>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="pl-6 pt-1">
+              <CollapsibleContent className="pl-2 mt-1">
                 <div className="flex flex-col space-y-1">
                   {(() => {
                     const filteredClients = getClientsByUser(user, clients)
@@ -90,54 +125,79 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                           asChild
                           key={String(client.id)}
                           variant={pathname === `/clientes/${client.id}` ? "default" : "ghost"}
-                          className="w-full justify-start"
+                          className="w-full justify-start text-sm"
+                          size="sm"
                         >
-                          <Link href={`/clientes/${client.id}`}>{typeof client.name === 'string' ? client.name : JSON.stringify(client.name)}</Link>
+                          <Link href={`/clientes/${client.id}`}>
+                            <div className={`w-2 h-2 rounded-full mr-3 ${getClientColor(client.name, client.id)}`}></div>
+                            <span className="truncate">{typeof client.name === 'string' ? client.name : JSON.stringify(client.name)}</span>
+                          </Link>
                         </Button>
                       ))
                     ) : (
-                      <div className="text-gray-400 pl-2">No hay clientes disponibles</div>
+                      <div className="text-gray-400 pl-2 text-sm">No hay clientes disponibles</div>
                     )
                   })()}
                 </div>
               </CollapsibleContent>
             </Collapsible>
 
-            <Button asChild variant={pathname === "/nueva-venta" ? "default" : "ghost"} className="w-full justify-start">
+            {/* Nueva Venta */}
+            <Button 
+              asChild 
+              variant={pathname === "/nueva-venta" ? "default" : "ghost"} 
+              className="w-full justify-start"
+            >
               <Link href="/nueva-venta">
                 <Plus className="mr-2 h-4 w-4" />
                 Nueva Venta
               </Link>
             </Button>
 
+            {/* Administración desplegable */}
             {user.role === "admin" && (
               <Collapsible open={isAdminOpen} onOpenChange={setIsAdminOpen} className="w-full">
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between">
-                    <div className="flex items-center">
+                  <Button variant="ghost" className="w-full justify-start group">
+                    <div className="flex items-center flex-1">
                       <UserCog className="mr-2 h-4 w-4" />
-                      Administración
+                      <span className="flex-1 text-left">Administración</span>
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ml-2 ${isAdminOpen ? "rotate-180" : ""}`} />
                     </div>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${isAdminOpen ? "rotate-180" : ""}`} />
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="pl-6 pt-1">
+                <CollapsibleContent className="pl-2 mt-1">
                   <div className="flex flex-col space-y-1">
-                    <Button asChild variant={pathname === "/admin/usuarios" ? "default" : "ghost"} className="w-full justify-start">
+                    <Button 
+                      asChild 
+                      variant={pathname === "/admin/usuarios" ? "default" : "ghost"} 
+                      className="w-full justify-start text-sm"
+                      size="sm"
+                    >
                       <Link href="/admin/usuarios">
-                        <UserCog className="mr-2 h-4 w-4" />
+                        <UserCog className="mr-2 h-3 w-3" />
                         Gestión de Usuarios
                       </Link>
                     </Button>
-                    <Button asChild variant={pathname === "/admin/clientes" ? "default" : "ghost"} className="w-full justify-start">
+                    <Button 
+                      asChild 
+                      variant={pathname === "/admin/clientes" ? "default" : "ghost"} 
+                      className="w-full justify-start text-sm"
+                      size="sm"
+                    >
                       <Link href="/admin/clientes">
-                        <Building2 className="mr-2 h-4 w-4" />
+                        <Building2 className="mr-2 h-3 w-3" />
                         Gestión de Clientes
                       </Link>
                     </Button>
-                    <Button asChild variant={pathname === "/admin/asesores" ? "default" : "ghost"} className="w-full justify-start">
+                    <Button 
+                      asChild 
+                      variant={pathname === "/admin/asesores" ? "default" : "ghost"} 
+                      className="w-full justify-start text-sm"
+                      size="sm"
+                    >
                       <Link href="/admin/asesores">
-                        <UserCog className="mr-2 h-4 w-4" />
+                        <UserCog className="mr-2 h-3 w-3" />
                         Gestión de Asesores
                       </Link>
                     </Button>
@@ -146,8 +206,13 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
               </Collapsible>
             )}
 
+            {/* Búsqueda de Comprobantes */}
             {(user.role === "admin" || user.role === "supervisor") && (
-              <Button asChild variant={pathname === "/comprobantes" ? "default" : "ghost"} className="w-full justify-start">
+              <Button 
+                asChild 
+                variant={pathname === "/comprobantes" ? "default" : "ghost"} 
+                className="w-full justify-start"
+              >
                 <Link href="/comprobantes">
                   <FileSearch className="mr-2 h-4 w-4" />
                   Búsqueda de Comprobantes
@@ -155,7 +220,12 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
               </Button>
             )}
 
-            <Button asChild variant={pathname === "/reportes" ? "default" : "ghost"} className="w-full justify-start">
+            {/* Reportes */}
+            <Button 
+              asChild 
+              variant={pathname === "/reportes" ? "default" : "ghost"} 
+              className="w-full justify-start"
+            >
               <Link href="/reportes">
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
                 Reportes
@@ -163,17 +233,19 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             </Button>
           </div>
         </ScrollArea>
-        <div className="mt-auto p-4">
-          <div className="flex items-center gap-4">
-            <Avatar>
-              <AvatarFallback>{String(user.username || user.name || "U")[0].toUpperCase()}</AvatarFallback>
+        
+        {/* Footer fijo */}
+        <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex items-center gap-3 mb-3">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-xs">{String(user.username || user.name || "U")[0].toUpperCase()}</AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{user.username || "Usuario"}</span>
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="text-sm font-medium truncate">{user.username || "Usuario"}</span>
               <span className="text-xs text-muted-foreground">{user.role}</span>
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={onLogout}>
               <LogOut className="h-4 w-4" />
