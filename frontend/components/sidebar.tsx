@@ -107,12 +107,12 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             {/* Clientes desplegable */}
             <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start group">
-                  <div className="flex items-center flex-1">
+                <Button variant="ghost" className="w-full justify-between group hover:bg-accent">
+                  <div className="flex items-center">
                     <Users className="mr-2 h-4 w-4" />
-                    <span className="flex-1 text-left">Clientes</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ml-2 ${isOpen ? "rotate-180" : ""}`} />
+                    <span>Clientes</span>
                   </div>
+                  <ChevronDown className={`h-5 w-5 text-gray-300 group-hover:text-white transition-all duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`} />
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pl-2 mt-1">
@@ -158,12 +158,12 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             {user.role === "admin" && (
               <Collapsible open={isAdminOpen} onOpenChange={setIsAdminOpen} className="w-full">
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start group">
-                    <div className="flex items-center flex-1">
+                  <Button variant="ghost" className="w-full justify-between group hover:bg-accent">
+                    <div className="flex items-center">
                       <UserCog className="mr-2 h-4 w-4" />
-                      <span className="flex-1 text-left">Administración</span>
-                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ml-2 ${isAdminOpen ? "rotate-180" : ""}`} />
+                      <span>Administración</span>
                     </div>
+                    <ChevronDown className={`h-5 w-5 text-gray-300 group-hover:text-white transition-all duration-300 ${isAdminOpen ? "rotate-180" : "rotate-0"}`} />
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pl-2 mt-1">
