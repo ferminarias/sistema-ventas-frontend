@@ -6,7 +6,7 @@ import { ResultsList } from "@/components/comprobantes/results-list"
 import { useComprobantesSearch } from "@/hooks/use-comprobantes-search"
 import { useAuth } from "@/contexts/auth-context"
 import type { ComprobanteFilters } from "@/types/comprobante"
-import { FileSearch, AlertCircle, RefreshCw, Download } from "lucide-react"
+import { FileSearch, AlertCircle, RefreshCw, Download, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
@@ -77,6 +77,15 @@ export default function BusquedaComprobantesPage() {
       <div className="bg-gray-800 border-b border-gray-700 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Button
+              onClick={() => router.back()}
+              variant="ghost"
+              size="sm"
+              className="text-gray-400 hover:text-white hover:bg-gray-700 mr-2"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver
+            </Button>
             <FileSearch className="h-8 w-8 text-purple-500" />
             <div>
               <h1 className="text-2xl font-bold text-white">Búsqueda de Comprobantes</h1>
