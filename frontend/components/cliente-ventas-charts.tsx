@@ -1,6 +1,6 @@
 "use client"
 
-// Gráficos mejorados con soporte retina y filtros históricos - v2025.01
+// Gráficos mejorados con soporte retina y semanas ISO del año - v2025.01
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -16,7 +16,6 @@ interface ClienteVentasChartsProps {
 export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: ClienteVentasChartsProps) {
   const [activeTab, setActiveTab] = useState("mensual")
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const chartRef = useRef<HTMLCanvasElement>(null)
   const pieChartRef = useRef<HTMLCanvasElement>(null)
 
@@ -40,36 +39,48 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
   const { ventas } = useVentas(cliente.toLowerCase())
 
-  // Función para obtener las semanas de un mes específico
-  const getSemanasMes = (year: number, month: number) => {
-    const primerDia = new Date(year, month, 1)
-    const ultimoDia = new Date(year, month + 1, 0)
-    const semanas = []
+  // Función para obtener la semana ISO del año según estándar ISO 8601
+  const getSemanaISO = (fecha: Date) => {
+    // Crear una copia en UTC para evitar problemas de zona horaria
+    const fechaUTC = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()))
     
-    // Obtener el primer lunes del mes (o el día 1 si no hay lunes antes)
-    let inicioSemana = new Date(primerDia)
-    const diaSemana = primerDia.getDay()
-    if (diaSemana !== 1) { // Si no es lunes
-      inicioSemana.setDate(primerDia.getDate() - (diaSemana === 0 ? 6 : diaSemana - 1))
+    // Encontrar el jueves de la semana (el jueves siempre está en la semana correcta)
+    // El día de la semana: 0=domingo, 1=lunes, ..., 6=sábado
+    // Para ISO: 1=lunes, 2=martes, ..., 7=domingo
+    const diaDeSemanaTrans = (fechaUTC.getUTCDay() + 6) % 7  // Convertir domingo=0 a domingo=6
+    const juevesDeEstaSemana = new Date(fechaUTC)
+    juevesDeEstaSemana.setUTCDate(fechaUTC.getUTCDate() - diaDeSemanaTrans + 3)  // +3 para llegar al jueves
+    
+    // El año ISO es el año del jueves
+    const yearISO = juevesDeEstaSemana.getUTCFullYear()
+    
+    // Encontrar el primer jueves del año ISO
+    const enero4 = new Date(Date.UTC(yearISO, 0, 4))  // 4 de enero siempre está en la semana 1
+    const diaDeEnero4 = (enero4.getUTCDay() + 6) % 7
+    const primerJueves = new Date(enero4)
+    primerJueves.setUTCDate(enero4.getUTCDate() - diaDeEnero4 + 3)
+    
+    // Calcular la diferencia en días y convertir a semanas
+    const diferenciaDias = (juevesDeEstaSemana.getTime() - primerJueves.getTime()) / (1000 * 60 * 60 * 24)
+    const semanaISO = Math.floor(diferenciaDias / 7) + 1
+    
+    return {
+      year: yearISO,
+      week: semanaISO
     }
+  }
+
+  // Función para obtener cuántas semanas tiene un año ISO
+  const getSemanasEnAño = (year: number) => {
+    // Un año tiene 53 semanas si el 1 de enero o el 31 de diciembre cae en jueves
+    const enero1 = new Date(year, 0, 1)
+    const diciembre31 = new Date(year, 11, 31)
     
-    while (inicioSemana <= ultimoDia) {
-      const finSemana = new Date(inicioSemana)
-      finSemana.setDate(inicioSemana.getDate() + 6)
-      
-      // Solo incluir semanas que tengan al menos un día del mes seleccionado
-      if (finSemana >= primerDia && inicioSemana <= ultimoDia) {
-        semanas.push({
-          inicio: new Date(inicioSemana),
-          fin: new Date(finSemana),
-          label: `Sem ${semanas.length + 1}`
-        })
-      }
-      
-      inicioSemana.setDate(inicioSemana.getDate() + 7)
+    // Si el 1 de enero es jueves (día 4) o si es año bisiesto y empieza en miércoles
+    if (enero1.getDay() === 4 || (diciembre31.getDay() === 4)) {
+      return 53
     }
-    
-    return semanas
+    return 52
   }
 
   // Procesar datos según el filtro seleccionado
@@ -96,29 +107,32 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         asesores: ventasPorAsesor
       }
     } else {
-      // Datos semanales del mes seleccionado
-      const semanas = getSemanasMes(selectedYear, selectedMonth)
-      const ventasPorSemana = Array(semanas.length).fill(0)
+      // Datos semanales ISO del año seleccionado
+      const totalSemanas = getSemanasEnAño(selectedYear)
+      const ventasPorSemana = Array(totalSemanas).fill(0)
       
       ventas.forEach((v) => {
         const fecha = new Date(v.fecha_venta)
         if (isNaN(fecha.getTime())) return
         
-        // Buscar en qué semana del mes seleccionado cae esta venta
-        semanas.forEach((semana, index) => {
-          if (fecha >= semana.inicio && fecha <= semana.fin) {
-            ventasPorSemana[index]++
-            
-            if (v.asesor) {
-              ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
-            }
+        const semanaInfo = getSemanaISO(fecha)
+        
+        // Solo procesar ventas del año seleccionado
+        if (semanaInfo.year === selectedYear && semanaInfo.week >= 1 && semanaInfo.week <= totalSemanas) {
+          ventasPorSemana[semanaInfo.week - 1]++  // Array es 0-indexed
+          
+          if (v.asesor) {
+            ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
           }
-        })
+        }
       })
+      
+      // Generar labels para las semanas (S1, S2, ... S52/53)
+      const labels = Array.from({ length: totalSemanas }, (_, i) => `S${i + 1}`)
       
       return {
         datos: ventasPorSemana,
-        labels: semanas.map(s => s.label),
+        labels: labels,
         asesores: ventasPorAsesor
       }
     }
@@ -195,18 +209,43 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     pieCtx.clearRect(0, 0, width, height)
 
     // Dibujar gráfico de barras
-    const barWidth = width / (datos.length * 2)
+    const barWidth = width / (datos.length * 1.5)  // Ajustar para que las barras no estén muy juntas
     const maxValue = Math.max(...datos, 1)
+    const margin = 40
+    const chartHeight = height - margin
+    
     ctx.fillStyle = "#7c3aed"
     datos.forEach((value, index) => {
-      const x = index * (barWidth * 2) + barWidth / 2
-      const barHeight = (value / maxValue) * (height - 40)
-      ctx.fillRect(x, height - barHeight - 20, barWidth, barHeight)
-      ctx.fillStyle = "#6b7280"
-      ctx.font = "10px sans-serif"
-      ctx.textAlign = "center"
-      ctx.fillText(labels[index], x + barWidth / 2, height - 5)
-      ctx.fillText(value.toString(), x + barWidth / 2, height - barHeight - 25)
+      const x = (index * (width - margin)) / datos.length + margin / 2
+      const barHeight = (value / maxValue) * (chartHeight - 40)
+      const barActualWidth = Math.min(barWidth, (width - margin) / datos.length - 2)
+      
+      // Dibujar barra
+      ctx.fillRect(x, chartHeight - barHeight - 20, barActualWidth, barHeight)
+      
+      // Etiquetas de eje X (solo mostrar algunas para evitar solapamiento)
+      const shouldShowLabel = datos.length <= 20 || index % Math.ceil(datos.length / 20) === 0
+      if (shouldShowLabel) {
+        ctx.fillStyle = "#6b7280"
+        ctx.font = "9px sans-serif"
+        ctx.textAlign = "center"
+        ctx.save()
+        ctx.translate(x + barActualWidth / 2, height - 5)
+        if (activeTab === "semanal" && datos.length > 30) {
+          ctx.rotate(-Math.PI / 4)  // Rotar labels si hay muchas semanas
+        }
+        ctx.fillText(labels[index], 0, 0)
+        ctx.restore()
+      }
+      
+      // Valor encima de la barra (solo si hay espacio)
+      if (value > 0 && barHeight > 15) {
+        ctx.fillStyle = "#6b7280"
+        ctx.font = "9px sans-serif"
+        ctx.textAlign = "center"
+        ctx.fillText(value.toString(), x + barActualWidth / 2, chartHeight - barHeight - 25)
+      }
+      
       ctx.fillStyle = "#7c3aed"
     })
 
@@ -295,7 +334,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       pieCtx.textAlign = "center"
       pieCtx.fillText("No hay datos de asesores", width / 2, height / 2)
     }
-  }, [activeTab, selectedYear, selectedMonth, ventas, datos, labels, asesoresProcesados])
+  }, [activeTab, selectedYear, ventas, datos, labels, asesoresProcesados])
 
   // Utilidad para mostrar el nombre real del cliente
   const getNombreCliente = () => {
@@ -309,9 +348,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     if (activeTab === "mensual") {
       return `Año ${selectedYear}`
     } else {
-      const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
-                     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-      return `${meses[selectedMonth]} ${selectedYear} (por semanas)`
+      const totalSemanas = getSemanasEnAño(selectedYear)
+      return `${selectedYear} - Semanas ISO (${totalSemanas} semanas del año)`
     }
   }
 
@@ -333,7 +371,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             <Tabs defaultValue="mensual" className="w-full" onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="mensual">Por Meses</TabsTrigger>
-                <TabsTrigger value="semanal">Por Semanas</TabsTrigger>
+                <TabsTrigger value="semanal">Por Semanas ISO</TabsTrigger>
               </TabsList>
             </Tabs>
             
@@ -342,7 +380,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                 value={selectedYear.toString()} 
                 onValueChange={(value) => setSelectedYear(parseInt(value))}
               >
-                <SelectTrigger className="w-24">
+                <SelectTrigger className="w-32">
                   <SelectValue placeholder="Año" />
                 </SelectTrigger>
                 <SelectContent>
@@ -355,23 +393,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               </Select>
               
               {activeTab === "semanal" && (
-                <Select 
-                  value={selectedMonth.toString()} 
-                  onValueChange={(value) => setSelectedMonth(parseInt(value))}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Mes" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
-                      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-                      .map((mes, index) => (
-                      <SelectItem key={index} value={index.toString()}>
-                        {mes}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="text-xs text-muted-foreground flex items-center">
+                  ⓘ Semanas 1-{getSemanasEnAño(selectedYear)} del año {selectedYear}
+                </div>
               )}
             </div>
           </div>
