@@ -1,8 +1,9 @@
 "use client"
 
-// Gráficos mejorados con soporte retina - v2025.01
+// Gráficos mejorados con soporte retina y filtros históricos - v2025.01
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useEffect, useRef, useState } from "react"
 import { useVentas } from "@/hooks/useVentas"
 
@@ -14,6 +15,8 @@ interface ClienteVentasChartsProps {
 
 export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: ClienteVentasChartsProps) {
   const [activeTab, setActiveTab] = useState("mensual")
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const chartRef = useRef<HTMLCanvasElement>(null)
   const pieChartRef = useRef<HTMLCanvasElement>(null)
 
@@ -37,22 +40,91 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
   const { ventas } = useVentas(cliente.toLowerCase())
 
-  // Agrupar ventas por mes y por asesor
-  const ventasPorMes = Array(12).fill(0)
-  const ventasPorSemana = Array(7).fill(0)
-  const ventasPorAsesor: Record<string, number> = {}
-
-  ventas.forEach((v) => {
-    const fecha = new Date(v.fecha_venta)
-    if (isNaN(fecha.getTime())) return // Validar fecha válida
+  // Función para obtener las semanas de un mes específico
+  const getSemanasMes = (year: number, month: number) => {
+    const primerDia = new Date(year, month, 1)
+    const ultimoDia = new Date(year, month + 1, 0)
+    const semanas = []
     
-    ventasPorMes[fecha.getMonth()]++
-    ventasPorSemana[fecha.getDay()]++
-    
-    if (v.asesor) {
-      ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
+    // Obtener el primer lunes del mes (o el día 1 si no hay lunes antes)
+    let inicioSemana = new Date(primerDia)
+    const diaSemana = primerDia.getDay()
+    if (diaSemana !== 1) { // Si no es lunes
+      inicioSemana.setDate(primerDia.getDate() - (diaSemana === 0 ? 6 : diaSemana - 1))
     }
-  })
+    
+    while (inicioSemana <= ultimoDia) {
+      const finSemana = new Date(inicioSemana)
+      finSemana.setDate(inicioSemana.getDate() + 6)
+      
+      // Solo incluir semanas que tengan al menos un día del mes seleccionado
+      if (finSemana >= primerDia && inicioSemana <= ultimoDia) {
+        semanas.push({
+          inicio: new Date(inicioSemana),
+          fin: new Date(finSemana),
+          label: `Sem ${semanas.length + 1}`
+        })
+      }
+      
+      inicioSemana.setDate(inicioSemana.getDate() + 7)
+    }
+    
+    return semanas
+  }
+
+  // Procesar datos según el filtro seleccionado
+  const procesarDatos = () => {
+    const ventasPorMes = Array(12).fill(0)
+    const ventasPorAsesor: Record<string, number> = {}
+    
+    if (activeTab === "mensual") {
+      // Datos mensuales del año seleccionado
+      ventas.forEach((v) => {
+        const fecha = new Date(v.fecha_venta)
+        if (isNaN(fecha.getTime()) || fecha.getFullYear() !== selectedYear) return
+        
+        ventasPorMes[fecha.getMonth()]++
+        
+        if (v.asesor) {
+          ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
+        }
+      })
+      
+      return {
+        datos: ventasPorMes,
+        labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+        asesores: ventasPorAsesor
+      }
+    } else {
+      // Datos semanales del mes seleccionado
+      const semanas = getSemanasMes(selectedYear, selectedMonth)
+      const ventasPorSemana = Array(semanas.length).fill(0)
+      
+      ventas.forEach((v) => {
+        const fecha = new Date(v.fecha_venta)
+        if (isNaN(fecha.getTime())) return
+        
+        // Buscar en qué semana del mes seleccionado cae esta venta
+        semanas.forEach((semana, index) => {
+          if (fecha >= semana.inicio && fecha <= semana.fin) {
+            ventasPorSemana[index]++
+            
+            if (v.asesor) {
+              ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
+            }
+          }
+        })
+      })
+      
+      return {
+        datos: ventasPorSemana,
+        labels: semanas.map(s => s.label),
+        asesores: ventasPorAsesor
+      }
+    }
+  }
+
+  const { datos, labels, asesores: ventasPorAsesor } = procesarDatos()
 
   // Procesar datos de asesores para optimizar visualización
   const procesarDatosAsesores = () => {
@@ -79,6 +151,21 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const asesoresProcesados = procesarDatosAsesores()
   const asesoresNombres = asesoresProcesados.map(a => a.nombre)
   const asesoresValores = asesoresProcesados.map(a => a.ventas)
+
+  // Obtener años disponibles en los datos
+  const getYearsAvailable = () => {
+    const years = new Set<number>()
+    ventas.forEach(v => {
+      const fecha = new Date(v.fecha_venta)
+      if (!isNaN(fecha.getTime())) {
+        years.add(fecha.getFullYear())
+      }
+    })
+    const sortedYears = Array.from(years).sort((a, b) => b - a)
+    return sortedYears.length > 0 ? sortedYears : [new Date().getFullYear()]
+  }
+
+  const yearsAvailable = getYearsAvailable()
 
   useEffect(() => {
     if (!chartRef.current || !pieChartRef.current) return
@@ -107,17 +194,11 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     ctx.clearRect(0, 0, width, height)
     pieCtx.clearRect(0, 0, width, height)
 
-    // Datos para el gráfico
-    const data = activeTab === "mensual" ? ventasPorMes : ventasPorSemana
-    const labels = activeTab === "mensual"
-      ? ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-      : ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
-
     // Dibujar gráfico de barras
-    const barWidth = width / (data.length * 2)
-    const maxValue = Math.max(...data, 1)
+    const barWidth = width / (datos.length * 2)
+    const maxValue = Math.max(...datos, 1)
     ctx.fillStyle = "#7c3aed"
-    data.forEach((value, index) => {
+    datos.forEach((value, index) => {
       const x = index * (barWidth * 2) + barWidth / 2
       const barHeight = (value / maxValue) * (height - 40)
       ctx.fillRect(x, height - barHeight - 20, barWidth, barHeight)
@@ -214,13 +295,24 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       pieCtx.textAlign = "center"
       pieCtx.fillText("No hay datos de asesores", width / 2, height / 2)
     }
-  }, [activeTab, ventas, asesoresProcesados])
+  }, [activeTab, selectedYear, selectedMonth, ventas, datos, labels, asesoresProcesados])
 
   // Utilidad para mostrar el nombre real del cliente
   const getNombreCliente = () => {
     if (cliente === "all") return "Todos los clientes"
     if (clientIdToName && clientIdToName[String(cliente)]) return clientIdToName[String(cliente)]
     return ""
+  }
+
+  // Obtener descripción del período seleccionado
+  const getDescripcionPeriodo = () => {
+    if (activeTab === "mensual") {
+      return `Año ${selectedYear}`
+    } else {
+      const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+                     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+      return `${meses[selectedMonth]} ${selectedYear} (por semanas)`
+    }
   }
 
   return (
@@ -232,13 +324,57 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               ? `Ventas de ${nombreCliente}` 
               : <span className="text-slate-400">Cargando nombre del cliente...</span>}
           </CardTitle>
-          <CardDescription>Visualización de ventas por período</CardDescription>
-          <Tabs defaultValue="mensual" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="mensual">Mensual</TabsTrigger>
-              <TabsTrigger value="semanal">Semanal</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <CardDescription>
+            Tendencias históricas - {getDescripcionPeriodo()}
+          </CardDescription>
+          
+          {/* Controles de filtro mejorados */}
+          <div className="space-y-4">
+            <Tabs defaultValue="mensual" className="w-full" onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="mensual">Por Meses</TabsTrigger>
+                <TabsTrigger value="semanal">Por Semanas</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
+            <div className="flex gap-2">
+              <Select 
+                value={selectedYear.toString()} 
+                onValueChange={(value) => setSelectedYear(parseInt(value))}
+              >
+                <SelectTrigger className="w-24">
+                  <SelectValue placeholder="Año" />
+                </SelectTrigger>
+                <SelectContent>
+                  {yearsAvailable.map(year => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {activeTab === "semanal" && (
+                <Select 
+                  value={selectedMonth.toString()} 
+                  onValueChange={(value) => setSelectedMonth(parseInt(value))}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Mes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+                      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+                      .map((mes, index) => (
+                      <SelectItem key={index} value={index.toString()}>
+                        {mes}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <canvas ref={chartRef} width={500} height={300} className="w-full"></canvas>
@@ -251,7 +387,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             {asesoresProcesados.length > 8 
               ? `Top 7 asesores + otros (${asesoresProcesados.length - 1} total)`
               : `${asesoresProcesados.length} asesores`
-            } - {getNombreCliente()}
+            } - {getNombreCliente()} ({getDescripcionPeriodo()})
           </CardDescription>
         </CardHeader>
         <CardContent>
