@@ -13,6 +13,8 @@ export function DashboardCharts() {
   const chartRef = useRef<HTMLCanvasElement>(null)
   const pieChartRef = useRef<HTMLCanvasElement>(null)
   const { ventas, loading, error } = useVentas()
+  const [hoveredPieIndex, setHoveredPieIndex] = useState<number | null>(null)
+  const [tooltip, setTooltip] = useState<{x: number, y: number, label: string, value: number} | null>(null)
 
   // Agrupar ventas por mes y por asesor
   const ventasPorMes = Array(12).fill(0)
@@ -33,6 +35,23 @@ export function DashboardCharts() {
 
   const asesoresNombres = Object.keys(ventasPorAsesor)
   const asesoresValores = Object.values(ventasPorAsesor)
+
+  // Paleta pastel/profesional
+  const pastelColors = [
+    "#a5b4fc", // azul lavanda
+    "#6ee7b7", // verde menta
+    "#fcd34d", // amarillo suave
+    "#fca5a5", // rojo coral suave
+    "#f9a8d4", // rosa pastel
+    "#fbcfe8", // rosa claro
+    "#c7d2fe", // azul claro
+    "#fde68a", // amarillo pastel
+    "#bbf7d0", // verde agua
+    "#fef9c3", // crema
+    "#ddd6fe", // violeta claro
+    "#bae6fd", // celeste
+    "#d1fae5", // verde muy claro
+  ]
 
   useEffect(() => {
     if (!chartRef.current || !pieChartRef.current) return
@@ -120,33 +139,33 @@ export function DashboardCharts() {
     const centerX = width * 0.6
     const centerY = height / 2
     const radius = Math.min(centerX - 30, centerY - 30)
-    const colors = [
-      "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444",
-      "#ec4899", "#84cc16", "#f97316", "#6366f1", "#14b8a6",
-      "#a855f7", "#22d3ee", "#fbbf24"
-    ]
     let startAngle = 0
     const total = asesoresValores.reduce((acc, val) => acc + val, 0) || 1
     asesoresValores.forEach((value, index) => {
       const sliceAngle = (value / total) * 2 * Math.PI
+      // Efecto hover: si está sobre este sector, agrandar y sombra
+      const isHovered = hoveredPieIndex === index
+      const r = isHovered ? radius + 10 : radius
+      const cx = isHovered ? centerX + Math.cos(startAngle + sliceAngle/2) * 8 : centerX
+      const cy = isHovered ? centerY + Math.sin(startAngle + sliceAngle/2) * 8 : centerY
       // Sombra
-      pieCtx.beginPath()
-      pieCtx.moveTo(centerX + 3, centerY + 3)
-      pieCtx.arc(centerX + 3, centerY + 3, radius, startAngle, startAngle + sliceAngle)
-      pieCtx.closePath()
-      pieCtx.fillStyle = "rgba(0, 0, 0, 0.4)"
-      pieCtx.fill()
+      if (isHovered) {
+        pieCtx.save()
+        pieCtx.shadowColor = "rgba(0,0,0,0.25)"
+        pieCtx.shadowBlur = 16
+      }
       // Sector principal
       pieCtx.beginPath()
-      pieCtx.moveTo(centerX, centerY)
-      pieCtx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle)
+      pieCtx.moveTo(cx, cy)
+      pieCtx.arc(cx, cy, r, startAngle, startAngle + sliceAngle)
       pieCtx.closePath()
-      pieCtx.fillStyle = colors[index % colors.length]
+      pieCtx.fillStyle = pastelColors[index % pastelColors.length]
       pieCtx.fill()
       // Borde
-      pieCtx.strokeStyle = "#1f2937"
-      pieCtx.lineWidth = 2
+      pieCtx.strokeStyle = isHovered ? "#6366f1" : "#1f2937"
+      pieCtx.lineWidth = isHovered ? 4 : 2
       pieCtx.stroke()
+      if (isHovered) pieCtx.restore()
       startAngle += sliceAngle
     })
     // Leyenda
@@ -158,12 +177,12 @@ export function DashboardCharts() {
       const y = legendStartY + index * legendItemHeight
       pieCtx.beginPath()
       pieCtx.arc(legendStartX + 6, y, 6, 0, 2 * Math.PI)
-      pieCtx.fillStyle = colors[index % colors.length]
+      pieCtx.fillStyle = pastelColors[index % pastelColors.length]
       pieCtx.fill()
       pieCtx.strokeStyle = "#374151"
       pieCtx.lineWidth = 2
       pieCtx.stroke()
-      pieCtx.fillStyle = "#f9fafb"
+      pieCtx.fillStyle = "#1e293b"
       pieCtx.font = "bold 11px Inter, sans-serif"
       pieCtx.textAlign = "left"
       const maxNameLength = 14
@@ -171,7 +190,7 @@ export function DashboardCharts() {
         ? legend.substring(0, maxNameLength) + "..." 
         : legend
       pieCtx.fillText(displayName, legendStartX + 18, y + 2)
-      pieCtx.fillStyle = "#d1d5db"
+      pieCtx.fillStyle = "#64748b"
       pieCtx.font = "10px Inter, sans-serif"
       pieCtx.fillText(`${asesoresValores[index]} ventas`, legendStartX + 18, y + 14)
     })
@@ -181,7 +200,56 @@ export function DashboardCharts() {
       pieCtx.font = "italic 10px Inter, sans-serif"
       pieCtx.fillText(`+${asesoresNombres.length - maxLegendItems} más...`, legendStartX, y + 2)
     }
-  }, [activeTab, ventas])
+  }, [activeTab, ventas, hoveredPieIndex])
+
+  // Efecto hover: detectar sector con mouse
+  useEffect(() => {
+    if (!pieChartRef.current) return
+    const canvas = pieChartRef.current
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+      const centerX = canvas.width * 0.6
+      const centerY = canvas.height / 2
+      const radius = Math.min(centerX - 30, centerY - 30)
+      let startAngle = 0
+      const total = asesoresValores.reduce((acc, val) => acc + val, 0) || 1
+      let found = null
+      for (let i = 0; i < asesoresValores.length; i++) {
+        const value = asesoresValores[i]
+        const sliceAngle = (value / total) * 2 * Math.PI
+        const dx = x - centerX
+        const dy = y - centerY
+        const dist = Math.sqrt(dx*dx + dy*dy)
+        const angle = Math.atan2(dy, dx)
+        let a = angle >= 0 ? angle : (2 * Math.PI + angle)
+        if (dist <= radius + 12 && a >= startAngle && a < startAngle + sliceAngle) {
+          found = i
+          setTooltip({
+            x: e.clientX,
+            y: e.clientY,
+            label: asesoresNombres[i],
+            value: asesoresValores[i]
+          })
+          break
+        }
+        startAngle += sliceAngle
+      }
+      setHoveredPieIndex(found)
+      if (found === null) setTooltip(null)
+    }
+    const handleMouseLeave = () => {
+      setHoveredPieIndex(null)
+      setTooltip(null)
+    }
+    canvas.addEventListener("mousemove", handleMouseMove)
+    canvas.addEventListener("mouseleave", handleMouseLeave)
+    return () => {
+      canvas.removeEventListener("mousemove", handleMouseMove)
+      canvas.removeEventListener("mouseleave", handleMouseLeave)
+    }
+  }, [asesoresNombres, asesoresValores])
 
   if (loading) return <div>Cargando gráficos...</div>
   if (error) return <div className="text-red-500">{error}</div>
@@ -214,7 +282,15 @@ export function DashboardCharts() {
           <CardDescription>Porcentaje de ventas por asesor</CardDescription>
         </CardHeader>
         <CardContent>
-          <canvas ref={pieChartRef} width={500} height={300} className="w-full rounded-lg"></canvas>
+          <div className="relative">
+            <canvas ref={pieChartRef} width={500} height={300} className="w-full rounded-lg cursor-pointer"></canvas>
+            {tooltip && (
+              <div style={{position: 'fixed', left: tooltip.x + 12, top: tooltip.y + 12, zIndex: 50, pointerEvents: 'none'}} className="bg-gray-900/90 text-white text-xs px-3 py-2 rounded-lg shadow-lg border border-blue-400/40">
+                <div className="font-bold">{tooltip.label}</div>
+                <div>{tooltip.value} ventas</div>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
