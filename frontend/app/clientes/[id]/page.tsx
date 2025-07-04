@@ -6,7 +6,6 @@ import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { VentasStats } from "@/components/dashboard/ventas-stats";
 import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
-import { ClienteVentasStats } from "@/components/cliente-ventas-stats";
 import { ClienteVentasCharts } from "@/components/cliente-ventas-charts";
 import { ClienteVentasTable } from "@/components/cliente-ventas-table";
 import { DashboardHeader } from "@/components/dashboard-header";
@@ -66,7 +65,6 @@ export default function ClienteDashboardPage() {
             <div className="text-sm text-gray-300">Creado: {new Date(client.createdAt).toLocaleString()}</div>
           </CardContent>
         </Card>
-        <ClienteVentasStats cliente={String(client.id)} />
         <ClienteVentasCharts cliente={String(client.id)} nombreCliente={client.name} />
         <ClienteVentasTable cliente={client.name || String(client.id)} />
       </div>

@@ -197,8 +197,8 @@ export default function ReportesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 flex items-center justify-center">
-        <div className="text-red-400 text-xl">Error: {error}</div>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-red-400 text-xl font-bold">{error}</div>
       </div>
     )
   }
@@ -314,488 +314,490 @@ export default function ReportesPage() {
   console.log("Nombre calculado:", nombreClienteSeleccionado);
 
   return (
-    <TooltipProvider>
-      <div className={`min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white transition-opacity duration-500 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="p-6 max-w-7xl mx-auto">
-          {/* Botón de volver atrás */}
-          <div className="flex items-center gap-4 mb-6">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => router.back()}
-              className="shrink-0 bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700 hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-4xl font-bold text-white">📊 Reportes y Análisis</h1>
-          </div>
-          {/* Métricas principales */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            {[0,1,2,3].map(i => (
-              <Card key={i} className={`${cardBase} ${metricHighlights[i]} bg-slate-800/80 backdrop-blur-sm`}>
-                <CardContent className="p-6">
-                  <div className="text-3xl font-bold text-white mb-2">
-                    {i === 0 ? metrics?.totalSales ?? '-' :
-                     i === 1 ? metrics?.avgCloseTime ?? '-' :
-                     i === 2 ? metrics?.dailyAverage ?? '-' :
-                     metrics?.conversionRate ?? '-'}
-                  </div>
-                  <div className="text-white/90 font-medium text-sm">
-                    {i === 0 ? 'Ventas del Mes' :
-                     i === 1 ? 'Tiempo Promedio de Cierre' :
-                     i === 2 ? 'Ventas por Día Promedio' :
-                     'Tasa de Conversión'}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+    <div className="min-h-screen bg-gray-900 text-white pb-10">
+      <TooltipProvider>
+        <div className={`transition-opacity duration-500 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="p-6 max-w-7xl mx-auto">
+            {/* Botón de volver atrás */}
+            <div className="flex items-center gap-4 mb-6">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => router.back()}
+                className="shrink-0 bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700 hover:text-white"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-4xl font-bold text-white">📊 Reportes y Análisis</h1>
+            </div>
+            {/* Métricas principales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+              {[0,1,2,3].map(i => (
+                <Card key={i} className={`${cardBase} ${metricHighlights[i]} bg-slate-800/80 backdrop-blur-sm`}>
+                  <CardContent className="p-6">
+                    <div className="text-3xl font-bold text-white mb-2">
+                      {i === 0 ? metrics?.totalSales ?? '-' :
+                       i === 1 ? metrics?.avgCloseTime ?? '-' :
+                       i === 2 ? metrics?.dailyAverage ?? '-' :
+                       metrics?.conversionRate ?? '-'}
+                    </div>
+                    <div className="text-white/90 font-medium text-sm">
+                      {i === 0 ? 'Ventas del Mes' :
+                       i === 1 ? 'Tiempo Promedio de Cierre' :
+                       i === 2 ? 'Ventas por Día Promedio' :
+                       'Tasa de Conversión'}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-          {/* Gráfico de tendencia de ventas */}
-          <Card className={`${cardBase} mb-6 relative`}>
-            {loading && (
-              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                <Loader2 className="h-8 w-8 text-white animate-spin" />
-              </div>
-            )}
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-white">Evolución de Ventas</CardTitle>
-                  <div className="text-slate-400">Cantidad de ventas por período</div>
+            {/* Gráfico de tendencia de ventas */}
+            <Card className={`${cardBase} mb-6 relative`}>
+              {loading && (
+                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
+                  <Loader2 className="h-8 w-8 text-white animate-spin" />
                 </div>
-                <div className="flex gap-1 bg-slate-700/50 p-1 rounded-lg">
-                  {['7d', '30d', '90d', '1y'].map((period) => (
+              )}
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-white">Evolución de Ventas</CardTitle>
+                    <div className="text-slate-400">Cantidad de ventas por período</div>
+                  </div>
+                  <div className="flex gap-1 bg-slate-700/50 p-1 rounded-lg">
+                    {['7d', '30d', '90d', '1y'].map((period) => (
+                      <Button
+                        key={period}
+                        variant={selectedPeriod === period ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setSelectedPeriod(period)}
+                        className={selectedPeriod === period ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}
+                      >
+                        {period.toUpperCase()}
+                      </Button>
+                    ))}
                     <Button
-                      key={period}
-                      variant={selectedPeriod === period ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setSelectedPeriod(period)}
-                      className={selectedPeriod === period ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}
+                      variant="outline"
+                      size="icon"
+                      title="Descargar gráfico como imagen"
+                      onClick={() => downloadChartImage(lineChartRef, 'evolucion_ventas.png')}
                     >
-                      {period.toUpperCase()}
+                      📷
                     </Button>
-                  ))}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  {salesTrendData ? (
+                    <Line ref={lineChartRef} data={salesTrendData} options={salesTrendOptions} />
+                  ) : (
+                    <div className="text-center text-slate-400">No hay datos de ventas</div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Distribución horaria */}
+            <Card className={`${cardBase} mb-6 relative`}>
+              {loading && (
+                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
+                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                </div>
+              )}
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-white">Distribución Horaria</CardTitle>
+                    <div className="text-slate-400">Cuándo se registran más ventas</div>
+                  </div>
                   <Button
                     variant="outline"
                     size="icon"
                     title="Descargar gráfico como imagen"
-                    onClick={() => downloadChartImage(lineChartRef, 'evolucion_ventas.png')}
+                    onClick={() => downloadChartImage(barChartRef, 'distribucion_horaria.png')}
                   >
                     📷
                   </Button>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                {salesTrendData ? (
-                  <Line ref={lineChartRef} data={salesTrendData} options={salesTrendOptions} />
-                ) : (
-                  <div className="text-center text-slate-400">No hay datos de ventas</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Distribución horaria */}
-          <Card className={`${cardBase} mb-6 relative`}>
-            {loading && (
-              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                <Loader2 className="h-8 w-8 text-white animate-spin" />
-              </div>
-            )}
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-white">Distribución Horaria</CardTitle>
-                  <div className="text-slate-400">Cuándo se registran más ventas</div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  title="Descargar gráfico como imagen"
-                  onClick={() => downloadChartImage(barChartRef, 'distribucion_horaria.png')}
-                >
-                  📷
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                {hourlyDistribution && hourlyDistribution.labels && hourlyDistribution.sales ? (
-                  <Bar
-                    ref={barChartRef}
-                    data={{
-                      labels: hourlyDistribution.labels,
-                      datasets: [
-                        {
-                          label: 'Ventas por hora',
-                          data: hourlyDistribution.sales,
-                          backgroundColor: 'rgba(139, 92, 246, 0.8)',
-                          borderColor: '#8b5cf6',
-                          borderWidth: 1,
-                          borderRadius: 4,
-                        },
-                      ],
-                    }}
-                    options={hourlyBarOptions}
-                  />
-                ) : (
-                  <div className="text-center text-slate-400">No hay datos de distribución horaria</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Top Asesores */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <Card className={`${cardBase} relative`}>
-              {loading && (
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
-                </div>
-              )}
-              <CardHeader>
-                <CardTitle className="text-white">🏆 Top Asesores General</CardTitle>
-                <div className="text-slate-400">Mejores vendedores del mes</div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {topAdvisorsGeneral.length > 0 ? (
-                    topAdvisorsGeneral.map((advisor, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
-                            {advisor.name
-                              .split(" ")
-                              .map((n: string) => n[0])
-                              .join("")}
-                          </div>
-                          <div>
-                            <h4 className="text-white font-medium">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
-                            <div className="text-slate-400 text-sm">Asesor Senior</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-white font-bold">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)} ventas</div>
-                          <div className="text-slate-400 text-sm">{typeof advisor.percentage === 'string' || typeof advisor.percentage === 'number' ? advisor.percentage : JSON.stringify(advisor.percentage)}% del total</div>
-                        </div>
-                      </div>
-                    ))
+                <div className="h-80">
+                  {hourlyDistribution && hourlyDistribution.labels && hourlyDistribution.sales ? (
+                    <Bar
+                      ref={barChartRef}
+                      data={{
+                        labels: hourlyDistribution.labels,
+                        datasets: [
+                          {
+                            label: 'Ventas por hora',
+                            data: hourlyDistribution.sales,
+                            backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                            borderColor: '#8b5cf6',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                          },
+                        ],
+                      }}
+                      options={hourlyBarOptions}
+                    />
                   ) : (
-                    <div className="text-center text-slate-400">No hay datos de asesores</div>
+                    <div className="text-center text-slate-400">No hay datos de distribución horaria</div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className={`${cardBase} relative`}>
-              {loading && (
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
-                </div>
-              )}
-              <CardHeader>
-                <CardTitle className="text-white">👥 Top Asesores por Cliente</CardTitle>
-                <div className="text-slate-400">Especialistas por cuenta</div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {topAdvisorsByClient.length > 0 ? (
-                    topAdvisorsByClient.map((advisor, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
-                            {advisor.name.split(" ").map((n: string) => n[0]).join("")}
-                          </div>
-                          <div>
-                            <h4 className="text-white font-medium">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
-                            <div className="text-slate-400 text-sm">Especialista {typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-white font-bold">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)} ventas</div>
-                          <div className="text-slate-400 text-sm">{typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center text-slate-400">No hay datos de asesores por cliente</div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Top Clientes */}
-          <Card className={`${cardBase} relative`}>
-            {loading && (
-              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                <Loader2 className="h-8 w-8 text-white animate-spin" />
-              </div>
-            )}
-            <CardHeader>
-              <CardTitle className="text-white">Top Clientes por Volumen</CardTitle>
-              <div className="text-slate-400">Mayor cantidad de ventas</div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {topClients.length > 0 ? (
-                  topClients.map((client, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
-                          {(clientIdToName[client.name] || client.name)[0]}
-                        </div>
-                        <div>
-                          <h4 className="text-white font-medium">{typeof client.name === 'string' ? (clientIdToName[client.name] || client.name) : JSON.stringify(client.name)}</h4>
-                          <div className="text-slate-400 text-sm">Frecuencia: {typeof client.frequency === 'string' || typeof client.frequency === 'number' ? client.frequency : JSON.stringify(client.frequency)} días</div>
-                          <div className="text-slate-400 text-xs">Asesor: {typeof client.advisor === 'string' ? client.advisor : JSON.stringify(client.advisor)}</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-white font-bold">{typeof client.sales === 'string' || typeof client.sales === 'number' ? client.sales : JSON.stringify(client.sales)} ventas</div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center text-slate-400">No hay datos de clientes</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Pipeline de ventas */}
-          <Card className={`${cardBase} relative`}>
-            {loading && (
-              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                <Loader2 className="h-8 w-8 text-white animate-spin" />
-              </div>
-            )}
-            <CardHeader>
-              <CardTitle className="text-white">Pipeline de Ventas</CardTitle>
-              <div className="text-slate-400">Estado actual del embudo de conversión</div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                {pipeline && [
-                  { number: pipeline.prospects, label: "Prospectos", value: "100%" },
-                  { number: pipeline.contacted, label: "Contactados", value: "" },
-                  { number: pipeline.interested, label: "Interesados", value: "" },
-                  { number: pipeline.proposals, label: "Propuestas", value: "" },
-                  { number: pipeline.closed, label: "Cerradas", value: "" },
-                ].map((stage, index) => (
-                  <div key={index} className="text-center p-4 bg-slate-700/50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-400 mb-2">{typeof stage.number === 'string' || typeof stage.number === 'number' ? stage.number : JSON.stringify(stage.number)}</div>
-                    <div className="text-slate-400 text-sm mb-2">{typeof stage.label === 'string' ? stage.label : JSON.stringify(stage.label)}</div>
-                    <div className="text-white text-sm font-medium">{typeof stage.value === 'string' ? stage.value : JSON.stringify(stage.value)}</div>
+            {/* Top Asesores */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card className={`${cardBase} relative`}>
+                {loading && (
+                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
+                    <Loader2 className="h-8 w-8 text-white animate-spin" />
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                )}
+                <CardHeader>
+                  <CardTitle className="text-white">🏆 Top Asesores General</CardTitle>
+                  <div className="text-slate-400">Mejores vendedores del mes</div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {topAdvisorsGeneral.length > 0 ? (
+                      topAdvisorsGeneral.map((advisor, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
+                              {advisor.name
+                                .split(" ")
+                                .map((n: string) => n[0])
+                                .join("")}
+                            </div>
+                            <div>
+                              <h4 className="text-white font-medium">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
+                              <div className="text-slate-400 text-sm">Asesor Senior</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-white font-bold">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)} ventas</div>
+                            <div className="text-slate-400 text-sm">{typeof advisor.percentage === 'string' || typeof advisor.percentage === 'number' ? advisor.percentage : JSON.stringify(advisor.percentage)}% del total</div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-slate-400">No hay datos de asesores</div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Mapa de calor */}
-          <Card className={`${cardBase} relative`}>
-            {loading && (
-              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                <Loader2 className="h-8 w-8 text-white animate-spin" />
-              </div>
-            )}
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-white">Mapa de Calor - Actividad de Ventas</CardTitle>
-                <UiTooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      tabIndex={0}
-                      aria-label="¿Qué es el mapa de calor?"
-                      type="button"
-                    >
-                      <Info className="w-4 h-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={8} side="right" className="max-w-xs text-left">
-                    <div className="font-semibold mb-1">¿Qué muestra este mapa de calor?</div>
-                    <div>
-                      Visualiza la intensidad de ventas por día de la semana durante las últimas 4 semanas.<br />
-                      <span className="text-blue-300">Colores más intensos = más ventas.</span><br />
-                      Útil para detectar patrones de actividad y días pico.
+              <Card className={`${cardBase} relative`}>
+                {loading && (
+                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
+                    <Loader2 className="h-8 w-8 text-white animate-spin" />
+                  </div>
+                )}
+                <CardHeader>
+                  <CardTitle className="text-white">👥 Top Asesores por Cliente</CardTitle>
+                  <div className="text-slate-400">Especialistas por cuenta</div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {topAdvisorsByClient.length > 0 ? (
+                      topAdvisorsByClient.map((advisor, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
+                              {advisor.name.split(" ").map((n: string) => n[0]).join("")}
+                            </div>
+                            <div>
+                              <h4 className="text-white font-medium">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
+                              <div className="text-slate-400 text-sm">Especialista {typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-white font-bold">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)} ventas</div>
+                            <div className="text-slate-400 text-sm">{typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-slate-400">No hay datos de asesores por cliente</div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Top Clientes */}
+            <Card className={`${cardBase} relative`}>
+              {loading && (
+                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
+                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle className="text-white">Top Clientes por Volumen</CardTitle>
+                <div className="text-slate-400">Mayor cantidad de ventas</div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {topClients.length > 0 ? (
+                    topClients.map((client, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
+                            {(clientIdToName[client.name] || client.name)[0]}
+                          </div>
+                          <div>
+                            <h4 className="text-white font-medium">{typeof client.name === 'string' ? (clientIdToName[client.name] || client.name) : JSON.stringify(client.name)}</h4>
+                            <div className="text-slate-400 text-sm">Frecuencia: {typeof client.frequency === 'string' || typeof client.frequency === 'number' ? client.frequency : JSON.stringify(client.frequency)} días</div>
+                            <div className="text-slate-400 text-xs">Asesor: {typeof client.advisor === 'string' ? client.advisor : JSON.stringify(client.advisor)}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-white font-bold">{typeof client.sales === 'string' || typeof client.sales === 'number' ? client.sales : JSON.stringify(client.sales)} ventas</div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-slate-400">No hay datos de clientes</div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pipeline de ventas */}
+            <Card className={`${cardBase} relative`}>
+              {loading && (
+                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
+                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle className="text-white">Pipeline de Ventas</CardTitle>
+                <div className="text-slate-400">Estado actual del embudo de conversión</div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  {pipeline && [
+                    { number: pipeline.prospects, label: "Prospectos", value: "100%" },
+                    { number: pipeline.contacted, label: "Contactados", value: "" },
+                    { number: pipeline.interested, label: "Interesados", value: "" },
+                    { number: pipeline.proposals, label: "Propuestas", value: "" },
+                    { number: pipeline.closed, label: "Cerradas", value: "" },
+                  ].map((stage, index) => (
+                    <div key={index} className="text-center p-4 bg-slate-700/50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-400 mb-2">{typeof stage.number === 'string' || typeof stage.number === 'number' ? stage.number : JSON.stringify(stage.number)}</div>
+                      <div className="text-slate-400 text-sm mb-2">{typeof stage.label === 'string' ? stage.label : JSON.stringify(stage.label)}</div>
+                      <div className="text-white text-sm font-medium">{typeof stage.value === 'string' ? stage.value : JSON.stringify(stage.value)}</div>
                     </div>
-                  </TooltipContent>
-                </UiTooltip>
-              </div>
-              <div className="text-slate-400">Últimas semanas por día de la semana</div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-7 gap-1 w-full">
-                {(heatmap && heatmap.length >= 28
-                  ? (() => {
-                      // Mapear datos reales a formato esperado
-                      const avg = heatmap.reduce((acc, c) => acc + c.sales, 0) / heatmap.length;
-                      const mapped = Array(28).fill(null).map((_, idx) => {
-                        const week = Math.floor(idx / 7);
-                        const dayIndex = idx % 7;
-                        const real = heatmap.find(cell => Number(cell.dayOfWeek) === dayIndex && Number(cell.week) === week);
-                        return {
-                          day: ["L", "M", "X", "J", "V", "S", "D"][dayIndex],
-                          intensity: real ? Math.min(5, Math.floor(real.sales / 5)) : 0,
-                          week,
-                          date: real?.date,
-                          sales: real?.sales,
-                          avg,
-                          isActive: activeDay === dayIndex,
-                          onHover: () => setActiveDay(dayIndex),
-                          onClick: () => alert(`Detalle de ventas para ${["L", "M", "X", "J", "V", "S", "D"][dayIndex]}${real?.date ? ", " + real.date : ""}: ${real?.sales ?? 0} ventas`),
-                        };
-                      });
-                      return mapped;
-                    })()
-                  : (() => {
-                      const simulated = generateHeatmap();
-                      return simulated.map((cell, idx) => ({
-                        ...cell,
-                        isActive: activeDay === idx % 7,
-                        onHover: () => setActiveDay(idx % 7),
-                        onClick: () => alert(`Detalle de ventas para ${["L", "M", "X", "J", "V", "S", "D"][idx % 7]}: ${cell.intensity * 5} ventas (simulado)`),
-                      }));
-                    })()
-                ).map((cell, index) => (
-                  <HeatmapCell key={index} {...cell} />
-                ))}
-              </div>
-              {/* Leyenda de escala de colores */}
-              <div className="flex items-center gap-2 mt-4 justify-center">
-                {[0,1,2,3,4,5].map(i => (
-                  <div key={i} className={`w-6 h-3 rounded-sm ${[
-                    "bg-slate-600 text-slate-200",
-                    "bg-blue-900 text-white",
-                    "bg-blue-700 text-white",
-                    "bg-blue-500 text-white",
-                    "bg-blue-400 text-white",
-                    "bg-blue-300 text-slate-900"
-                  ][i]}`}></div>
-                ))}
-                <span className="text-xs text-slate-300 ml-2">Menos ventas</span>
-                <span className="text-xs text-slate-300 ml-2">Más ventas</span>
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Exportar reportes */}
-          <Card className={`${cardBase}`}>
-            <CardHeader>
-              <CardTitle className="text-white">Exportar Análisis Personalizado</CardTitle>
-              <div className="text-slate-400">Filtra y descarga reportes específicos</div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-slate-700/30 rounded-lg">
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">Cliente</label>
-                  <Select
-                    value={selectedClient}
-                    onValueChange={(value) => setSelectedClient(String(value))}
-                    disabled={Object.keys(clientIdToName).length === 0}
-                  >
-                    <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-600">
-                      <SelectItem value="all">Todos los clientes</SelectItem>
-                      {allClients.map((client) => (
-                        <SelectItem key={String(client.id)} value={String(client.id)}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            {/* Mapa de calor */}
+            <Card className={`${cardBase} relative`}>
+              {loading && (
+                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
+                  <Loader2 className="h-8 w-8 text-white animate-spin" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">Fecha Inicio</label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="bg-slate-900 border-slate-600 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">Fecha Fin</label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="bg-slate-900 border-slate-600 text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { format: "excel", icon: "📊", title: "Excel Completo", desc: "Todas las métricas filtradas", color: "from-green-600 to-green-500" },
-                  { format: "pdf", icon: "📄", title: "Reporte PDF", desc: "Resumen ejecutivo filtrado", color: "from-red-600 to-red-500" },
-                  { format: "csv", icon: "📋", title: "Datos CSV", desc: "Datos filtrados para análisis", color: "from-blue-600 to-blue-500" },
-                  { format: "api", icon: "🔗", title: "API JSON", desc: "Datos filtrados para integración", color: "from-cyan-600 to-cyan-500" },
-                ].map((option) => (
-                  <Button
-                    key={option.format}
-                    onClick={async () => {
-                      try {
-                        const filters = {
-                          client: selectedClient !== "all" ? selectedClient : undefined,
-                          startDate,
-                          endDate,
-                          format: option.format,
-                        };
-                        const data = await analyticsService.exportData(filters);
-                        if (option.format === "excel" || option.format === "pdf" || option.format === "csv") {
-                          if (!data.path) throw new Error("No se recibió la ruta del archivo");
-                          const downloadUrl = `${API_BASE}/${data.path}`;
-                          const link = document.createElement("a");
-                          link.href = downloadUrl;
-                          link.download = data.path.split("/").pop() || `reporte.${option.format}`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                        } else {
-                          alert("Datos JSON filtrados:\n" + JSON.stringify(data, null, 2));
-                        }
-                      } catch (err: any) {
-                        alert("Error al exportar: " + (err.message || err));
-                      }
-                    }}
-                    className="h-auto p-4 bg-slate-700/50 hover:bg-slate-600/50 border-2 border-slate-600 hover:border-blue-500 transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-lg bg-gradient-to-r ${option.color} flex items-center justify-center text-white text-lg`}
+              )}
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-white">Mapa de Calor - Actividad de Ventas</CardTitle>
+                  <UiTooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        tabIndex={0}
+                        aria-label="¿Qué es el mapa de calor?"
+                        type="button"
                       >
-                        {option.icon}
+                        <Info className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8} side="right" className="max-w-xs text-left">
+                      <div className="font-semibold mb-1">¿Qué muestra este mapa de calor?</div>
+                      <div>
+                        Visualiza la intensidad de ventas por día de la semana durante las últimas 4 semanas.<br />
+                        <span className="text-blue-300">Colores más intensos = más ventas.</span><br />
+                        Útil para detectar patrones de actividad y días pico.
                       </div>
-                      <div className="text-left">
-                        <div className="font-medium text-white">{option.title}</div>
-                        <div className="text-xs text-slate-400">{option.desc}</div>
-                      </div>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                    </TooltipContent>
+                  </UiTooltip>
+                </div>
+                <div className="text-slate-400">Últimas semanas por día de la semana</div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-7 gap-1 w-full">
+                  {(heatmap && heatmap.length >= 28
+                    ? (() => {
+                        // Mapear datos reales a formato esperado
+                        const avg = heatmap.reduce((acc, c) => acc + c.sales, 0) / heatmap.length;
+                        const mapped = Array(28).fill(null).map((_, idx) => {
+                          const week = Math.floor(idx / 7);
+                          const dayIndex = idx % 7;
+                          const real = heatmap.find(cell => Number(cell.dayOfWeek) === dayIndex && Number(cell.week) === week);
+                          return {
+                            day: ["L", "M", "X", "J", "V", "S", "D"][dayIndex],
+                            intensity: real ? Math.min(5, Math.floor(real.sales / 5)) : 0,
+                            week,
+                            date: real?.date,
+                            sales: real?.sales,
+                            avg,
+                            isActive: activeDay === dayIndex,
+                            onHover: () => setActiveDay(dayIndex),
+                            onClick: () => alert(`Detalle de ventas para ${["L", "M", "X", "J", "V", "S", "D"][dayIndex]}${real?.date ? ", " + real.date : ""}: ${real?.sales ?? 0} ventas`),
+                          };
+                        });
+                        return mapped;
+                      })()
+                    : (() => {
+                        const simulated = generateHeatmap();
+                        return simulated.map((cell, idx) => ({
+                          ...cell,
+                          isActive: activeDay === idx % 7,
+                          onHover: () => setActiveDay(idx % 7),
+                          onClick: () => alert(`Detalle de ventas para ${["L", "M", "X", "J", "V", "S", "D"][idx % 7]}: ${cell.intensity * 5} ventas (simulado)`),
+                        }));
+                      })()
+                  ).map((cell, index) => (
+                    <HeatmapCell key={index} {...cell} />
+                  ))}
+                </div>
+                {/* Leyenda de escala de colores */}
+                <div className="flex items-center gap-2 mt-4 justify-center">
+                  {[0,1,2,3,4,5].map(i => (
+                    <div key={i} className={`w-6 h-3 rounded-sm ${[
+                      "bg-slate-600 text-slate-200",
+                      "bg-blue-900 text-white",
+                      "bg-blue-700 text-white",
+                      "bg-blue-500 text-white",
+                      "bg-blue-400 text-white",
+                      "bg-blue-300 text-slate-900"
+                    ][i]}`}></div>
+                  ))}
+                  <span className="text-xs text-slate-300 ml-2">Menos ventas</span>
+                  <span className="text-xs text-slate-300 ml-2">Más ventas</span>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Renderizar ClienteVentasCharts solo cuando el mapeo ya está completamente cargado y el nombre está disponible */}
-          {Object.keys(clientIdToName).length > 0 && 
-            (selectedClient === "all" || clientIdToName[String(selectedClient)] !== undefined) && (
-            <ClienteVentasCharts
-              cliente={selectedClient}
-              clientIdToName={clientIdToName}
-              nombreCliente={nombreClienteSeleccionado}
-            />
-          )}
+            {/* Exportar reportes */}
+            <Card className={`${cardBase}`}>
+              <CardHeader>
+                <CardTitle className="text-white">Exportar Análisis Personalizado</CardTitle>
+                <div className="text-slate-400">Filtra y descarga reportes específicos</div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-slate-700/30 rounded-lg">
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-2">Cliente</label>
+                    <Select
+                      value={selectedClient}
+                      onValueChange={(value) => setSelectedClient(String(value))}
+                      disabled={Object.keys(clientIdToName).length === 0}
+                    >
+                      <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-600">
+                        <SelectItem value="all">Todos los clientes</SelectItem>
+                        {allClients.map((client) => (
+                          <SelectItem key={String(client.id)} value={String(client.id)}>
+                            {client.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-2">Fecha Inicio</label>
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="bg-slate-900 border-slate-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-2">Fecha Fin</label>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="bg-slate-900 border-slate-600 text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    { format: "excel", icon: "📊", title: "Excel Completo", desc: "Todas las métricas filtradas", color: "from-green-600 to-green-500" },
+                    { format: "pdf", icon: "📄", title: "Reporte PDF", desc: "Resumen ejecutivo filtrado", color: "from-red-600 to-red-500" },
+                    { format: "csv", icon: "📋", title: "Datos CSV", desc: "Datos filtrados para análisis", color: "from-blue-600 to-blue-500" },
+                    { format: "api", icon: "🔗", title: "API JSON", desc: "Datos filtrados para integración", color: "from-cyan-600 to-cyan-500" },
+                  ].map((option) => (
+                    <Button
+                      key={option.format}
+                      onClick={async () => {
+                        try {
+                          const filters = {
+                            client: selectedClient !== "all" ? selectedClient : undefined,
+                            startDate,
+                            endDate,
+                            format: option.format,
+                          };
+                          const data = await analyticsService.exportData(filters);
+                          if (option.format === "excel" || option.format === "pdf" || option.format === "csv") {
+                            if (!data.path) throw new Error("No se recibió la ruta del archivo");
+                            const downloadUrl = `${API_BASE}/${data.path}`;
+                            const link = document.createElement("a");
+                            link.href = downloadUrl;
+                            link.download = data.path.split("/").pop() || `reporte.${option.format}`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                          } else {
+                            alert("Datos JSON filtrados:\n" + JSON.stringify(data, null, 2));
+                          }
+                        } catch (err: any) {
+                          alert("Error al exportar: " + (err.message || err));
+                        }
+                      }}
+                      className="h-auto p-4 bg-slate-700/50 hover:bg-slate-600/50 border-2 border-slate-600 hover:border-blue-500 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-lg bg-gradient-to-r ${option.color} flex items-center justify-center text-white text-lg`}
+                        >
+                          {option.icon}
+                        </div>
+                        <div className="text-left">
+                          <div className="font-medium text-white">{option.title}</div>
+                          <div className="text-xs text-slate-400">{option.desc}</div>
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Renderizar ClienteVentasCharts solo cuando el mapeo ya está completamente cargado y el nombre está disponible */}
+            {Object.keys(clientIdToName).length > 0 && 
+              (selectedClient === "all" || clientIdToName[String(selectedClient)] !== undefined) && (
+              <ClienteVentasCharts
+                cliente={selectedClient}
+                clientIdToName={clientIdToName}
+                nombreCliente={nombreClienteSeleccionado}
+              />
+            )}
+          </div>
         </div>
-      </div>
-    </TooltipProvider>
+      </TooltipProvider>
+    </div>
   )
 } 

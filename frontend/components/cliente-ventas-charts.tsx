@@ -6,7 +6,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CalendarDays, TrendingUp, Users, Filter, RotateCcw } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { CalendarDays, TrendingUp, Users, Filter, RotateCcw, Info } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useVentas } from "@/hooks/useVentas"
 
@@ -171,6 +172,23 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     maxVentas: Math.max(...datos),
     totalAsesores: Object.keys(ventasPorAsesor).length
   }
+
+  // Generar tooltips dinámicos según el modo actual
+  const getTooltips = () => {
+    const tipoPerido = activeTab === "mensual" ? "mes" : "semana"
+    const rangoPeriodo = activeTab === "mensual" 
+      ? `año ${selectedYear}` 
+      : `semanas ${semanaInicio} a ${semanaFin} de ${selectedYear}`
+
+    return {
+      totalVentas: `Suma total de todas las ventas registradas en el ${rangoPeriodo}.`,
+      promedio: `Promedio de ventas por ${tipoPerido} en el período seleccionado. Se calcula dividiendo el total de ventas entre la cantidad de ${tipoPerido === "mes" ? "meses" : "semanas"} del período.`,
+      maximo: `Mayor cantidad de ventas registradas en un solo ${tipoPerido} dentro del período seleccionado.`,
+      asesores: `Número de asesores que realizaron al menos una venta en el ${rangoPeriodo}.`
+    }
+  }
+
+  const tooltips = getTooltips()
 
   // Procesar datos de asesores para optimizar visualización
   const procesarDatosAsesores = () => {
@@ -443,213 +461,247 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   }
 
   return (
-    <div className="space-y-6">
-      {/* Estadísticas destacadas - Modo oscuro */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-900/40 to-blue-800/40 border-blue-500/30 backdrop-blur-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-blue-400" />
-              <div>
-                <p className="text-sm font-medium text-blue-300">Total Ventas</p>
-                <p className="text-2xl font-bold text-blue-100">{estadisticas.totalVentas}</p>
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Estadísticas destacadas - Modo oscuro con tooltips */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="bg-gradient-to-br from-blue-900/40 to-blue-800/40 border-blue-500/30 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-blue-400" />
+                  <p className="text-sm font-medium text-blue-300">Total Ventas</p>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-blue-400/70 hover:text-blue-300 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p className="text-sm">{tooltips.totalVentas}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-green-900/40 to-green-800/40 border-green-500/30 backdrop-blur-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <CalendarDays className="h-5 w-5 text-green-400" />
-              <div>
-                <p className="text-sm font-medium text-green-300">Promedio</p>
-                <p className="text-2xl font-bold text-green-100">{estadisticas.promedioVentas}</p>
+              <p className="text-2xl font-bold text-blue-100">{estadisticas.totalVentas}</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-green-900/40 to-green-800/40 border-green-500/30 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <CalendarDays className="h-5 w-5 text-green-400" />
+                  <p className="text-sm font-medium text-green-300">Promedio</p>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-green-400/70 hover:text-green-300 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p className="text-sm">{tooltips.promedio}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 border-purple-500/30 backdrop-blur-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-purple-400" />
-              <div>
-                <p className="text-sm font-medium text-purple-300">Máximo</p>
-                <p className="text-2xl font-bold text-purple-100">{estadisticas.maxVentas}</p>
+              <p className="text-2xl font-bold text-green-100">{estadisticas.promedioVentas}</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 border-purple-500/30 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-purple-400" />
+                  <p className="text-sm font-medium text-purple-300">Máximo</p>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-purple-400/70 hover:text-purple-300 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p className="text-sm">{tooltips.maximo}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-orange-900/40 to-orange-800/40 border-orange-500/30 backdrop-blur-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-orange-400" />
-              <div>
-                <p className="text-sm font-medium text-orange-300">Asesores</p>
-                <p className="text-2xl font-bold text-orange-100">{estadisticas.totalAsesores}</p>
+              <p className="text-2xl font-bold text-purple-100">{estadisticas.maxVentas}</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-orange-900/40 to-orange-800/40 border-orange-500/30 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Users className="h-5 w-5 text-orange-400" />
+                  <p className="text-sm font-medium text-orange-300">Asesores</p>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-orange-400/70 hover:text-orange-300 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p className="text-sm">{tooltips.asesores}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <p className="text-2xl font-bold text-orange-100">{estadisticas.totalAsesores}</p>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Gráficos principales - Modo oscuro */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-gray-800/50 border-gray-600/50 backdrop-blur-sm shadow-2xl">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                  {nombreCliente && nombreCliente !== "-" 
-                    ? `Ventas de ${nombreCliente}` 
-                    : "Cargando..."}
-                </CardTitle>
-                <CardDescription className="text-sm text-gray-300 mt-1">
-                  {getDescripcionPeriodo()}
-                </CardDescription>
+        {/* Gráficos principales - Modo oscuro */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="bg-gray-800/50 border-gray-600/50 backdrop-blur-sm shadow-2xl">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                    {nombreCliente && nombreCliente !== "-" 
+                      ? `Ventas de ${nombreCliente}` 
+                      : "Cargando..."}
+                  </CardTitle>
+                  <CardDescription className="text-sm text-gray-300 mt-1">
+                    {getDescripcionPeriodo()}
+                  </CardDescription>
+                </div>
+                <Badge variant="secondary" className="bg-purple-900/50 text-purple-200 border-purple-600/50">
+                  {datos.length} períodos
+                </Badge>
               </div>
-              <Badge variant="secondary" className="bg-purple-900/50 text-purple-200 border-purple-600/50">
-                {datos.length} períodos
-              </Badge>
-            </div>
-            
-            {/* Controles mejorados para modo oscuro */}
-            <div className="space-y-4 mt-4">
-              <Tabs defaultValue="mensual" className="w-full" onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2 bg-gray-700/50 border-gray-600">
-                  <TabsTrigger value="mensual" className="data-[state=active]:bg-gray-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-300">
-                    📅 Por Meses
-                  </TabsTrigger>
-                  <TabsTrigger value="semanal" className="data-[state=active]:bg-gray-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-300">
-                    📊 Semanas ISO
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
               
-              <div className="flex flex-wrap gap-2 items-center">
-                <Select 
-                  value={selectedYear.toString()} 
-                  onValueChange={(value) => setSelectedYear(parseInt(value))}
-                >
-                  <SelectTrigger className="w-32 bg-gray-700/50 border-gray-600 text-white">
-                    <SelectValue placeholder="Año" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-600">
-                    {yearsAvailable.map(year => (
-                      <SelectItem key={year} value={year.toString()} className="text-white hover:bg-gray-700">
-                        📅 {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Controles mejorados para modo oscuro */}
+              <div className="space-y-4 mt-4">
+                <Tabs defaultValue="mensual" className="w-full" onValueChange={setActiveTab}>
+                  <TabsList className="grid w-full grid-cols-2 bg-gray-700/50 border-gray-600">
+                    <TabsTrigger value="mensual" className="data-[state=active]:bg-gray-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-300">
+                      📅 Por Meses
+                    </TabsTrigger>
+                    <TabsTrigger value="semanal" className="data-[state=active]:bg-gray-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-300">
+                      📊 Semanas ISO
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 
-                {activeTab === "semanal" && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowFilters(!showFilters)}
-                      className="bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600"
-                    >
-                      <Filter className="h-4 w-4 mr-1" />
-                      Filtros
-                    </Button>
-                    
-                    {(semanaInicio !== 1 || semanaFin !== totalSemanasAño) && (
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Select 
+                    value={selectedYear.toString()} 
+                    onValueChange={(value) => setSelectedYear(parseInt(value))}
+                  >
+                    <SelectTrigger className="w-32 bg-gray-700/50 border-gray-600 text-white">
+                      <SelectValue placeholder="Año" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-600">
+                      {yearsAvailable.map(year => (
+                        <SelectItem key={year} value={year.toString()} className="text-white hover:bg-gray-700">
+                          📅 {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {activeTab === "semanal" && (
+                    <>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={resetFiltros}
-                        className="bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-600"
+                        onClick={() => setShowFilters(!showFilters)}
+                        className="bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600"
                       >
-                        <RotateCcw className="h-4 w-4 mr-1" />
-                        Reset
+                        <Filter className="h-4 w-4 mr-1" />
+                        Filtros
                       </Button>
-                    )}
-                  </>
-                )}
-              </div>
-              
-              {/* Panel de filtros expandible - Modo oscuro */}
-              {activeTab === "semanal" && showFilters && (
-                <Card className="bg-blue-900/30 border-blue-600/50 backdrop-blur-sm">
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex flex-wrap gap-2">
-                      <span className="text-sm font-medium text-blue-300">Filtros rápidos:</span>
-                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(1)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
-                        Q1 (S1-13)
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(2)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
-                        Q2 (S14-26)
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(3)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
-                        Q3 (S27-39)
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(4)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
-                        Q4 (S40-{totalSemanasAño})
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-blue-300 block mb-1">Semana inicio:</label>
-                        <Select value={semanaInicio.toString()} onValueChange={(v) => setSemanaInicio(parseInt(v))}>
-                          <SelectTrigger className="h-8 bg-gray-700/50 border-gray-600 text-white">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-gray-800 border-gray-600">
-                            {Array.from({length: totalSemanasAño}, (_, i) => i + 1).map(week => (
-                              <SelectItem key={week} value={week.toString()} className="text-white hover:bg-gray-700">S{week}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      
+                      {(semanaInicio !== 1 || semanaFin !== totalSemanasAño) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={resetFiltros}
+                          className="bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-600"
+                        >
+                          <RotateCcw className="h-4 w-4 mr-1" />
+                          Reset
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+                
+                {/* Panel de filtros expandible - Modo oscuro */}
+                {activeTab === "semanal" && showFilters && (
+                  <Card className="bg-blue-900/30 border-blue-600/50 backdrop-blur-sm">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-sm font-medium text-blue-300">Filtros rápidos:</span>
+                        <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(1)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
+                          Q1 (S1-13)
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(2)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
+                          Q2 (S14-26)
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(3)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
+                          Q3 (S27-39)
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(4)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
+                          Q4 (S40-{totalSemanasAño})
+                        </Button>
                       </div>
                       
-                      <div>
-                        <label className="text-xs font-medium text-blue-300 block mb-1">Semana fin:</label>
-                        <Select value={semanaFin.toString()} onValueChange={(v) => setSemanaFin(parseInt(v))}>
-                          <SelectTrigger className="h-8 bg-gray-700/50 border-gray-600 text-white">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-gray-800 border-gray-600">
-                            {Array.from({length: totalSemanasAño}, (_, i) => i + 1)
-                              .filter(week => week >= semanaInicio)
-                              .map(week => (
-                              <SelectItem key={week} value={week.toString()} className="text-white hover:bg-gray-700">S{week}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-medium text-blue-300 block mb-1">Semana inicio:</label>
+                          <Select value={semanaInicio.toString()} onValueChange={(v) => setSemanaInicio(parseInt(v))}>
+                            <SelectTrigger className="h-8 bg-gray-700/50 border-gray-600 text-white">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-gray-800 border-gray-600">
+                              {Array.from({length: totalSemanasAño}, (_, i) => i + 1).map(week => (
+                                <SelectItem key={week} value={week.toString()} className="text-white hover:bg-gray-700">S{week}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <label className="text-xs font-medium text-blue-300 block mb-1">Semana fin:</label>
+                          <Select value={semanaFin.toString()} onValueChange={(v) => setSemanaFin(parseInt(v))}>
+                            <SelectTrigger className="h-8 bg-gray-700/50 border-gray-600 text-white">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-gray-800 border-gray-600">
+                              {Array.from({length: totalSemanasAño}, (_, i) => i + 1)
+                                .filter(week => week >= semanaInicio)
+                                .map(week => (
+                                <SelectItem key={week} value={week.toString()} className="text-white hover:bg-gray-700">S{week}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <canvas ref={chartRef} width={500} height={300} className="w-full rounded-lg"></canvas>
-          </CardContent>
-        </Card>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <canvas ref={chartRef} width={500} height={300} className="w-full rounded-lg"></canvas>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-gray-800/50 border-gray-600/50 backdrop-blur-sm shadow-2xl">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
-              Distribución por Asesor
-            </CardTitle>
-            <CardDescription className="text-gray-300">
-              {asesoresProcesados.length > 8 
-                ? `Top 7 asesores + otros (${asesoresProcesados.length - 1} total)`
-                : `${asesoresProcesados.length} asesores activos`
-              } - {getNombreCliente()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <canvas ref={pieChartRef} width={500} height={300} className="w-full rounded-lg"></canvas>
-          </CardContent>
-        </Card>
+          <Card className="bg-gray-800/50 border-gray-600/50 backdrop-blur-sm shadow-2xl">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
+                Distribución por Asesor
+              </CardTitle>
+              <CardDescription className="text-gray-300">
+                {asesoresProcesados.length > 8 
+                  ? `Top 7 asesores + otros (${asesoresProcesados.length - 1} total)`
+                  : `${asesoresProcesados.length} asesores activos`
+                } - {getNombreCliente()}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <canvas ref={pieChartRef} width={500} height={300} className="w-full rounded-lg"></canvas>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   )
 }
