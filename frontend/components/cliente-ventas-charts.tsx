@@ -4,6 +4,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { CalendarDays, TrendingUp, Users, Filter, RotateCcw } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useVentas } from "@/hooks/useVentas"
 
@@ -16,21 +19,30 @@ interface ClienteVentasChartsProps {
 export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: ClienteVentasChartsProps) {
   const [activeTab, setActiveTab] = useState("mensual")
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [semanaInicio, setSemanaInicio] = useState(1)
+  const [semanaFin, setSemanaFin] = useState(52)
+  const [showFilters, setShowFilters] = useState(false)
   const chartRef = useRef<HTMLCanvasElement>(null)
   const pieChartRef = useRef<HTMLCanvasElement>(null)
 
   // Validación defensiva para cliente
   if (!cliente || cliente === "null" || cliente === "undefined") {
     return (
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">Cargando gráficos del cliente...</div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="border-2 border-dashed border-gray-200">
+          <CardContent className="flex items-center justify-center h-48">
+            <div className="text-center space-y-2">
+              <CalendarDays className="h-8 w-8 text-gray-400 mx-auto" />
+              <p className="text-gray-500">Cargando gráficos del cliente...</p>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">Cargando gráficos del cliente...</div>
+        <Card className="border-2 border-dashed border-gray-200">
+          <CardContent className="flex items-center justify-center h-48">
+            <div className="text-center space-y-2">
+              <Users className="h-8 w-8 text-gray-400 mx-auto" />
+              <p className="text-gray-500">Cargando distribución...</p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -83,6 +95,15 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     return 52
   }
 
+  const totalSemanasAño = getSemanasEnAño(selectedYear)
+
+  // Ajustar semanaFin si cambió el año y excede el límite
+  useEffect(() => {
+    if (semanaFin > totalSemanasAño) {
+      setSemanaFin(totalSemanasAño)
+    }
+  }, [selectedYear, totalSemanasAño, semanaFin])
+
   // Procesar datos según el filtro seleccionado
   const procesarDatos = () => {
     const ventasPorMes = Array(12).fill(0)
@@ -107,9 +128,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         asesores: ventasPorAsesor
       }
     } else {
-      // Datos semanales ISO del año seleccionado
-      const totalSemanas = getSemanasEnAño(selectedYear)
-      const ventasPorSemana = Array(totalSemanas).fill(0)
+      // Datos semanales ISO del año seleccionado (filtrado por rango)
+      const rangoSemanas = semanaFin - semanaInicio + 1
+      const ventasPorSemana = Array(rangoSemanas).fill(0)
       
       ventas.forEach((v) => {
         const fecha = new Date(v.fecha_venta)
@@ -117,9 +138,12 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         
         const semanaInfo = getSemanaISO(fecha)
         
-        // Solo procesar ventas del año seleccionado
-        if (semanaInfo.year === selectedYear && semanaInfo.week >= 1 && semanaInfo.week <= totalSemanas) {
-          ventasPorSemana[semanaInfo.week - 1]++  // Array es 0-indexed
+        // Solo procesar ventas del año y rango de semanas seleccionado
+        if (semanaInfo.year === selectedYear && 
+            semanaInfo.week >= semanaInicio && 
+            semanaInfo.week <= semanaFin) {
+          const indice = semanaInfo.week - semanaInicio  // Ajustar índice al rango
+          ventasPorSemana[indice]++
           
           if (v.asesor) {
             ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
@@ -127,8 +151,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         }
       })
       
-      // Generar labels para las semanas (S1, S2, ... S52/53)
-      const labels = Array.from({ length: totalSemanas }, (_, i) => `S${i + 1}`)
+      // Generar labels para el rango de semanas seleccionado
+      const labels = Array.from({ length: rangoSemanas }, (_, i) => `S${semanaInicio + i}`)
       
       return {
         datos: ventasPorSemana,
@@ -139,6 +163,14 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   }
 
   const { datos, labels, asesores: ventasPorAsesor } = procesarDatos()
+
+  // Calcular estadísticas para mostrar
+  const estadisticas = {
+    totalVentas: datos.reduce((sum, val) => sum + val, 0),
+    promedioVentas: Math.round((datos.reduce((sum, val) => sum + val, 0) / datos.length) * 10) / 10,
+    maxVentas: Math.max(...datos),
+    totalAsesores: Object.keys(ventasPorAsesor).length
+  }
 
   // Procesar datos de asesores para optimizar visualización
   const procesarDatosAsesores = () => {
@@ -181,6 +213,20 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
   const yearsAvailable = getYearsAvailable()
 
+  // Funciones para filtros rápidos
+  const setRangoTrimestre = (trimestre: number) => {
+    const iniciosSemanas = [1, 14, 27, 40]
+    const finesSemanas = [13, 26, 39, Math.min(52, totalSemanasAño)]
+    setSemanaInicio(iniciosSemanas[trimestre - 1])
+    setSemanaFin(finesSemanas[trimestre - 1])
+  }
+
+  const resetFiltros = () => {
+    setSemanaInicio(1)
+    setSemanaFin(totalSemanasAño)
+    setShowFilters(false)
+  }
+
   useEffect(() => {
     if (!chartRef.current || !pieChartRef.current) return
 
@@ -208,66 +254,88 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     ctx.clearRect(0, 0, width, height)
     pieCtx.clearRect(0, 0, width, height)
 
-    // Dibujar gráfico de barras
-    const barWidth = width / (datos.length * 1.5)  // Ajustar para que las barras no estén muy juntas
+    // Dibujar gráfico de barras con gradiente
+    const barWidth = width / (datos.length * 1.3)
     const maxValue = Math.max(...datos, 1)
-    const margin = 40
+    const margin = 50
     const chartHeight = height - margin
     
-    ctx.fillStyle = "#7c3aed"
+    // Crear gradiente para las barras
+    const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight)
+    gradient.addColorStop(0, "#8b5cf6")
+    gradient.addColorStop(1, "#7c3aed")
+    
     datos.forEach((value, index) => {
       const x = (index * (width - margin)) / datos.length + margin / 2
-      const barHeight = (value / maxValue) * (chartHeight - 40)
-      const barActualWidth = Math.min(barWidth, (width - margin) / datos.length - 2)
+      const barHeight = (value / maxValue) * (chartHeight - 60)
+      const barActualWidth = Math.min(barWidth, (width - margin) / datos.length - 4)
       
-      // Dibujar barra
+      // Sombra de la barra
+      ctx.fillStyle = "rgba(124, 58, 237, 0.2)"
+      ctx.fillRect(x + 2, chartHeight - barHeight - 18, barActualWidth, barHeight)
+      
+      // Barra principal con gradiente
+      ctx.fillStyle = gradient
       ctx.fillRect(x, chartHeight - barHeight - 20, barActualWidth, barHeight)
       
-      // Etiquetas de eje X (solo mostrar algunas para evitar solapamiento)
-      const shouldShowLabel = datos.length <= 20 || index % Math.ceil(datos.length / 20) === 0
+      // Borde de la barra
+      ctx.strokeStyle = "#6d28d9"
+      ctx.lineWidth = 1
+      ctx.strokeRect(x, chartHeight - barHeight - 20, barActualWidth, barHeight)
+      
+      // Etiquetas de eje X
+      const shouldShowLabel = datos.length <= 24 || index % Math.ceil(datos.length / 16) === 0
       if (shouldShowLabel) {
-        ctx.fillStyle = "#6b7280"
-        ctx.font = "9px sans-serif"
+        ctx.fillStyle = "#4b5563"
+        ctx.font = "10px Inter, sans-serif"
         ctx.textAlign = "center"
         ctx.save()
-        ctx.translate(x + barActualWidth / 2, height - 5)
-        if (activeTab === "semanal" && datos.length > 30) {
-          ctx.rotate(-Math.PI / 4)  // Rotar labels si hay muchas semanas
+        ctx.translate(x + barActualWidth / 2, height - 8)
+        if (activeTab === "semanal" && datos.length > 24) {
+          ctx.rotate(-Math.PI / 6)
         }
         ctx.fillText(labels[index], 0, 0)
         ctx.restore()
       }
       
-      // Valor encima de la barra (solo si hay espacio)
-      if (value > 0 && barHeight > 15) {
-        ctx.fillStyle = "#6b7280"
-        ctx.font = "9px sans-serif"
+      // Valor encima de la barra
+      if (value > 0 && barHeight > 20) {
+        ctx.fillStyle = "#374151"
+        ctx.font = "bold 10px Inter, sans-serif"
         ctx.textAlign = "center"
-        ctx.fillText(value.toString(), x + barActualWidth / 2, chartHeight - barHeight - 25)
+        ctx.fillText(value.toString(), x + barActualWidth / 2, chartHeight - barHeight - 30)
       }
-      
-      ctx.fillStyle = "#7c3aed"
     })
 
-    // Dibujar gráfico circular mejorado
+    // Dibujar gráfico circular con mejor estética
     if (asesoresValores.length > 0) {
-      const centerX = width * 0.6 // Mover el centro hacia la derecha para dar espacio a la leyenda
+      const centerX = width * 0.6
       const centerY = height / 2
-      const radius = Math.min(centerX - 20, centerY - 20)
+      const radius = Math.min(centerX - 30, centerY - 30)
       
-      // Paleta de colores más amplia y distintiva
+      // Paleta de colores más moderna
       const colors = [
-        "#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe",
-        "#f59e0b", "#f97316", "#ef4444", "#10b981", "#06b6d4",
-        "#8b5a2b", "#6b7280", "#9ca3af"
+        "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444",
+        "#ec4899", "#8b5a2b", "#6b7280", "#84cc16", "#f97316",
+        "#6366f1", "#14b8a6", "#a855f7"
       ]
       
       let startAngle = 0
       const total = asesoresValores.reduce((acc, val) => acc + val, 0) || 1
 
-      // Dibujar sectores del gráfico circular
+      // Dibujar sectores con efecto 3D
       asesoresValores.forEach((value, index) => {
         const sliceAngle = (value / total) * 2 * Math.PI
+        
+        // Sombra del sector
+        pieCtx.beginPath()
+        pieCtx.moveTo(centerX + 2, centerY + 2)
+        pieCtx.arc(centerX + 2, centerY + 2, radius, startAngle, startAngle + sliceAngle)
+        pieCtx.closePath()
+        pieCtx.fillStyle = "rgba(0, 0, 0, 0.1)"
+        pieCtx.fill()
+        
+        // Sector principal
         pieCtx.beginPath()
         pieCtx.moveTo(centerX, centerY)
         pieCtx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle)
@@ -275,66 +343,63 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         pieCtx.fillStyle = colors[index % colors.length]
         pieCtx.fill()
         
-        // Agregar borde a los sectores
+        // Borde del sector
         pieCtx.strokeStyle = "#ffffff"
-        pieCtx.lineWidth = 2
+        pieCtx.lineWidth = 3
         pieCtx.stroke()
         
         startAngle += sliceAngle
       })
 
-      // Dibujar leyenda mejorada en el lado izquierdo
-      const legendStartX = 15
+      // Leyenda mejorada
+      const legendStartX = 20
       const legendStartY = 30
-      const legendItemHeight = 22
-      const maxLegendItems = Math.min(asesoresNombres.length, 10)
+      const legendItemHeight = 24
+      const maxLegendItems = Math.min(asesoresNombres.length, 9)
 
       asesoresNombres.slice(0, maxLegendItems).forEach((legend, index) => {
         const y = legendStartY + index * legendItemHeight
         
-        // Cuadrado de color
+        // Círculo de color en lugar de cuadrado
+        pieCtx.beginPath()
+        pieCtx.arc(legendStartX + 6, y, 6, 0, 2 * Math.PI)
         pieCtx.fillStyle = colors[index % colors.length]
-        pieCtx.fillRect(legendStartX, y - 8, 12, 12)
-        
-        // Borde del cuadrado
+        pieCtx.fill()
         pieCtx.strokeStyle = "#ffffff"
-        pieCtx.lineWidth = 1
-        pieCtx.strokeRect(legendStartX, y - 8, 12, 12)
+        pieCtx.lineWidth = 2
+        pieCtx.stroke()
         
         // Texto del asesor
         pieCtx.fillStyle = "#374151"
-        pieCtx.font = "11px sans-serif"
+        pieCtx.font = "bold 11px Inter, sans-serif"
         pieCtx.textAlign = "left"
         
-        // Truncar nombre si es muy largo
-        const maxNameLength = 15
+        const maxNameLength = 14
         const displayName = legend.length > maxNameLength 
           ? legend.substring(0, maxNameLength) + "..." 
           : legend
         
         pieCtx.fillText(displayName, legendStartX + 18, y + 2)
         
-        // Número de ventas
+        // Número de ventas con estilo
         pieCtx.fillStyle = "#6b7280"
-        pieCtx.font = "10px sans-serif"
-        pieCtx.fillText(`(${asesoresValores[index]})`, legendStartX + 18, y + 14)
+        pieCtx.font = "10px Inter, sans-serif"
+        pieCtx.fillText(`${asesoresValores[index]} ventas`, legendStartX + 18, y + 14)
       })
 
-      // Si hay más elementos, mostrar indicador
       if (asesoresNombres.length > maxLegendItems) {
         const y = legendStartY + maxLegendItems * legendItemHeight
         pieCtx.fillStyle = "#9ca3af"
-        pieCtx.font = "10px sans-serif"
+        pieCtx.font = "italic 10px Inter, sans-serif"
         pieCtx.fillText(`+${asesoresNombres.length - maxLegendItems} más...`, legendStartX, y + 2)
       }
     } else {
-      // Mostrar mensaje cuando no hay datos
       pieCtx.fillStyle = "#9ca3af"
-      pieCtx.font = "14px sans-serif"
+      pieCtx.font = "14px Inter, sans-serif"
       pieCtx.textAlign = "center"
       pieCtx.fillText("No hay datos de asesores", width / 2, height / 2)
     }
-  }, [activeTab, selectedYear, ventas, datos, labels, asesoresProcesados])
+  }, [activeTab, selectedYear, semanaInicio, semanaFin, ventas, datos, labels, asesoresProcesados])
 
   // Utilidad para mostrar el nombre real del cliente
   const getNombreCliente = () => {
@@ -346,78 +411,223 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   // Obtener descripción del período seleccionado
   const getDescripcionPeriodo = () => {
     if (activeTab === "mensual") {
-      return `Año ${selectedYear}`
+      return `${selectedYear} - Vista mensual`
     } else {
-      const totalSemanas = getSemanasEnAño(selectedYear)
-      return `${selectedYear} - Semanas ISO (${totalSemanas} semanas del año)`
+      if (semanaInicio === 1 && semanaFin === totalSemanasAño) {
+        return `${selectedYear} - Todas las semanas (S1-S${totalSemanasAño})`
+      }
+      return `${selectedYear} - Semanas ${semanaInicio} a ${semanaFin}`
     }
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {nombreCliente && nombreCliente !== "-" 
-              ? `Ventas de ${nombreCliente}` 
-              : <span className="text-slate-400">Cargando nombre del cliente...</span>}
-          </CardTitle>
-          <CardDescription>
-            Tendencias históricas - {getDescripcionPeriodo()}
-          </CardDescription>
-          
-          {/* Controles de filtro mejorados */}
-          <div className="space-y-4">
-            <Tabs defaultValue="mensual" className="w-full" onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="mensual">Por Meses</TabsTrigger>
-                <TabsTrigger value="semanal">Por Semanas ISO</TabsTrigger>
-              </TabsList>
-            </Tabs>
+    <div className="space-y-6">
+      {/* Estadísticas destacadas */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="text-sm font-medium text-blue-600">Total Ventas</p>
+                <p className="text-2xl font-bold text-blue-900">{estadisticas.totalVentas}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <CalendarDays className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="text-sm font-medium text-green-600">Promedio</p>
+                <p className="text-2xl font-bold text-green-900">{estadisticas.promedioVentas}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5 text-purple-600" />
+              <div>
+                <p className="text-sm font-medium text-purple-600">Máximo</p>
+                <p className="text-2xl font-bold text-purple-900">{estadisticas.maxVentas}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Users className="h-5 w-5 text-orange-600" />
+              <div>
+                <p className="text-sm font-medium text-orange-600">Asesores</p>
+                <p className="text-2xl font-bold text-orange-900">{estadisticas.totalAsesores}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráficos principales */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  {nombreCliente && nombreCliente !== "-" 
+                    ? `Ventas de ${nombreCliente}` 
+                    : "Cargando..."}
+                </CardTitle>
+                <CardDescription className="text-sm text-gray-600 mt-1">
+                  {getDescripcionPeriodo()}
+                </CardDescription>
+              </div>
+              <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                {datos.length} períodos
+              </Badge>
+            </div>
             
-            <div className="flex gap-2">
-              <Select 
-                value={selectedYear.toString()} 
-                onValueChange={(value) => setSelectedYear(parseInt(value))}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Año" />
-                </SelectTrigger>
-                <SelectContent>
-                  {yearsAvailable.map(year => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Controles mejorados */}
+            <div className="space-y-4 mt-4">
+              <Tabs defaultValue="mensual" className="w-full" onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-2 bg-gray-100">
+                  <TabsTrigger value="mensual" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                    📅 Por Meses
+                  </TabsTrigger>
+                  <TabsTrigger value="semanal" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                    📊 Semanas ISO
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
               
-              {activeTab === "semanal" && (
-                <div className="text-xs text-muted-foreground flex items-center">
-                  ⓘ Semanas 1-{getSemanasEnAño(selectedYear)} del año {selectedYear}
-                </div>
+              <div className="flex flex-wrap gap-2 items-center">
+                <Select 
+                  value={selectedYear.toString()} 
+                  onValueChange={(value) => setSelectedYear(parseInt(value))}
+                >
+                  <SelectTrigger className="w-32 bg-white border-gray-200">
+                    <SelectValue placeholder="Año" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {yearsAvailable.map(year => (
+                      <SelectItem key={year} value={year.toString()}>
+                        📅 {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {activeTab === "semanal" && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="bg-white"
+                    >
+                      <Filter className="h-4 w-4 mr-1" />
+                      Filtros
+                    </Button>
+                    
+                    {(semanaInicio !== 1 || semanaFin !== totalSemanasAño) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={resetFiltros}
+                        className="bg-white text-gray-600"
+                      >
+                        <RotateCcw className="h-4 w-4 mr-1" />
+                        Reset
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+              
+              {/* Panel de filtros expandible */}
+              {activeTab === "semanal" && showFilters && (
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <span className="text-sm font-medium text-blue-700">Filtros rápidos:</span>
+                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(1)} className="h-7 text-xs">
+                        Q1 (S1-13)
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(2)} className="h-7 text-xs">
+                        Q2 (S14-26)
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(3)} className="h-7 text-xs">
+                        Q3 (S27-39)
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(4)} className="h-7 text-xs">
+                        Q4 (S40-{totalSemanasAño})
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-medium text-blue-700 block mb-1">Semana inicio:</label>
+                        <Select value={semanaInicio.toString()} onValueChange={(v) => setSemanaInicio(parseInt(v))}>
+                          <SelectTrigger className="h-8 bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({length: totalSemanasAño}, (_, i) => i + 1).map(week => (
+                              <SelectItem key={week} value={week.toString()}>S{week}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs font-medium text-blue-700 block mb-1">Semana fin:</label>
+                        <Select value={semanaFin.toString()} onValueChange={(v) => setSemanaFin(parseInt(v))}>
+                          <SelectTrigger className="h-8 bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({length: totalSemanasAño}, (_, i) => i + 1)
+                              .filter(week => week >= semanaInicio)
+                              .map(week => (
+                              <SelectItem key={week} value={week.toString()}>S{week}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <canvas ref={chartRef} width={500} height={300} className="w-full"></canvas>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Distribución por Asesor</CardTitle>
-          <CardDescription>
-            {asesoresProcesados.length > 8 
-              ? `Top 7 asesores + otros (${asesoresProcesados.length - 1} total)`
-              : `${asesoresProcesados.length} asesores`
-            } - {getNombreCliente()} ({getDescripcionPeriodo()})
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <canvas ref={pieChartRef} width={500} height={300} className="w-full"></canvas>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <canvas ref={chartRef} width={500} height={300} className="w-full rounded-lg"></canvas>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+              Distribución por Asesor
+            </CardTitle>
+            <CardDescription>
+              {asesoresProcesados.length > 8 
+                ? `Top 7 asesores + otros (${asesoresProcesados.length - 1} total)`
+                : `${asesoresProcesados.length} asesores activos`
+              } - {getNombreCliente()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <canvas ref={pieChartRef} width={500} height={300} className="w-full rounded-lg"></canvas>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
