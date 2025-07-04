@@ -29,19 +29,19 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   if (!cliente || cliente === "null" || cliente === "undefined") {
     return (
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-2 border-dashed border-gray-200">
+        <Card className="border-2 border-dashed border-gray-600 bg-gray-800/50">
           <CardContent className="flex items-center justify-center h-48">
             <div className="text-center space-y-2">
               <CalendarDays className="h-8 w-8 text-gray-400 mx-auto" />
-              <p className="text-gray-500">Cargando gráficos del cliente...</p>
+              <p className="text-gray-400">Cargando gráficos del cliente...</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-dashed border-gray-200">
+        <Card className="border-2 border-dashed border-gray-600 bg-gray-800/50">
           <CardContent className="flex items-center justify-center h-48">
             <div className="text-center space-y-2">
               <Users className="h-8 w-8 text-gray-400 mx-auto" />
-              <p className="text-gray-500">Cargando distribución...</p>
+              <p className="text-gray-400">Cargando distribución...</p>
             </div>
           </CardContent>
         </Card>
@@ -254,85 +254,107 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     ctx.clearRect(0, 0, width, height)
     pieCtx.clearRect(0, 0, width, height)
 
-    // Dibujar gráfico de barras con gradiente
-    const barWidth = width / (datos.length * 1.3)
-    const maxValue = Math.max(...datos, 1)
-    const margin = 50
+    // Mejorar visualización de barras según cantidad de datos
+    const isManySemanas = datos.length > 24
+    const margin = isManySemanas ? 60 : 50
     const chartHeight = height - margin
+    const chartWidth = width - margin
     
-    // Crear gradiente para las barras
+    // Calcular ancho de barras más inteligente
+    const availableWidth = chartWidth * 0.9 // 90% del espacio disponible
+    const maxBarWidth = isManySemanas ? 8 : 20
+    const minBarWidth = 2
+    const calculatedBarWidth = Math.max(minBarWidth, Math.min(maxBarWidth, availableWidth / datos.length * 0.8))
+    
+    const maxValue = Math.max(...datos, 1)
+    
+    // Crear gradiente para las barras (más vibrante para modo oscuro)
     const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight)
-    gradient.addColorStop(0, "#8b5cf6")
+    gradient.addColorStop(0, "#a855f7")
+    gradient.addColorStop(0.5, "#8b5cf6")
     gradient.addColorStop(1, "#7c3aed")
     
     datos.forEach((value, index) => {
-      const x = (index * (width - margin)) / datos.length + margin / 2
+      const x = margin / 2 + (index * chartWidth) / datos.length
       const barHeight = (value / maxValue) * (chartHeight - 60)
-      const barActualWidth = Math.min(barWidth, (width - margin) / datos.length - 4)
       
       // Sombra de la barra
-      ctx.fillStyle = "rgba(124, 58, 237, 0.2)"
-      ctx.fillRect(x + 2, chartHeight - barHeight - 18, barActualWidth, barHeight)
+      ctx.fillStyle = "rgba(168, 85, 247, 0.3)"
+      ctx.fillRect(x + 1, chartHeight - barHeight - 18, calculatedBarWidth, barHeight)
       
       // Barra principal con gradiente
       ctx.fillStyle = gradient
-      ctx.fillRect(x, chartHeight - barHeight - 20, barActualWidth, barHeight)
+      ctx.fillRect(x, chartHeight - barHeight - 20, calculatedBarWidth, barHeight)
       
-      // Borde de la barra
-      ctx.strokeStyle = "#6d28d9"
+      // Borde brillante para resaltar
+      ctx.strokeStyle = "#c084fc"
       ctx.lineWidth = 1
-      ctx.strokeRect(x, chartHeight - barHeight - 20, barActualWidth, barHeight)
+      ctx.strokeRect(x, chartHeight - barHeight - 20, calculatedBarWidth, barHeight)
       
-      // Etiquetas de eje X
-      const shouldShowLabel = datos.length <= 24 || index % Math.ceil(datos.length / 16) === 0
+      // Mejorar etiquetas según cantidad de datos
+      let shouldShowLabel = true
+      if (isManySemanas) {
+        // Para muchas semanas, mostrar cada 4-6 labels
+        const interval = Math.ceil(datos.length / 12)
+        shouldShowLabel = index % interval === 0 || index === datos.length - 1
+      }
+      
       if (shouldShowLabel) {
-        ctx.fillStyle = "#4b5563"
-        ctx.font = "10px Inter, sans-serif"
+        ctx.fillStyle = "#e5e7eb"
+        ctx.font = isManySemanas ? "9px Inter, sans-serif" : "10px Inter, sans-serif"
         ctx.textAlign = "center"
         ctx.save()
-        ctx.translate(x + barActualWidth / 2, height - 8)
-        if (activeTab === "semanal" && datos.length > 24) {
-          ctx.rotate(-Math.PI / 6)
+        ctx.translate(x + calculatedBarWidth / 2, height - 8)
+        if (isManySemanas) {
+          ctx.rotate(-Math.PI / 3) // Más rotación para mejor legibilidad
         }
         ctx.fillText(labels[index], 0, 0)
         ctx.restore()
       }
       
-      // Valor encima de la barra
-      if (value > 0 && barHeight > 20) {
-        ctx.fillStyle = "#374151"
+      // Valor encima de la barra (más selectivo)
+      if (value > 0 && barHeight > 25 && (!isManySemanas || value >= maxValue * 0.3)) {
+        ctx.fillStyle = "#f3f4f6"
         ctx.font = "bold 10px Inter, sans-serif"
         ctx.textAlign = "center"
-        ctx.fillText(value.toString(), x + barActualWidth / 2, chartHeight - barHeight - 30)
+        ctx.fillText(value.toString(), x + calculatedBarWidth / 2, chartHeight - barHeight - 30)
       }
     })
 
-    // Dibujar gráfico circular con mejor estética
+    // Línea de base sutil
+    ctx.strokeStyle = "#374151"
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(margin / 2, chartHeight - 20)
+    ctx.lineTo(width - margin / 2, chartHeight - 20)
+    ctx.stroke()
+
+    // Dibujar gráfico circular con mejor estética para modo oscuro
     if (asesoresValores.length > 0) {
       const centerX = width * 0.6
       const centerY = height / 2
       const radius = Math.min(centerX - 30, centerY - 30)
       
-      // Paleta de colores más moderna
+      // Paleta de colores vibrantes para modo oscuro
       const colors = [
         "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444",
-        "#ec4899", "#8b5a2b", "#6b7280", "#84cc16", "#f97316",
-        "#6366f1", "#14b8a6", "#a855f7"
+        "#ec4899", "#84cc16", "#f97316", "#6366f1", "#14b8a6",
+        "#a855f7", "#22d3ee", "#fbbf24"
       ]
       
       let startAngle = 0
       const total = asesoresValores.reduce((acc, val) => acc + val, 0) || 1
 
-      // Dibujar sectores con efecto 3D
+      // Dibujar sectores con efecto brillante
       asesoresValores.forEach((value, index) => {
         const sliceAngle = (value / total) * 2 * Math.PI
         
         // Sombra del sector
         pieCtx.beginPath()
-        pieCtx.moveTo(centerX + 2, centerY + 2)
-        pieCtx.arc(centerX + 2, centerY + 2, radius, startAngle, startAngle + sliceAngle)
+        pieCtx.moveTo(centerX + 3, centerY + 3)
+        pieCtx.arc(centerX + 3, centerY + 3, radius, startAngle, startAngle + sliceAngle)
         pieCtx.closePath()
-        pieCtx.fillStyle = "rgba(0, 0, 0, 0.1)"
+        pieCtx.fillStyle = "rgba(0, 0, 0, 0.4)"
         pieCtx.fill()
         
         // Sector principal
@@ -343,15 +365,15 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         pieCtx.fillStyle = colors[index % colors.length]
         pieCtx.fill()
         
-        // Borde del sector
-        pieCtx.strokeStyle = "#ffffff"
-        pieCtx.lineWidth = 3
+        // Borde brillante
+        pieCtx.strokeStyle = "#1f2937"
+        pieCtx.lineWidth = 2
         pieCtx.stroke()
         
         startAngle += sliceAngle
       })
 
-      // Leyenda mejorada
+      // Leyenda mejorada para modo oscuro
       const legendStartX = 20
       const legendStartY = 30
       const legendItemHeight = 24
@@ -360,17 +382,17 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       asesoresNombres.slice(0, maxLegendItems).forEach((legend, index) => {
         const y = legendStartY + index * legendItemHeight
         
-        // Círculo de color en lugar de cuadrado
+        // Círculo de color con borde
         pieCtx.beginPath()
         pieCtx.arc(legendStartX + 6, y, 6, 0, 2 * Math.PI)
         pieCtx.fillStyle = colors[index % colors.length]
         pieCtx.fill()
-        pieCtx.strokeStyle = "#ffffff"
+        pieCtx.strokeStyle = "#374151"
         pieCtx.lineWidth = 2
         pieCtx.stroke()
         
-        // Texto del asesor
-        pieCtx.fillStyle = "#374151"
+        // Texto del asesor (colores para modo oscuro)
+        pieCtx.fillStyle = "#f9fafb"
         pieCtx.font = "bold 11px Inter, sans-serif"
         pieCtx.textAlign = "left"
         
@@ -381,8 +403,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         
         pieCtx.fillText(displayName, legendStartX + 18, y + 2)
         
-        // Número de ventas con estilo
-        pieCtx.fillStyle = "#6b7280"
+        // Número de ventas
+        pieCtx.fillStyle = "#d1d5db"
         pieCtx.font = "10px Inter, sans-serif"
         pieCtx.fillText(`${asesoresValores[index]} ventas`, legendStartX + 18, y + 14)
       })
@@ -422,85 +444,85 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
   return (
     <div className="space-y-6">
-      {/* Estadísticas destacadas */}
+      {/* Estadísticas destacadas - Modo oscuro */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+        <Card className="bg-gradient-to-br from-blue-900/40 to-blue-800/40 border-blue-500/30 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-blue-600" />
+              <TrendingUp className="h-5 w-5 text-blue-400" />
               <div>
-                <p className="text-sm font-medium text-blue-600">Total Ventas</p>
-                <p className="text-2xl font-bold text-blue-900">{estadisticas.totalVentas}</p>
+                <p className="text-sm font-medium text-blue-300">Total Ventas</p>
+                <p className="text-2xl font-bold text-blue-100">{estadisticas.totalVentas}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+        <Card className="bg-gradient-to-br from-green-900/40 to-green-800/40 border-green-500/30 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <CalendarDays className="h-5 w-5 text-green-600" />
+              <CalendarDays className="h-5 w-5 text-green-400" />
               <div>
-                <p className="text-sm font-medium text-green-600">Promedio</p>
-                <p className="text-2xl font-bold text-green-900">{estadisticas.promedioVentas}</p>
+                <p className="text-sm font-medium text-green-300">Promedio</p>
+                <p className="text-2xl font-bold text-green-100">{estadisticas.promedioVentas}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+        <Card className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 border-purple-500/30 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
+              <TrendingUp className="h-5 w-5 text-purple-400" />
               <div>
-                <p className="text-sm font-medium text-purple-600">Máximo</p>
-                <p className="text-2xl font-bold text-purple-900">{estadisticas.maxVentas}</p>
+                <p className="text-sm font-medium text-purple-300">Máximo</p>
+                <p className="text-2xl font-bold text-purple-100">{estadisticas.maxVentas}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+        <Card className="bg-gradient-to-br from-orange-900/40 to-orange-800/40 border-orange-500/30 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-orange-600" />
+              <Users className="h-5 w-5 text-orange-400" />
               <div>
-                <p className="text-sm font-medium text-orange-600">Asesores</p>
-                <p className="text-2xl font-bold text-orange-900">{estadisticas.totalAsesores}</p>
+                <p className="text-sm font-medium text-orange-300">Asesores</p>
+                <p className="text-2xl font-bold text-orange-100">{estadisticas.totalAsesores}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Gráficos principales */}
+      {/* Gráficos principales - Modo oscuro */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
+        <Card className="bg-gray-800/50 border-gray-600/50 backdrop-blur-sm shadow-2xl">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                <CardTitle className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                   {nombreCliente && nombreCliente !== "-" 
                     ? `Ventas de ${nombreCliente}` 
                     : "Cargando..."}
                 </CardTitle>
-                <CardDescription className="text-sm text-gray-600 mt-1">
+                <CardDescription className="text-sm text-gray-300 mt-1">
                   {getDescripcionPeriodo()}
                 </CardDescription>
               </div>
-              <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+              <Badge variant="secondary" className="bg-purple-900/50 text-purple-200 border-purple-600/50">
                 {datos.length} períodos
               </Badge>
             </div>
             
-            {/* Controles mejorados */}
+            {/* Controles mejorados para modo oscuro */}
             <div className="space-y-4 mt-4">
               <Tabs defaultValue="mensual" className="w-full" onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2 bg-gray-100">
-                  <TabsTrigger value="mensual" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <TabsList className="grid w-full grid-cols-2 bg-gray-700/50 border-gray-600">
+                  <TabsTrigger value="mensual" className="data-[state=active]:bg-gray-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-300">
                     📅 Por Meses
                   </TabsTrigger>
-                  <TabsTrigger value="semanal" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  <TabsTrigger value="semanal" className="data-[state=active]:bg-gray-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-300">
                     📊 Semanas ISO
                   </TabsTrigger>
                 </TabsList>
@@ -511,12 +533,12 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                   value={selectedYear.toString()} 
                   onValueChange={(value) => setSelectedYear(parseInt(value))}
                 >
-                  <SelectTrigger className="w-32 bg-white border-gray-200">
+                  <SelectTrigger className="w-32 bg-gray-700/50 border-gray-600 text-white">
                     <SelectValue placeholder="Año" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-gray-800 border-gray-600">
                     {yearsAvailable.map(year => (
-                      <SelectItem key={year} value={year.toString()}>
+                      <SelectItem key={year} value={year.toString()} className="text-white hover:bg-gray-700">
                         📅 {year}
                       </SelectItem>
                     ))}
@@ -529,7 +551,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                       variant="outline"
                       size="sm"
                       onClick={() => setShowFilters(!showFilters)}
-                      className="bg-white"
+                      className="bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600"
                     >
                       <Filter className="h-4 w-4 mr-1" />
                       Filtros
@@ -540,7 +562,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                         variant="outline"
                         size="sm"
                         onClick={resetFiltros}
-                        className="bg-white text-gray-600"
+                        className="bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-600"
                       >
                         <RotateCcw className="h-4 w-4 mr-1" />
                         Reset
@@ -550,52 +572,52 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                 )}
               </div>
               
-              {/* Panel de filtros expandible */}
+              {/* Panel de filtros expandible - Modo oscuro */}
               {activeTab === "semanal" && showFilters && (
-                <Card className="bg-blue-50 border-blue-200">
+                <Card className="bg-blue-900/30 border-blue-600/50 backdrop-blur-sm">
                   <CardContent className="p-4 space-y-3">
                     <div className="flex flex-wrap gap-2">
-                      <span className="text-sm font-medium text-blue-700">Filtros rápidos:</span>
-                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(1)} className="h-7 text-xs">
+                      <span className="text-sm font-medium text-blue-300">Filtros rápidos:</span>
+                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(1)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
                         Q1 (S1-13)
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(2)} className="h-7 text-xs">
+                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(2)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
                         Q2 (S14-26)
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(3)} className="h-7 text-xs">
+                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(3)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
                         Q3 (S27-39)
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(4)} className="h-7 text-xs">
+                      <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(4)} className="h-7 text-xs bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600">
                         Q4 (S40-{totalSemanasAño})
                       </Button>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs font-medium text-blue-700 block mb-1">Semana inicio:</label>
+                        <label className="text-xs font-medium text-blue-300 block mb-1">Semana inicio:</label>
                         <Select value={semanaInicio.toString()} onValueChange={(v) => setSemanaInicio(parseInt(v))}>
-                          <SelectTrigger className="h-8 bg-white">
+                          <SelectTrigger className="h-8 bg-gray-700/50 border-gray-600 text-white">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-gray-800 border-gray-600">
                             {Array.from({length: totalSemanasAño}, (_, i) => i + 1).map(week => (
-                              <SelectItem key={week} value={week.toString()}>S{week}</SelectItem>
+                              <SelectItem key={week} value={week.toString()} className="text-white hover:bg-gray-700">S{week}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       
                       <div>
-                        <label className="text-xs font-medium text-blue-700 block mb-1">Semana fin:</label>
+                        <label className="text-xs font-medium text-blue-300 block mb-1">Semana fin:</label>
                         <Select value={semanaFin.toString()} onValueChange={(v) => setSemanaFin(parseInt(v))}>
-                          <SelectTrigger className="h-8 bg-white">
+                          <SelectTrigger className="h-8 bg-gray-700/50 border-gray-600 text-white">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-gray-800 border-gray-600">
                             {Array.from({length: totalSemanasAño}, (_, i) => i + 1)
                               .filter(week => week >= semanaInicio)
                               .map(week => (
-                              <SelectItem key={week} value={week.toString()}>S{week}</SelectItem>
+                              <SelectItem key={week} value={week.toString()} className="text-white hover:bg-gray-700">S{week}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -611,12 +633,12 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
+        <Card className="bg-gray-800/50 border-gray-600/50 backdrop-blur-sm shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+            <CardTitle className="text-xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
               Distribución por Asesor
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-gray-300">
               {asesoresProcesados.length > 8 
                 ? `Top 7 asesores + otros (${asesoresProcesados.length - 1} total)`
                 : `${asesoresProcesados.length} asesores activos`
