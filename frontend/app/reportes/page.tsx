@@ -38,13 +38,13 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler)
 
 // 1. Clases base para todas las Card
-const cardBase = "transition-all duration-200 border border-slate-700/50 shadow-md hover:shadow-lg hover:-translate-y-0.5 hover:border-blue-500/50 hover:bg-opacity-90"
+const cardBase = "transition-all duration-200 border border-gray-700/70 shadow-2xl rounded-xl bg-gray-800/60 hover:shadow-2xl hover:-translate-y-0.5"
 // 2. Clases para highlight de métricas principales
 const metricHighlights = [
-  "bg-gradient-to-r from-blue-600 to-blue-400 border-t-4 border-blue-400",
-  "bg-gradient-to-r from-purple-600 to-purple-400 border-t-4 border-purple-400",
-  "bg-gradient-to-r from-cyan-600 to-cyan-400 border-t-4 border-cyan-400",
-  "bg-gradient-to-r from-pink-600 to-pink-400 border-t-4 border-pink-400"
+  "bg-gray-800/80 border-t-4 border-blue-700/60",
+  "bg-gray-800/80 border-t-4 border-purple-700/60",
+  "bg-gray-800/80 border-t-4 border-cyan-700/60",
+  "bg-gray-800/80 border-t-4 border-pink-700/60"
 ]
 
 // Componente HeatmapCell mejorado
@@ -333,7 +333,7 @@ export default function ReportesPage() {
             {/* Métricas principales */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               {[0,1,2,3].map(i => (
-                <Card key={i} className={`${cardBase} ${metricHighlights[i]} bg-slate-800/80 backdrop-blur-sm`}>
+                <Card key={i} className={`${cardBase} ${metricHighlights[i]}`}>
                   <CardContent className="p-6">
                     <div className="text-3xl font-bold text-white mb-2">
                       {i === 0 ? metrics?.totalSales ?? '-' :
@@ -700,13 +700,13 @@ export default function ReportesPage() {
                       onValueChange={(value) => setSelectedClient(String(value))}
                       disabled={Object.keys(clientIdToName).length === 0}
                     >
-                      <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
+                      <SelectTrigger className="bg-gray-900 border-gray-700 text-white focus:border-blue-500">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-600">
-                        <SelectItem value="all">Todos los clientes</SelectItem>
+                      <SelectContent className="bg-gray-800 border-gray-700">
+                        <SelectItem value="all" className="text-white hover:bg-gray-700">Todos los clientes</SelectItem>
                         {allClients.map((client) => (
-                          <SelectItem key={String(client.id)} value={String(client.id)}>
+                          <SelectItem key={String(client.id)} value={String(client.id)} className="text-white hover:bg-gray-700">
                             {client.name}
                           </SelectItem>
                         ))}
@@ -719,7 +719,7 @@ export default function ReportesPage() {
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="bg-slate-900 border-slate-600 text-white"
+                      className="bg-gray-900 border-gray-700 text-white focus:border-blue-500 placeholder:text-gray-400"
                     />
                   </div>
                   <div>
@@ -728,7 +728,7 @@ export default function ReportesPage() {
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="bg-slate-900 border-slate-600 text-white"
+                      className="bg-gray-900 border-gray-700 text-white focus:border-blue-500 placeholder:text-gray-400"
                     />
                   </div>
                 </div>
@@ -767,7 +767,7 @@ export default function ReportesPage() {
                           alert("Error al exportar: " + (err.message || err));
                         }
                       }}
-                      className="h-auto p-4 bg-slate-700/50 hover:bg-slate-600/50 border-2 border-slate-600 hover:border-blue-500 transition-all"
+                      className="h-auto p-4 bg-gray-800/60 hover:bg-gray-700 border-2 border-gray-700 hover:border-blue-500 transition-all rounded-xl text-white"
                     >
                       <div className="flex items-center gap-3">
                         <div
