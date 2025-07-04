@@ -15,6 +15,7 @@ export function DashboardCharts() {
   const { ventas, loading, error } = useVentas()
   const [hoveredPieIndex, setHoveredPieIndex] = useState<number | null>(null)
   const [tooltip, setTooltip] = useState<{x: number, y: number, label: string, value: number} | null>(null)
+  const [pieAnim, setPieAnim] = useState<{[k:number]: number}>({}) // para animación suave
 
   // Agrupar ventas por mes y por asesor
   const ventasPorMes = Array(12).fill(0)
@@ -143,18 +144,19 @@ export function DashboardCharts() {
     const total = asesoresValores.reduce((acc, val) => acc + val, 0) || 1
     asesoresValores.forEach((value, index) => {
       const sliceAngle = (value / total) * 2 * Math.PI
-      // Efecto hover: si está sobre este sector, agrandar y sombra
-      const isHovered = hoveredPieIndex === index
-      const r = isHovered ? radius + 10 : radius
-      const cx = isHovered ? centerX + Math.cos(startAngle + sliceAngle/2) * 8 : centerX
-      const cy = isHovered ? centerY + Math.sin(startAngle + sliceAngle/2) * 8 : centerY
-      // Sombra
-      if (isHovered) {
+      // Efecto hover: explosión radial + glow + opacidad
+      const anim = pieAnim[index] ?? 0
+      const r = radius + anim * 16
+      const cx = centerX + Math.cos(startAngle + sliceAngle/2) * anim * 12
+      const cy = centerY + Math.sin(startAngle + sliceAngle/2) * anim * 12
+      // Glow animado
+      if (anim > 0.01) {
         pieCtx.save()
-        pieCtx.shadowColor = "rgba(0,0,0,0.25)"
-        pieCtx.shadowBlur = 16
+        pieCtx.shadowColor = pastelColors[index % pastelColors.length]
+        pieCtx.shadowBlur = 24 * anim
       }
       // Sector principal
+      pieCtx.globalAlpha = hoveredPieIndex === null ? 1 : (hoveredPieIndex === index ? 1 : 0.35)
       pieCtx.beginPath()
       pieCtx.moveTo(cx, cy)
       pieCtx.arc(cx, cy, r, startAngle, startAngle + sliceAngle)
@@ -162,10 +164,11 @@ export function DashboardCharts() {
       pieCtx.fillStyle = pastelColors[index % pastelColors.length]
       pieCtx.fill()
       // Borde
-      pieCtx.strokeStyle = isHovered ? "#6366f1" : "#1f2937"
-      pieCtx.lineWidth = isHovered ? 4 : 2
+      pieCtx.strokeStyle = anim > 0.01 ? "#6366f1" : "#1f2937"
+      pieCtx.lineWidth = anim > 0.01 ? 4 : 2
       pieCtx.stroke()
-      if (isHovered) pieCtx.restore()
+      if (anim > 0.01) pieCtx.restore()
+      pieCtx.globalAlpha = 1
       startAngle += sliceAngle
     })
     // Leyenda
@@ -182,7 +185,8 @@ export function DashboardCharts() {
       pieCtx.strokeStyle = "#374151"
       pieCtx.lineWidth = 2
       pieCtx.stroke()
-      pieCtx.fillStyle = "#1e293b"
+      // Nombres y ventas siempre en blanco suave
+      pieCtx.fillStyle = "#f3f4f6"
       pieCtx.font = "bold 11px Inter, sans-serif"
       pieCtx.textAlign = "left"
       const maxNameLength = 14
@@ -190,7 +194,6 @@ export function DashboardCharts() {
         ? legend.substring(0, maxNameLength) + "..." 
         : legend
       pieCtx.fillText(displayName, legendStartX + 18, y + 2)
-      pieCtx.fillStyle = "#64748b"
       pieCtx.font = "10px Inter, sans-serif"
       pieCtx.fillText(`${asesoresValores[index]} ventas`, legendStartX + 18, y + 14)
     })
@@ -200,7 +203,27 @@ export function DashboardCharts() {
       pieCtx.font = "italic 10px Inter, sans-serif"
       pieCtx.fillText(`+${asesoresNombres.length - maxLegendItems} más...`, legendStartX, y + 2)
     }
-  }, [activeTab, ventas, hoveredPieIndex])
+  }, [activeTab, ventas, hoveredPieIndex, pieAnim])
+
+  useEffect(() => {
+    if (!pieChartRef.current) return () => {};
+    let raf: number | null = null
+    const animate = () => {
+      setPieAnim(prev => {
+        const next: {[k:number]: number} = {...prev}
+        for (let i = 0; i < asesoresValores.length; i++) {
+          const target = hoveredPieIndex === i ? 1 : 0
+          const current = prev[i] ?? 0
+          // animación spring
+          next[i] = current + (target - current) * 0.18
+        }
+        return next
+      })
+      raf = requestAnimationFrame(animate)
+    }
+    raf = requestAnimationFrame(animate)
+    return () => { if (raf) cancelAnimationFrame(raf) }
+  }, [hoveredPieIndex, asesoresValores.length])
 
   // Efecto hover: detectar sector con mouse
   useEffect(() => {
@@ -285,7 +308,7 @@ export function DashboardCharts() {
           <div className="relative">
             <canvas ref={pieChartRef} width={500} height={300} className="w-full rounded-lg cursor-pointer"></canvas>
             {tooltip && (
-              <div style={{position: 'fixed', left: tooltip.x + 12, top: tooltip.y + 12, zIndex: 50, pointerEvents: 'none'}} className="bg-gray-900/90 text-white text-xs px-3 py-2 rounded-lg shadow-lg border border-blue-400/40">
+              <div style={{position: 'fixed', left: tooltip.x + 12, top: tooltip.y + 12, zIndex: 50, pointerEvents: 'none', opacity: 1, transform: 'translateY(0px)', transition: 'opacity 0.18s, transform 0.18s'}} className="backdrop-blur-md bg-gray-900/80 text-white text-xs px-3 py-2 rounded-xl shadow-2xl border border-blue-400/40 animate-fade-in">
                 <div className="font-bold">{tooltip.label}</div>
                 <div>{tooltip.value} ventas</div>
               </div>
