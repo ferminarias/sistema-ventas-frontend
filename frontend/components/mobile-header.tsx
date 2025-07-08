@@ -3,13 +3,15 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, FileSpreadsheet, Home, Menu, Plus, Settings, X } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { BarChart3, FileSpreadsheet, Home, Menu, Plus, Settings, X, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 export function MobileHeader() {
   const pathname = usePathname()
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
 
   return (
@@ -93,8 +95,22 @@ export function MobileHeader() {
                     Nueva Venta
                   </Link>
                 </Button>
+                {/* Administrador de Ventas */}
+                {user && (user.role === "admin" || user.role === "supervisor") && (
+                  <Button
+                    asChild
+                    variant={pathname === "/admin-ventas" ? "default" : "ghost"}
+                    className="justify-start"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Link href="/admin-ventas">
+                      <Shield className="mr-2 h-4 w-4" />
+                      Administrador de Ventas
+                    </Link>
+                  </Button>
+                )}
                 <Button asChild variant="ghost" className="justify-start" onClick={() => setOpen(false)}>
-                  <Link href="#">
+                  <Link href="/reportes">
                     <FileSpreadsheet className="mr-2 h-4 w-4" />
                     Reportes
                   </Link>

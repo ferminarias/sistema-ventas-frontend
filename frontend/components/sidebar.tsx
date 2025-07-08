@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart3, FileSpreadsheet, Home, Plus, Settings, Users, LogOut, UserCog, Building2, Moon, UserPlus, FileSearch } from "lucide-react"
+import { BarChart3, FileSpreadsheet, Home, Plus, Settings, Users, LogOut, UserCog, Building2, Moon, UserPlus, FileSearch, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -156,6 +156,20 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                 Nueva Venta
               </Link>
             </Button>
+
+            {/* Administrador de Ventas */}
+            {(user.role === "admin" || user.role === "supervisor") && (
+              <Button 
+                asChild 
+                variant={pathname === "/admin-ventas" ? "default" : "ghost"} 
+                className="w-full justify-start"
+              >
+                <Link href="/admin-ventas">
+                  <Shield className="mr-2 h-4 w-4" />
+                  Administrador de Ventas
+                </Link>
+              </Button>
+            )}
 
             {/* Administración desplegable */}
             {user.role === "admin" && (
