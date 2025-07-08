@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useEffect, useRef, useState } from "react"
 import { useVentas } from "@/hooks/useVentas"
-import type { Venta } from "@/lib/api"
+// Tipo local para ventas - compatible con el hook useVentas
 
 // Simulamos la importación de Chart.js
 // En un proyecto real, usaríamos Chart.js o una librería similar
@@ -20,7 +20,7 @@ export function DashboardCharts() {
   const ventasPorSemana = Array(7).fill(0)
   const ventasPorAsesor: Record<string, number> = {}
 
-  ventas.forEach((v: Venta) => {
+  ventas.forEach((v: any) => {
     const fecha = new Date(v.fecha_venta || v.fecha)
     if (isNaN(fecha.getTime())) return // Validar fecha válida
     
@@ -109,9 +109,9 @@ export function DashboardCharts() {
 
     // Dibujar gráfico circular mejorado
     if (asesoresValores.length > 0) {
-      const centerX = width * 0.6 // Mover el centro hacia la derecha para dar espacio a la leyenda
+      const centerX = width * 0.52 // Mejor centrado - balance perfecto entre círculo y leyenda
       const centerY = height / 2
-      const radius = Math.min(centerX - 20, centerY - 20)
+      const radius = Math.min(centerX - 15, centerY - 15)
       
       // Paleta de colores más amplia y distintiva
       const colors = [
@@ -142,49 +142,49 @@ export function DashboardCharts() {
       })
 
       // Dibujar leyenda mejorada en el lado izquierdo
-      const legendStartX = 15
-      const legendStartY = 30
-      const legendItemHeight = 22
+      const legendStartX = 12
+      const legendStartY = 25
+      const legendItemHeight = 20
       const maxLegendItems = Math.min(asesoresNombres.length, 10)
 
-      asesoresNombres.slice(0, maxLegendItems).forEach((legend, index) => {
-        const y = legendStartY + index * legendItemHeight
-        
-        // Cuadrado de color
-        pieCtx.fillStyle = colors[index % colors.length]
-        pieCtx.fillRect(legendStartX, y - 8, 12, 12)
-        
-        // Borde del cuadrado
-        pieCtx.strokeStyle = "#ffffff"
-        pieCtx.lineWidth = 1
-        pieCtx.strokeRect(legendStartX, y - 8, 12, 12)
-        
-        // Texto del asesor
-        pieCtx.fillStyle = "#374151"
-        pieCtx.font = "11px sans-serif"
-        pieCtx.textAlign = "left"
-        
-        // Truncar nombre si es muy largo
-        const maxNameLength = 15
-        const displayName = legend.length > maxNameLength 
-          ? legend.substring(0, maxNameLength) + "..." 
-          : legend
-        
-        pieCtx.fillText(displayName, legendStartX + 18, y + 2)
-        
-        // Número de ventas
-        pieCtx.fillStyle = "#6b7280"
-        pieCtx.font = "10px sans-serif"
-        pieCtx.fillText(`(${asesoresValores[index]})`, legendStartX + 18, y + 14)
-      })
+              asesoresNombres.slice(0, maxLegendItems).forEach((legend, index) => {
+          const y = legendStartY + index * legendItemHeight
+          
+          // Cuadrado de color - ligeramente más pequeño
+          pieCtx.fillStyle = colors[index % colors.length]
+          pieCtx.fillRect(legendStartX, y - 6, 10, 10)
+          
+          // Borde del cuadrado
+          pieCtx.strokeStyle = "#ffffff"
+          pieCtx.lineWidth = 1
+          pieCtx.strokeRect(legendStartX, y - 6, 10, 10)
+          
+          // Texto del asesor
+          pieCtx.fillStyle = "#374151"
+          pieCtx.font = "11px sans-serif"
+          pieCtx.textAlign = "left"
+          
+          // Truncar nombre si es muy largo
+          const maxNameLength = 16  // Un carácter más para mejor lectura
+          const displayName = legend.length > maxNameLength 
+            ? legend.substring(0, maxNameLength) + "..." 
+            : legend
+          
+          pieCtx.fillText(displayName, legendStartX + 16, y + 2)
+          
+          // Número de ventas
+          pieCtx.fillStyle = "#6b7280"
+          pieCtx.font = "10px sans-serif"
+          pieCtx.fillText(`(${asesoresValores[index]})`, legendStartX + 16, y + 12)
+        })
 
-      // Si hay más elementos, mostrar indicador
-      if (asesoresNombres.length > maxLegendItems) {
-        const y = legendStartY + maxLegendItems * legendItemHeight
-        pieCtx.fillStyle = "#9ca3af"
-        pieCtx.font = "10px sans-serif"
-        pieCtx.fillText(`+${asesoresNombres.length - maxLegendItems} más...`, legendStartX, y + 2)
-      }
+              // Si hay más elementos, mostrar indicador
+        if (asesoresNombres.length > maxLegendItems) {
+          const y = legendStartY + maxLegendItems * legendItemHeight
+          pieCtx.fillStyle = "#9ca3af"
+          pieCtx.font = "10px sans-serif"
+          pieCtx.fillText(`+${asesoresNombres.length - maxLegendItems} más...`, legendStartX + 16, y + 2)
+        }
     } else {
       // Mostrar mensaje cuando no hay datos
       pieCtx.fillStyle = "#9ca3af"

@@ -138,9 +138,9 @@ export function DashboardCharts() {
 
     // === PIE CHART ESTILO CLIENTES ===
     pieCtx.clearRect(0, 0, width, height)
-    const centerX = width * 0.6
+    const centerX = width * 0.52  // Mejor centrado - balance perfecto entre círculo y leyenda
     const centerY = height / 2
-    const radius = Math.min(centerX - 30, centerY - 30)
+    const radius = Math.min(centerX - 25, centerY - 25)
     let startAngle = 0
     const total = asesoresValores.reduce((acc, val) => acc + val, 0) || 1
     asesoresValores.forEach((value, index) => {
@@ -172,38 +172,38 @@ export function DashboardCharts() {
       pieCtx.globalAlpha = 1
       startAngle += sliceAngle
     })
-    // Leyenda
-    const legendStartX = 20
-    const legendStartY = 30
-    const legendItemHeight = 24
+    // Leyenda - mejor posicionada con el nuevo centrado
+    const legendStartX = 15
+    const legendStartY = 25
+    const legendItemHeight = 22
     const maxLegendItems = Math.min(asesoresNombres.length, 9)
-    asesoresNombres.slice(0, maxLegendItems).forEach((legend, index) => {
-      const y = legendStartY + index * legendItemHeight
-      pieCtx.beginPath()
-      pieCtx.arc(legendStartX + 6, y, 6, 0, 2 * Math.PI)
-      pieCtx.fillStyle = pastelColors[index % pastelColors.length]
-      pieCtx.fill()
-      pieCtx.strokeStyle = "#374151"
-      pieCtx.lineWidth = 2
-      pieCtx.stroke()
-      // Nombres y ventas siempre en blanco suave
-      pieCtx.fillStyle = "#f3f4f6"
-      pieCtx.font = "bold 11px Inter, sans-serif"
-      pieCtx.textAlign = "left"
-      const maxNameLength = 14
-      const displayName = legend.length > maxNameLength 
-        ? legend.substring(0, maxNameLength) + "..." 
-        : legend
-      pieCtx.fillText(displayName, legendStartX + 18, y + 2)
-      pieCtx.font = "10px Inter, sans-serif"
-      pieCtx.fillText(`${asesoresValores[index]} ventas`, legendStartX + 18, y + 14)
-    })
-    if (asesoresNombres.length > maxLegendItems) {
-      const y = legendStartY + maxLegendItems * legendItemHeight
-      pieCtx.fillStyle = "#9ca3af"
-      pieCtx.font = "italic 10px Inter, sans-serif"
-      pieCtx.fillText(`+${asesoresNombres.length - maxLegendItems} más...`, legendStartX, y + 2)
-    }
+          asesoresNombres.slice(0, maxLegendItems).forEach((legend, index) => {
+        const y = legendStartY + index * legendItemHeight
+        pieCtx.beginPath()
+        pieCtx.arc(legendStartX + 5, y, 5, 0, 2 * Math.PI)  // Círculo ligeramente más pequeño
+        pieCtx.fillStyle = pastelColors[index % pastelColors.length]
+        pieCtx.fill()
+        pieCtx.strokeStyle = "#374151"
+        pieCtx.lineWidth = 1.5
+        pieCtx.stroke()
+        // Nombres y ventas siempre en blanco suave
+        pieCtx.fillStyle = "#f3f4f6"
+        pieCtx.font = "bold 11px Inter, sans-serif"
+        pieCtx.textAlign = "left"
+        const maxNameLength = 15  // Un carácter más para mejor lectura
+        const displayName = legend.length > maxNameLength 
+          ? legend.substring(0, maxNameLength) + "..." 
+          : legend
+        pieCtx.fillText(displayName, legendStartX + 16, y + 2)
+        pieCtx.font = "10px Inter, sans-serif"
+        pieCtx.fillText(`${asesoresValores[index]} ventas`, legendStartX + 16, y + 13)
+      })
+          if (asesoresNombres.length > maxLegendItems) {
+        const y = legendStartY + maxLegendItems * legendItemHeight
+        pieCtx.fillStyle = "#9ca3af"
+        pieCtx.font = "italic 10px Inter, sans-serif"
+        pieCtx.fillText(`+${asesoresNombres.length - maxLegendItems} más...`, legendStartX + 16, y + 2)
+      }
   }, [activeTab, ventas, hoveredPieIndex, pieAnim])
 
   useEffect(() => {
@@ -234,9 +234,9 @@ export function DashboardCharts() {
       const rect = canvas.getBoundingClientRect()
       const x = (e.clientX - rect.left) * (canvas.width / rect.width)
       const y = (e.clientY - rect.top) * (canvas.height / rect.height)
-      const centerX = canvas.width * 0.6
+      const centerX = canvas.width * 0.52  // Coincide con el centrado del gráfico
       const centerY = canvas.height / 2
-      const radius = Math.min(centerX - 30, centerY - 30)
+      const radius = Math.min(centerX - 25, centerY - 25)
       let startAngle = 0
       const total = asesoresValores.reduce((acc, val) => acc + val, 0) || 1
       let found = null

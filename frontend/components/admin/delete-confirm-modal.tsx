@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { X, AlertTriangle, Trash2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { X, AlertTriangle, Trash2, CheckCircle } from 'lucide-react'
 import { type VentaAdmin } from '@/services/admin-ventas-service'
 import { RailwayLoader } from '@/components/ui/railway-loader'
 
@@ -16,11 +17,30 @@ interface Props {
 
 export function DeleteConfirmModal({ venta, onConfirm, onClose }: Props) {
   const [loading, setLoading] = useState(false)
+  const [textoConfirmacion, setTextoConfirmacion] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  
+  const TEXTO_REQUERIDO = 'ELIMINAR'
+  const textoEsCorrecto = textoConfirmacion === TEXTO_REQUERIDO
+
+  // Auto-enfocar el input al abrir el modal
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus()
+      }
+    }, 300) // Pequeño delay para que la animación termine
+    
+    return () => clearTimeout(timer)
+  }, [])
 
   const handleConfirm = async () => {
+    if (!textoEsCorrecto) return
+    
     setLoading(true)
     try {
       await onConfirm()
+      setTextoConfirmacion('') // Limpiar input después del éxito
     } finally {
       setLoading(false)
     }
@@ -114,18 +134,85 @@ export function DeleteConfirmModal({ venta, onConfirm, onClose }: Props) {
               </AlertDescription>
             </Alert>
 
+            {/* Confirmación por tipeo - Doble verificación */}
+            <div className="bg-gray-700/30 border border-gray-600 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1 bg-orange-900/20 rounded">
+                  <AlertTriangle className="h-4 w-4 text-orange-400" />
+                </div>
+                <span className="text-white font-medium">Confirmación de Seguridad</span>
+              </div>
+              
+              <p className="text-gray-300 text-sm">
+                Para confirmar la eliminación, escribe <code className="bg-gray-600 px-2 py-1 rounded text-white font-mono">{TEXTO_REQUERIDO}</code> en el campo de abajo:
+              </p>
+              
+              <div className="relative">
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  placeholder={`Escribe "${TEXTO_REQUERIDO}" para confirmar`}
+                  value={textoConfirmacion}
+                  onChange={(e) => setTextoConfirmacion(e.target.value.toUpperCase())}
+                  disabled={loading}
+                  className={`bg-gray-700 border transition-all duration-200 text-white placeholder-gray-400 focus:ring-2 ${
+                    textoConfirmacion.length > 0
+                      ? textoEsCorrecto
+                        ? 'border-green-500 focus:border-green-400 focus:ring-green-500/20'
+                        : 'border-red-500 focus:border-red-400 focus:ring-red-500/20'
+                      : 'border-gray-600 focus:border-purple-500 focus:ring-purple-500/20'
+                  }`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && textoEsCorrecto) {
+                      handleConfirm()
+                    }
+                  }}
+                />
+                {textoConfirmacion.length > 0 && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    {textoEsCorrecto ? (
+                      <CheckCircle className="h-4 w-4 text-green-400" />
+                    ) : (
+                      <X className="h-4 w-4 text-red-400" />
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {textoConfirmacion.length > 0 && !textoEsCorrecto && (
+                <p className="text-red-400 text-xs flex items-center gap-1">
+                  <X className="h-3 w-3" />
+                  El texto no coincide. Debe escribir exactamente "{TEXTO_REQUERIDO}"
+                </p>
+              )}
+              
+              {textoEsCorrecto && (
+                <p className="text-green-400 text-xs flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  ✓ Confirmación correcta. Ya puedes eliminar la venta.
+                </p>
+              )}
+            </div>
+
             {/* Botones de acción */}
             <div className="flex gap-3 pt-2">
               <Button
                 onClick={handleConfirm}
-                disabled={loading}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                disabled={loading || !textoEsCorrecto}
+                className={`flex-1 transition-all duration-200 ${
+                  textoEsCorrecto 
+                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20' 
+                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                }`}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                {loading ? "Eliminando..." : "Sí, Eliminar"}
+                {loading ? "Eliminando..." : textoEsCorrecto ? "✓ Eliminar Venta" : "🔒 Escribe confirmación"}
               </Button>
               <Button
-                onClick={onClose}
+                onClick={() => {
+                  setTextoConfirmacion('')
+                  onClose()
+                }}
                 variant="outline"
                 disabled={loading}
                 className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
