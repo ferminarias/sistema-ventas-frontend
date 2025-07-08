@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowDown, ArrowUp, DollarSign, ShoppingCart, Users } from "lucide-react"
 import { useVentas } from "@/hooks/useVentas"
+import { RailwayLoader } from "@/components/ui/railway-loader"
 
 export function VentasStats() {
   const { ventas, loading, error } = useVentas()
@@ -40,7 +41,30 @@ export function VentasStats() {
     },
   ]
 
-  if (loading) return <div>Cargando métricas...</div>
+  if (loading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="bg-gray-800 border-gray-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="h-4 bg-gray-700 rounded w-24 animate-pulse" />
+              <div className="h-4 w-4 bg-gray-700 rounded animate-pulse" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="h-8 bg-gray-600 rounded w-16 animate-pulse" />
+                <div className="h-3 bg-gray-700 rounded w-32 animate-pulse" />
+              </div>
+              <div className="mt-4">
+                <RailwayLoader size="sm" showText={false} />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+  
   if (error) return <div className="text-red-500">{error}</div>
 
   return (

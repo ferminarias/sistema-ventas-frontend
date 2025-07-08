@@ -22,6 +22,7 @@ import {
 import { Line, Bar, Scatter } from "react-chartjs-2"
 import { analyticsService } from "@/services/analytics-service"
 import { Loader2, ArrowLeft } from "lucide-react"
+import { RailwayLoader } from "@/components/ui/railway-loader"
 import {
   Tooltip as UiTooltip,
   TooltipTrigger,
@@ -355,8 +356,8 @@ export default function ReportesPage() {
             {/* Gráfico de tendencia de ventas */}
             <Card className={`${cardBase} mb-6 relative`}>
               {loading && (
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
+                  <RailwayLoader size="lg" text="Generando gráfico de tendencias..." />
                 </div>
               )}
               <CardHeader>
@@ -389,8 +390,10 @@ export default function ReportesPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
-                  {salesTrendData ? (
+                <div className="h-80 flex items-center justify-center">
+                  {loading ? (
+                    <RailwayLoader size="lg" text="Generando gráfico de tendencias..." />
+                  ) : salesTrendData ? (
                     <Line ref={lineChartRef} data={salesTrendData} options={salesTrendOptions} />
                   ) : (
                     <div className="text-center text-slate-400">No hay datos de ventas</div>
@@ -402,8 +405,8 @@ export default function ReportesPage() {
             {/* Distribución horaria */}
             <Card className={`${cardBase} mb-6 relative`}>
               {loading && (
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
+                  <RailwayLoader size="lg" text="Analizando distribución horaria..." />
                 </div>
               )}
               <CardHeader>
@@ -423,8 +426,10 @@ export default function ReportesPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
-                  {hourlyDistribution && hourlyDistribution.labels && hourlyDistribution.sales ? (
+                <div className="h-80 flex items-center justify-center">
+                  {loading ? (
+                    <RailwayLoader size="lg" text="Analizando distribución horaria..." />
+                  ) : hourlyDistribution && hourlyDistribution.labels && hourlyDistribution.sales ? (
                     <Bar
                       ref={barChartRef}
                       data={{
@@ -453,8 +458,8 @@ export default function ReportesPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <Card className={`${cardBase} relative`}>
                 {loading && (
-                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                    <Loader2 className="h-8 w-8 text-white animate-spin" />
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
+                    <RailwayLoader size="md" text="Cargando asesores..." />
                   </div>
                 )}
                 <CardHeader>
@@ -493,8 +498,8 @@ export default function ReportesPage() {
 
               <Card className={`${cardBase} relative`}>
                 {loading && (
-                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                    <Loader2 className="h-8 w-8 text-white animate-spin" />
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
+                    <RailwayLoader size="md" text="Cargando especialistas..." />
                   </div>
                 )}
                 <CardHeader>
@@ -532,8 +537,8 @@ export default function ReportesPage() {
             {/* Top Clientes */}
             <Card className={`${cardBase} relative`}>
               {loading && (
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
+                  <RailwayLoader size="md" text="Analizando clientes..." />
                 </div>
               )}
               <CardHeader>
@@ -568,16 +573,16 @@ export default function ReportesPage() {
             </Card>
 
             {/* Pipeline de ventas */}
-            <Card className={`${cardBase} relative`}>
-              {loading && (
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
-                </div>
-              )}
-              <CardHeader>
-                <CardTitle className="text-white">Pipeline de Ventas</CardTitle>
-                <div className="text-slate-400">Estado actual del embudo de conversión</div>
-              </CardHeader>
+                          <Card className={`${cardBase} relative`}>
+                {loading && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
+                    <RailwayLoader size="lg" text="Generando pipeline..." />
+                  </div>
+                )}
+                <CardHeader>
+                  <CardTitle className="text-white">Pipeline de Ventas</CardTitle>
+                  <div className="text-slate-400">Estado actual del embudo de conversión</div>
+                </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   {pipeline && [
@@ -600,8 +605,8 @@ export default function ReportesPage() {
             {/* Mapa de calor */}
             <Card className={`${cardBase} relative`}>
               {loading && (
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-10 rounded-lg">
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
+                  <RailwayLoader size="lg" text="Generando mapa de calor..." />
                 </div>
               )}
               <CardHeader>

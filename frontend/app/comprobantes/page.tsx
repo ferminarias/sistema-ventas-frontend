@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/auth-context"
 import type { ComprobanteFilters } from "@/types/comprobante"
 import { FileSearch, AlertCircle, RefreshCw, Download, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { RailwayLoader } from "@/components/ui/railway-loader"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 
@@ -58,10 +59,7 @@ export default function BusquedaComprobantesPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Verificando permisos...</p>
-        </div>
+        <RailwayLoader size="lg" text="Verificando permisos..." />
       </div>
     )
   }

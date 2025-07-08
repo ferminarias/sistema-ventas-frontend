@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Loader2 } from "lucide-react"
+import { RailwayLoader } from "@/components/ui/railway-loader"
 import { ClientFieldsManagement } from "@/components/admin/client-fields-management"
 
 export default function ClientFieldsPage() {
@@ -55,8 +56,7 @@ export default function ClientFieldsPage() {
     return (
       <div className="container mx-auto py-6">
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Cargando cliente...</span>
+          <RailwayLoader size="md" text="Cargando configuración del cliente..." />
         </div>
       </div>
     )

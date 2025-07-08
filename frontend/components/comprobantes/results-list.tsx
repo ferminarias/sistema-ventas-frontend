@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Eye, Download, FileText, Calendar, User, CreditCard, Settings, X } from "lucide-react"
+import { RailwayLoader } from "@/components/ui/railway-loader"
 import type { Comprobante, ArchivoComprobante } from "@/types/comprobante"
 import { FilePreview } from "./file-preview"
 import { comprobantesService } from "@/services/comprobantes"
@@ -68,22 +69,68 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="bg-gray-700 border border-gray-600 rounded-lg p-4 animate-pulse">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2 flex-1">
-                <div className="h-4 bg-gray-600 rounded w-1/4"></div>
-                <div className="h-3 bg-gray-600 rounded w-1/3"></div>
+      <div className="space-y-4">
+        <div className="text-center py-8">
+          <RailwayLoader size="lg" text="Buscando comprobantes..." />
+        </div>
+        
+        {/* Skeleton para los resultados */}
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 space-y-3">
+                  {/* Header skeleton */}
+                  <div className="flex items-center gap-3">
+                    <div className="h-6 bg-gray-600 rounded w-48 animate-pulse"></div>
+                    <div className="h-6 bg-blue-600/30 rounded w-16 animate-pulse"></div>
+                  </div>
+                  
+                  {/* Info skeleton */}
+                  <div className="flex items-center gap-6">
+                    <div className="h-4 bg-gray-600 rounded w-24 animate-pulse"></div>
+                    <div className="h-4 bg-gray-600 rounded w-32 animate-pulse"></div>
+                    <div className="h-4 bg-gray-600 rounded w-28 animate-pulse"></div>
+                  </div>
+                  
+                  {/* Contact skeleton */}
+                  <div className="h-3 bg-gray-600 rounded w-64 animate-pulse"></div>
+                  
+                  {/* Files skeleton */}
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-600 rounded w-32 animate-pulse"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {[1, 2].map((j) => (
+                        <div key={j} className="bg-gray-800 border border-gray-600 rounded-lg p-3">
+                          <div className="h-32 bg-gray-600 rounded mb-2 animate-pulse"></div>
+                          <div className="space-y-1">
+                            <div className="h-3 bg-gray-600 rounded w-full animate-pulse"></div>
+                            <div className="h-3 bg-gray-600 rounded w-2/3 animate-pulse"></div>
+                            <div className="flex gap-1 mt-2">
+                              <div className="h-6 bg-gray-600 rounded w-12 animate-pulse"></div>
+                              <div className="h-6 bg-gray-600 rounded w-16 animate-pulse"></div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Action buttons skeleton */}
+                <div className="flex flex-col gap-2">
+                  <div className="h-8 bg-gray-600 rounded w-20 animate-pulse"></div>
+                  <div className="h-8 bg-gray-600 rounded w-16 animate-pulse"></div>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <div className="h-8 w-16 bg-gray-600 rounded"></div>
-                <div className="h-8 w-20 bg-gray-600 rounded"></div>
-                <div className="h-8 w-8 bg-gray-600 rounded"></div>
+              
+              {/* Mini railway loader per card */}
+              <div className="mt-4 flex justify-center">
+                <RailwayLoader size="sm" showText={false} />
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     )
   }

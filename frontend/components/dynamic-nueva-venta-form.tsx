@@ -14,6 +14,7 @@ import { DynamicField } from "@/components/ui/dynamic-field"
 import { clientFieldsService, type ClientField } from "@/services/client-fields-service"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
+import { RailwayLoader } from "@/components/ui/railway-loader"
 
 export function DynamicNuevaVentaForm() {
   const { toast } = useToast()
@@ -332,8 +333,7 @@ export function DynamicNuevaVentaForm() {
           <CardContent>
             {loadingFields ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <span className="ml-2">Cargando campos...</span>
+                <RailwayLoader size="md" text="Cargando campos del formulario..." />
               </div>
             ) : (() => {
               console.log(`🔍 Decidiendo qué mostrar - clientFields.length: ${clientFields.length}`)

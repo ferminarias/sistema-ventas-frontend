@@ -122,15 +122,6 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
                 {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
               </Button>
             </form>
-
-            <div className="mt-6 p-4 bg-gray-700 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-300 mb-2">Credenciales de prueba:</h4>
-              <div className="space-y-2 text-xs text-gray-400">
-                <div>
-                  <strong className="text-purple-400">Admin:</strong> admin@nods.com / admin123
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

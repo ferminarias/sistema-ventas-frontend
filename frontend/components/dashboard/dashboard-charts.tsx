@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useEffect, useRef, useState } from "react"
 import { useVentas } from "@/hooks/useVentas"
+import { RailwayLoader } from "@/components/ui/railway-loader"
 
 // Simulamos la importación de Chart.js
 // En un proyecto real, usaríamos Chart.js o una librería similar
@@ -274,7 +275,29 @@ export function DashboardCharts() {
     }
   }, [asesoresNombres, asesoresValores])
 
-  if (loading) return <div>Cargando gráficos...</div>
+  if (loading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        {[1, 2].map((i) => (
+          <Card key={i} className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <div className="space-y-2">
+                <div className="h-6 bg-gray-700 rounded w-32 animate-pulse" />
+                <div className="h-4 bg-gray-700 rounded w-48 animate-pulse" />
+              </div>
+              <div className="h-10 bg-gray-700 rounded w-40 animate-pulse mt-4" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 bg-gray-700/30 rounded-lg flex items-center justify-center">
+                <RailwayLoader size="lg" text={i === 1 ? "Cargando gráfico de ventas..." : "Cargando distribución por asesor..."} />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+  
   if (error) return <div className="text-red-500">{error}</div>
 
   return (
