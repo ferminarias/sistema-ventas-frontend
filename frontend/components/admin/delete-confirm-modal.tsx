@@ -14,7 +14,7 @@ interface Props {
   onClose: () => void
 }
 
-export default function DeleteConfirmModal({ venta, onConfirm, onClose }: Props) {
+export function DeleteConfirmModal({ venta, onConfirm, onClose }: Props) {
   const [loading, setLoading] = useState(false)
 
   const handleConfirm = async () => {

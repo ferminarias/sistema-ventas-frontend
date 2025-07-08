@@ -18,7 +18,7 @@ interface Props {
   onClose: () => void
 }
 
-export default function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: Props) {
+export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: Props) {
   const [formData, setFormData] = useState({
     nombre: venta.nombre,
     apellido: venta.apellido,

@@ -13,8 +13,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Search, RotateCcw, Edit, Trash2, Users, FileText, BarChart3 } from 'lucide-react'
 import { RailwayLoader } from '@/components/ui/railway-loader'
-import EditVentaModal from '@/components/admin/edit-venta-modal'
-import DeleteConfirmModal from '@/components/admin/delete-confirm-modal'
+import dynamic from 'next/dynamic'
+
+// Importar modales de forma lazy para evitar errores de hidratación
+const EditVentaModal = dynamic(() => import('@/components/admin/edit-venta-modal').then(mod => ({ default: mod.EditVentaModal })), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><RailwayLoader size="md" text="Cargando modal..." /></div>
+})
+
+const DeleteConfirmModal = dynamic(() => import('@/components/admin/delete-confirm-modal').then(mod => ({ default: mod.DeleteConfirmModal })), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><RailwayLoader size="md" text="Cargando modal..." /></div>
+})
 
 export default function AdminVentasPage() {
   const router = useRouter()
@@ -28,10 +38,10 @@ export default function AdminVentasPage() {
   const [loading, setLoading] = useState(true)
   const [clientes, setClientes] = useState<any[]>([])
   
-  // Estados para filtros
+  // Estados para filtros - valores iniciales limpios para evitar React error #31
   const [filtros, setFiltros] = useState({
     busqueda: '',
-    cliente_id: '',
+    cliente_id: 'all',
     asesor: '',
     fecha_inicio: '',
     fecha_fin: '',
@@ -67,18 +77,32 @@ export default function AdminVentasPage() {
     }
   }, [user, authLoading, router, toast])
 
-  // Cargar datos iniciales
+  // Cargar datos iniciales una sola vez
   useEffect(() => {
     if (user && (user.role === 'admin' || user.role === 'supervisor')) {
       cargarDatos()
       cargarClientes()
     }
-  }, [filtros, user])
+  }, [user])
+
+  // Recargar solo ventas cuando cambian filtros
+  useEffect(() => {
+    if (user && (user.role === 'admin' || user.role === 'supervisor')) {
+      cargarDatos()
+    }
+  }, [filtros])
 
   const cargarDatos = async () => {
     try {
       setLoading(true)
-      const response = await adminVentasService.getVentasAdmin(filtros)
+      
+      // Preparar filtros - convertir "all" a undefined para evitar errores
+      const filtrosLimpios = {
+        ...filtros,
+        cliente_id: filtros.cliente_id === 'all' ? undefined : Number(filtros.cliente_id)
+      }
+      
+      const response = await adminVentasService.getVentasAdmin(filtrosLimpios)
       setVentas(response.ventas)
       setPagination(response.pagination)
       setStats(response.stats)
@@ -89,7 +113,6 @@ export default function AdminVentasPage() {
         description: error.message || "Error al cargar ventas",
         variant: "destructive",
       })
-      console.error(error)
     } finally {
       setLoading(false)
     }
@@ -153,15 +176,16 @@ export default function AdminVentasPage() {
   }
 
   const handleLimpiarFiltros = () => {
-    setFiltros({
+    const filtrosLimpios = {
       busqueda: '',
-      cliente_id: '',
+      cliente_id: 'all',
       asesor: '',
       fecha_inicio: '',
       fecha_fin: '',
       page: 1,
       limit: 20
-    })
+    }
+    setFiltros(filtrosLimpios)
   }
 
   // Mostrar loading mientras se verifica autenticación
@@ -267,17 +291,17 @@ export default function AdminVentasPage() {
             />
             
             <Select
-              value={filtros.cliente_id}
+              value={String(filtros.cliente_id)}
               onValueChange={(value) => setFiltros({...filtros, cliente_id: value, page: 1})}
             >
               <SelectTrigger className="bg-gray-700 border-gray-600 text-white focus:border-purple-500">
                 <SelectValue placeholder="Todos los clientes" />
               </SelectTrigger>
               <SelectContent className="bg-gray-700 border-gray-600">
-                <SelectItem value="" className="text-white hover:bg-gray-600">Todos los clientes</SelectItem>
+                <SelectItem value="all" className="text-white hover:bg-gray-600">Todos los clientes</SelectItem>
                 {clientes.map(cliente => (
-                  <SelectItem key={cliente.id} value={cliente.id.toString()} className="text-white hover:bg-gray-600">
-                    {cliente.name}
+                  <SelectItem key={String(cliente.id)} value={String(cliente.id)} className="text-white hover:bg-gray-600">
+                    {String(cliente.name)}
                   </SelectItem>
                 ))}
               </SelectContent>
