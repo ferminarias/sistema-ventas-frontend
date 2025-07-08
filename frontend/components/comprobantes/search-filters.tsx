@@ -79,7 +79,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
               </SelectItem>
               {filtrosDisponibles?.clientes?.map((cliente: any) => (
                 <SelectItem key={cliente.id} value={cliente.id.toString()} className="text-white hover:bg-gray-700">
-                  {typeof cliente.name === 'string' ? cliente.name : JSON.stringify(cliente.name)}
+                  {cliente.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -101,17 +101,11 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
               <SelectItem value="all" className="text-white hover:bg-gray-700">
                 Todos los tipos
               </SelectItem>
-              {filtrosDisponibles?.tipos_archivo?.map((tipo: any) => {
-                // Manejar tanto objetos {value, label} como strings
-                const value = typeof tipo === 'object' ? tipo.value : tipo
-                const label = typeof tipo === 'object' ? tipo.label : (tipo && typeof tipo === 'string' ? tipo.charAt(0).toUpperCase() + tipo.slice(1) : tipo)
-                
-                return (
-                  <SelectItem key={value} value={value} className="text-white hover:bg-gray-700">
-                    {typeof label === 'string' ? label : JSON.stringify(label)}
-                  </SelectItem>
-                )
-              })}
+              {filtrosDisponibles?.tipos_archivo?.map((tipo: any, index: number) => (
+                <SelectItem key={index} value={tipo} className="text-white hover:bg-gray-700">
+                  {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

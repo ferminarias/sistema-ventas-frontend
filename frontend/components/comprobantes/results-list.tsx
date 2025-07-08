@@ -258,7 +258,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                 {/* Fallback para estructura antigua */}
                 {(!comprobante.archivos || comprobante.archivos.length === 0) && comprobante.archivo_nombre && (
                   <div className="text-xs text-gray-500">
-                    Archivo: {typeof comprobante.archivo_nombre === 'string' ? comprobante.archivo_nombre : JSON.stringify(comprobante.archivo_nombre)}
+                    Archivo: {comprobante.archivo_nombre}
                   </div>
                 )}
               </div>
@@ -300,7 +300,27 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
             </div>
             
             {/* Contenido del modal */}
-            <div className="p-6">
+            <div className="p-4 space-y-4">
+              {/* Información del comprobante */}
+              <div className="bg-gray-700 rounded-lg p-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Venta ID:</span>
+                  <span className="text-white">#{currentVenta.venta_id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Cliente:</span>
+                  <span className="text-white">{currentVenta.cliente_nombre}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Archivo:</span>
+                  <span className="text-white">{currentFile.original_name || currentFile.filename}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Tamaño:</span>
+                  <span className="text-white">{currentFile.size_mb ? `${currentFile.size_mb.toFixed(1)} MB` : 'N/A'}</span>
+                </div>
+              </div>
+
               {currentFile.tipo === 'imagen' ? (
                 <div className="flex justify-center">
                   <img 

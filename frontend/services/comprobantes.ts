@@ -17,6 +17,77 @@ function getAuthHeaders(): HeadersInit {
   return headers
 }
 
+// Función mejorada para extraer valores de objetos {label, value}
+const extractValue = (obj: any): any => {
+  // Si es null o undefined, retornar tal como está
+  if (obj === null || obj === undefined) return obj
+  
+  // Si no es objeto, retornar tal como está
+  if (typeof obj !== 'object') return obj
+  
+  // Si es array, procesar cada elemento
+  if (Array.isArray(obj)) {
+    return obj.map(extractValue)
+  }
+  
+  // Si tiene la propiedad 'value', usar esa
+  if ('value' in obj && obj.value !== undefined) {
+    return extractValue(obj.value) // Recursivo en caso de objetos anidados
+  }
+  
+  // Si tiene la propiedad 'label', usar esa
+  if ('label' in obj && obj.label !== undefined) {
+    return extractValue(obj.label) // Recursivo en caso de objetos anidados
+  }
+  
+  // Si es un objeto con solo una propiedad, extraer esa propiedad
+  const keys = Object.keys(obj)
+  if (keys.length === 1) {
+    return extractValue(obj[keys[0]])
+  }
+  
+  // Si es un objeto normal, limpiar recursivamente todas sus propiedades
+  return cleanObject(obj)
+}
+
+// Función mejorada para limpiar objetos recursivamente
+const cleanObject = (obj: any): any => {
+  // Si es null, undefined o no es objeto, retornar tal como está
+  if (obj === null || obj === undefined || typeof obj !== 'object') {
+    return obj
+  }
+  
+  // Si es array, limpiar cada elemento
+  if (Array.isArray(obj)) {
+    return obj.map(extractValue)
+  }
+  
+  // Si es un objeto, limpiar cada propiedad
+  const cleaned: any = {}
+  for (const [key, value] of Object.entries(obj)) {
+    cleaned[key] = extractValue(value)
+  }
+  
+  return cleaned
+}
+
+// Función para asegurar que un valor sea válido para renderizar en React
+const ensureRenderableValue = (value: any): any => {
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
+  if (Array.isArray(value)) return value.map(ensureRenderableValue)
+  if (typeof value === 'object') {
+    // Si después de la limpieza sigue siendo un objeto, convertir a string
+    const cleaned = cleanObject(value)
+    if (typeof cleaned === 'object' && cleaned !== null) {
+      // Como último recurso, convertir a string legible
+      return JSON.stringify(cleaned)
+    }
+    return cleaned
+  }
+  return String(value)
+}
+
 class ComprobantesService {
   // Obtener filtros disponibles
   async getFiltrosDisponibles(): Promise<FiltrosDisponibles> {
@@ -30,53 +101,37 @@ class ComprobantesService {
     }
 
     const backendFilters = await response.json()
-    console.log("🔄 FILTROS BACKEND RAW:", backendFilters)
 
-    // Función helper para extraer valores de objetos {label, value}
-    const extractValue = (obj: any): any => {
-      if (obj && typeof obj === 'object' && 'value' in obj) {
-        return obj.value
-      }
-      if (obj && typeof obj === 'object' && 'label' in obj) {
-        return obj.label
-      }
-      return obj
-    }
-
-    // Mapeo correcto usando 'name' en lugar de 'nombre'
+    // Mapeo correcto con limpieza agresiva
     const cleanedFilters: FiltrosDisponibles = {
       clientes: (backendFilters.clientes || []).map((cliente: any) => {
-        const id = extractValue(cliente.id) || extractValue(cliente) || 0
-        const name = extractValue(cliente.name) || extractValue(cliente.nombre) || extractValue(cliente) || 'Sin nombre'
+        const cleanedCliente = cleanObject(cliente)
         return {
-          id: typeof id === 'number' ? id : (typeof id === 'string' ? parseInt(id) : 0),
-          name: typeof name === 'string' ? name : String(name)
+          id: ensureRenderableValue(cleanedCliente.id || cleanedCliente) || 0,
+          name: ensureRenderableValue(cleanedCliente.name || cleanedCliente.nombre || cleanedCliente) || 'Sin nombre'
         }
       }),
       asesores: (backendFilters.asesores || []).map((asesor: any) => {
-        const id = extractValue(asesor.id) || extractValue(asesor) || 0
-        const name = extractValue(asesor.name) || extractValue(asesor.nombre) || extractValue(asesor) || 'Sin nombre'
+        const cleanedAsesor = cleanObject(asesor)
         return {
-          id: typeof id === 'number' ? id : (typeof id === 'string' ? parseInt(id) : 0),
-          name: typeof name === 'string' ? name : String(name)
+          id: ensureRenderableValue(cleanedAsesor.id || cleanedAsesor) || 0,
+          name: ensureRenderableValue(cleanedAsesor.name || cleanedAsesor.nombre || cleanedAsesor) || 'Sin nombre'
         }
       }),
       tipos_archivo: (backendFilters.tipos_archivo || []).map((tipo: any) => {
-        const value = extractValue(tipo)
-        return typeof value === 'string' ? value : String(value)
+        return ensureRenderableValue(extractValue(tipo)) || 'Desconocido'
       }),
-      rango_fechas: backendFilters.rango_fechas || {
-        fecha_min: '2020-01-01',
-        fecha_max: new Date().toISOString().split('T')[0]
+      rango_fechas: {
+        fecha_min: ensureRenderableValue(extractValue(backendFilters.rango_fechas?.fecha_min)) || '2020-01-01',
+        fecha_max: ensureRenderableValue(extractValue(backendFilters.rango_fechas?.fecha_max)) || new Date().toISOString().split('T')[0]
       },
-      estadisticas: backendFilters.estadisticas || {
-        total_comprobantes: 0,
-        total_clientes: 0,
-        tipos_mas_comunes: []
+      estadisticas: {
+        total_comprobantes: ensureRenderableValue(extractValue(backendFilters.estadisticas?.total_comprobantes)) || 0,
+        total_clientes: ensureRenderableValue(extractValue(backendFilters.estadisticas?.total_clientes)) || 0,
+        tipos_mas_comunes: (backendFilters.estadisticas?.tipos_mas_comunes || []).map((tipo: any) => ensureRenderableValue(extractValue(tipo)))
       }
     }
 
-    console.log("✅ FILTROS LIMPIADOS:", cleanedFilters)
     return cleanedFilters
   }
 
@@ -100,46 +155,34 @@ class ComprobantesService {
     }
 
     const backendResponse = await response.json()
-    console.log("🔄 MAPEO BACKEND RESPONSE:", backendResponse)
 
-    // Función helper para extraer valores de objetos {label, value}
-    const extractValue = (obj: any): any => {
-      if (obj && typeof obj === 'object' && 'value' in obj) {
-        return obj.value
-      }
-      if (obj && typeof obj === 'object' && 'label' in obj) {
-        return obj.label
-      }
-      return obj
-    }
-
-    // Función para limpiar un objeto de propiedades {label, value}
-    const cleanObject = (obj: any): any => {
-      if (!obj || typeof obj !== 'object') return obj
-      if (Array.isArray(obj)) return obj.map(cleanObject)
-      
-      const cleaned: any = {}
-      for (const [key, value] of Object.entries(obj)) {
-        cleaned[key] = extractValue(value)
-        // Si sigue siendo un objeto, aplicar recursivamente
-        if (cleaned[key] && typeof cleaned[key] === 'object' && !Array.isArray(cleaned[key])) {
-          cleaned[key] = cleanObject(cleaned[key])
-        }
-      }
-      return cleaned
-    }
-
-    // Mapear la respuesta del backend a la estructura esperada por el frontend
+    // Mapear la respuesta del backend con limpieza agresiva
     const mappedResponse: ComprobanteSearchResponse = {
-      comprobantes: (backendResponse.resultados || []).map((comprobante: any) => cleanObject(comprobante)),
-      total: extractValue(backendResponse.pagination?.total_results) || 0,
-      page: extractValue(backendResponse.pagination?.current_page) || 1,
-      limit: extractValue(backendResponse.pagination?.results_per_page) || 20,
-      total_pages: extractValue(backendResponse.pagination?.total_pages) || 1
+      comprobantes: (backendResponse.resultados || []).map((comprobante: any) => {
+        const cleaned = cleanObject(comprobante)
+        // Asegurar que todos los valores sean renderizables
+        return this.ensureAllValuesRenderable(cleaned)
+      }),
+      total: ensureRenderableValue(extractValue(backendResponse.pagination?.total_results)) || 0,
+      page: ensureRenderableValue(extractValue(backendResponse.pagination?.current_page)) || 1,
+      limit: ensureRenderableValue(extractValue(backendResponse.pagination?.results_per_page)) || 20,
+      total_pages: ensureRenderableValue(extractValue(backendResponse.pagination?.total_pages)) || 1
     }
 
-    console.log("✅ RESPONSE MAPEADA:", mappedResponse)
     return mappedResponse
+  }
+
+  // Método para asegurar que todos los valores de un objeto sean renderizables
+  private ensureAllValuesRenderable(obj: any): any {
+    if (obj === null || obj === undefined) return obj
+    if (typeof obj !== 'object') return ensureRenderableValue(obj)
+    if (Array.isArray(obj)) return obj.map(item => this.ensureAllValuesRenderable(item))
+    
+    const result: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = this.ensureAllValuesRenderable(value)
+    }
+    return result
   }
 
   // Descargar archivo usando el nuevo endpoint
