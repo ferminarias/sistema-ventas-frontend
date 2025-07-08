@@ -48,8 +48,8 @@ export function DeleteConfirmModal({ venta, onConfirm, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 border border-gray-700 rounded-lg w-full max-w-md">
-        <CardHeader className="border-b border-gray-700 pb-4">
+      <div className="bg-gray-800 border border-gray-700 rounded-lg w-full max-w-2xl max-h-[95vh] overflow-hidden relative">
+        <CardHeader className="border-b border-gray-700 pb-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-red-900/20 rounded-lg">
@@ -71,7 +71,7 @@ export function DeleteConfirmModal({ venta, onConfirm, onClose }: Props) {
           </div>
         </CardHeader>
         
-        <CardContent className="p-6 relative">
+        <CardContent className="p-6 overflow-y-auto max-h-[calc(95vh-140px)]">
           {loading && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
               <RailwayLoader size="md" text="Eliminando venta..." />
@@ -135,7 +135,7 @@ export function DeleteConfirmModal({ venta, onConfirm, onClose }: Props) {
             </Alert>
 
             {/* Confirmación por tipeo - Doble verificación */}
-            <div className="bg-gray-700/30 border border-gray-600 rounded-lg p-4 space-y-3">
+            <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className="p-1 bg-orange-900/20 rounded">
                   <AlertTriangle className="h-4 w-4 text-orange-400" />
@@ -168,6 +168,7 @@ export function DeleteConfirmModal({ venta, onConfirm, onClose }: Props) {
                     }
                   }}
                 />
+                
                 {textoConfirmacion.length > 0 && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                     {textoEsCorrecto ? (
@@ -193,35 +194,37 @@ export function DeleteConfirmModal({ venta, onConfirm, onClose }: Props) {
                 </p>
               )}
             </div>
-
-            {/* Botones de acción */}
-            <div className="flex gap-3 pt-2">
-              <Button
-                onClick={handleConfirm}
-                disabled={loading || !textoEsCorrecto}
-                className={`flex-1 transition-all duration-200 ${
-                  textoEsCorrecto 
-                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20' 
-                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                {loading ? "Eliminando..." : textoEsCorrecto ? "✓ Eliminar Venta" : "🔒 Escribe confirmación"}
-              </Button>
-              <Button
-                onClick={() => {
-                  setTextoConfirmacion('')
-                  onClose()
-                }}
-                variant="outline"
-                disabled={loading}
-                className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
-              >
-                ❌ Cancelar
-              </Button>
-            </div>
           </div>
         </CardContent>
+
+        {/* Botones de acción fijos en la parte inferior */}
+        <div className="border-t border-gray-700 p-4 bg-gray-800 flex-shrink-0">
+          <div className="flex gap-3">
+            <Button
+              onClick={handleConfirm}
+              disabled={loading || !textoEsCorrecto}
+              className={`flex-1 transition-all duration-200 ${
+                textoEsCorrecto 
+                  ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20' 
+                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {loading ? "Eliminando..." : textoEsCorrecto ? "✓ Eliminar Venta" : "🔒 Escribe confirmación"}
+            </Button>
+            <Button
+              onClick={() => {
+                setTextoConfirmacion('')
+                onClose()
+              }}
+              variant="outline"
+              disabled={loading}
+              className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+            >
+              ❌ Cancelar
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )
