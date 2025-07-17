@@ -30,7 +30,7 @@ export function EditUserDialog({ open, user, onClose, onSubmit }: EditUserDialog
   const availableClients = ["Aliat", "Anahuac", "Cesa", "Faro"]
 
   useEffect(() => {
-    if (user) {
+    if (open && user) {
       setFormData({
         username: user.username || "",
         email: user.email,
@@ -38,7 +38,7 @@ export function EditUserDialog({ open, user, onClose, onSubmit }: EditUserDialog
         assignedClients: user.assignedClients || [],
       })
     }
-  }, [user])
+  }, [open, user])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
