@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { authService } from "@/services/auth-service"
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import type { User } from "@/types/auth"
+import { DashboardHeader } from "@/components/dashboard-header"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { ClienteVentasCharts } from "@/components/cliente-ventas-charts"
+import { ClienteVentasTable } from "@/components/cliente-ventas-table"
 
 export default function Dashboard() {
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -23,11 +25,6 @@ export default function Dashboard() {
     })
   }, [router])
 
-  const handleLogout = () => {
-    authService.logout()
-    router.replace("/")
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
@@ -38,5 +35,24 @@ export default function Dashboard() {
 
   if (!user) return null
 
-  return <DashboardLayout user={user} onLogout={handleLogout} />
+  // Dashboard general: no hay cliente específico, pero podemos mostrar resumen global
+  return (
+    <div className="flex-1 bg-gray-900 text-white overflow-auto">
+      <DashboardHeader cliente={"General"} />
+      <div className="p-6 space-y-6">
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle>Información General</CardTitle>
+            <CardDescription>Resumen de ventas y actividad global del sistema</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-gray-300">Bienvenido, {user.username || user.name}</div>
+            <div className="text-sm text-gray-300">Rol: {user.role}</div>
+          </CardContent>
+        </Card>
+        <ClienteVentasCharts cliente={"general"} nombreCliente={"General"} />
+        <ClienteVentasTable cliente={"general"} />
+      </div>
+    </div>
+  )
 } 
