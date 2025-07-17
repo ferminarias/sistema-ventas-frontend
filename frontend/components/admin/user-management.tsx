@@ -37,7 +37,12 @@ export function UserManagement({ user }: UserManagementProps) {
     setError(null)
     try {
       const data = await usersApi.getUsers(token)
-      setUsers(data)
+      // Normaliza los campos para que assignedClients siempre esté presente
+      const normalized = data.map((u: any) => ({
+        ...u,
+        assignedClients: u.assignedClients ?? u.allowedClients ?? [],
+      }))
+      setUsers(normalized)
     } catch (err: any) {
       setError(err.message || "Error al obtener usuarios")
     } finally {
