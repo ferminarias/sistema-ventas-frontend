@@ -721,8 +721,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                 )}
               </div>
             </CardHeader>
-            <CardContent>
-              <canvas ref={chartRef} width={500} height={300} className="w-full rounded-lg"></canvas>
+            <CardContent className="pb-10">
+              <canvas ref={chartRef} width={500} height={320} className="w-full rounded-lg"></canvas>
             </CardContent>
           </Card>
 
@@ -735,9 +735,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               } - {getNombreCliente()}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pb-10">
               <div className="relative">
-                <canvas ref={pieChartRef} width={500} height={300} className="w-full rounded-lg cursor-pointer"></canvas>
+                <canvas ref={pieChartRef} width={500} height={320} className="w-full rounded-lg cursor-pointer"></canvas>
                 {tooltip && (
                   <div style={{position: 'fixed', left: tooltip.x + 12, top: tooltip.y + 12, zIndex: 50, pointerEvents: 'none'}} className="bg-gray-900/90 text-white text-xs px-3 py-2 rounded-lg shadow-lg border border-blue-400/40">
                     <div className="font-bold">{tooltip.label}</div>
