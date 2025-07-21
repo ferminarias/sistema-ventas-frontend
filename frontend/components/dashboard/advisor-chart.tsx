@@ -54,9 +54,9 @@ export function AdvisorChart({ selectedClient }: AdvisorChartProps) {
   }, [selectedClient])
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+    <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 pb-10">
       <h3 className="text-lg font-semibold mb-2 text-white">Distribución por Asesor</h3>
-      <canvas ref={pieChartRef} width={500} height={300} className="w-full"></canvas>
+      <canvas ref={pieChartRef} width={500} height={320} className="w-full"></canvas>
     </div>
   )
 } 
