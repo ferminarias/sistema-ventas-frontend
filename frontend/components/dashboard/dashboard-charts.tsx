@@ -436,9 +436,9 @@ export function DashboardCharts() {
             </TabsList>
           </Tabs>
         </CardHeader>
-        <CardContent>
-          <div ref={chartContainerRef} className="w-full" style={{ height: '300px' }}>
-            <canvas ref={chartRef} className="w-full h-full rounded-lg"></canvas>
+        <CardContent className="pb-10">
+          <div ref={chartContainerRef} className="w-full" style={{ height: '320px' }}>
+            <canvas ref={chartRef} className="w-full h-full rounded-lg" height={320}></canvas>
           </div>
         </CardContent>
       </Card>
@@ -448,9 +448,9 @@ export function DashboardCharts() {
           <CardTitle>Distribución por Asesor</CardTitle>
           <CardDescription>Porcentaje de ventas por asesor</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div ref={pieContainerRef} className="relative w-full" style={{ height: '300px' }}>
-            <canvas ref={pieChartRef} className="w-full h-full rounded-lg cursor-pointer"></canvas>
+        <CardContent className="pb-10">
+          <div ref={pieContainerRef} className="relative w-full" style={{ height: '320px' }}>
+            <canvas ref={pieChartRef} className="w-full h-full rounded-lg cursor-pointer" height={320}></canvas>
             {tooltip && (
               <div 
                 style={{
