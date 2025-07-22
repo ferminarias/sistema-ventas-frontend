@@ -100,10 +100,13 @@ export default function AsesoresPage() {
     cargarAsesores()
   }
 
-  // Filtrar asesores según el rol y clientes asignados
+  // Filtrar asesores según el rol y clientes asignados (soporta client_ids array)
   const asesoresFiltrados = user?.role === "admin"
     ? asesores
-    : asesores.filter(a => user?.allowedClients?.includes(String(a.client_id)))
+    : asesores.filter(a =>
+        Array.isArray(a.client_ids) &&
+        a.client_ids.some(id => (user?.allowedClients ?? []).includes(String(id)))
+      )
 
   return (
     <div className="container mx-auto py-6">
