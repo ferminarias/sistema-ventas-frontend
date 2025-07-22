@@ -163,7 +163,7 @@ export function DashboardCharts() {
     const margin = isMany ? 60 : 50
     const chartHeight = height - margin
     const chartWidth = width - margin
-    const availableWidth = chartWidth * 0.9
+    const availableWidth = chartWidth // 100% del espacio disponible
     const maxBarWidth = isMany ? 8 : 20
     const minBarWidth = 2
     const calculatedBarWidth = Math.max(minBarWidth, Math.min(maxBarWidth, availableWidth / data.length * 0.8))

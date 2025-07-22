@@ -298,7 +298,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     const chartWidth = width - margin
     
     // Calcular ancho de barras más inteligente
-    const availableWidth = chartWidth * 0.9 // 90% del espacio disponible
+    const availableWidth = chartWidth // 100% del espacio disponible
     const maxBarWidth = isManySemanas ? 8 : 20
     const minBarWidth = 2
     const calculatedBarWidth = Math.max(minBarWidth, Math.min(maxBarWidth, availableWidth / datos.length * 0.8))
