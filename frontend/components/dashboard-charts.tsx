@@ -96,7 +96,8 @@ export function DashboardCharts() {
     const maxValue = Math.max(...data, 1)
     ctx.fillStyle = "#7c3aed"
     data.forEach((value, index) => {
-      const x = index * (barWidth * 2) + barWidth / 2
+      // Nuevo cálculo de x para encuadrar bien las barras y etiquetas
+      const x = (data.length === 1 ? width / 2 - barWidth / 2 : (index * (width - barWidth)) / (data.length - 1))
       const barHeight = (value / maxValue) * (height - 40)
       ctx.fillRect(x, height - barHeight - 20, barWidth, barHeight)
       ctx.fillStyle = "#6b7280"

@@ -312,7 +312,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     gradient.addColorStop(1, "#7c3aed")
     
     datos.forEach((value, index) => {
-      const x = margin / 2 + (index * chartWidth) / datos.length
+      // Nuevo cálculo de x para encuadrar bien las barras y etiquetas
+      const x = margin / 2 + (datos.length === 1 ? chartWidth / 2 - calculatedBarWidth / 2 : (index * (chartWidth - calculatedBarWidth)) / (datos.length - 1))
       const barHeight = (value / maxValue) * (chartHeight - 60)
       
       // Sombra de la barra
