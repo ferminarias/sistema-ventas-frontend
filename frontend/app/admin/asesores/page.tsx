@@ -72,9 +72,13 @@ export default function AsesoresPage() {
     if (!confirm("¿Está seguro de eliminar este asesor?")) return
 
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`/api/advisors/${id}`, {
         method: "DELETE",
         credentials: "include",
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        },
       })
 
       if (!response.ok) throw new Error("Error al eliminar el asesor")
