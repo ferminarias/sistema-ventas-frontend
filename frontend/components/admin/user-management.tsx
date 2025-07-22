@@ -10,6 +10,7 @@ import { EditUserDialog } from "./edit-user-dialog"
 import { ChangePasswordDialog } from "./change-password-dialog"
 import { usersApi } from "@/lib/api/users"
 import type { User } from "@/types/auth"
+import { clientService } from "@/services/client-service"
 
 interface UserManagementProps {
   user: User
@@ -23,6 +24,7 @@ export function UserManagement({ user }: UserManagementProps) {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [availableClients, setAvailableClients] = useState([])
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
 
@@ -54,6 +56,13 @@ export function UserManagement({ user }: UserManagementProps) {
     fetchUsers()
     // eslint-disable-next-line
   }, [])
+
+  // Obtener clientes cada vez que se abre el modal de edición
+  useEffect(() => {
+    if (showEditDialog) {
+      clientService.getAllClients().then(setAvailableClients).catch(() => setAvailableClients([]))
+    }
+  }, [showEditDialog])
 
   const handleCreateUser = async (userData: any) => {
     if (!token) {
@@ -219,6 +228,7 @@ export function UserManagement({ user }: UserManagementProps) {
           setSelectedUser(null)
         }}
         onSubmit={handleEditUser}
+        availableClients={availableClients}
       />
 
       <ChangePasswordDialog
