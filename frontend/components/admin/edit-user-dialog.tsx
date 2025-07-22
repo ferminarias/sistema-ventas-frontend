@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { X, Edit, Save } from "lucide-react"
 import type { User, UpdateUserRequest } from "@/types/auth"
+import type { UserRole } from "@/types/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -16,18 +17,23 @@ interface EditUserDialogProps {
   user: User | null
   onClose: () => void
   onSubmit: (userData: UpdateUserRequest) => void
+  availableClients: Array<{ id: number, name: string }> // <-- agregar prop
 }
 
-export function EditUserDialog({ open, user, onClose, onSubmit }: EditUserDialogProps) {
-  const [formData, setFormData] = useState<UpdateUserRequest>({
+// Elimina la interfaz extendida y usa un tipo local para el estado
+export function EditUserDialog({ open, user, onClose, onSubmit, availableClients = [] }: EditUserDialogProps) {
+  const [formData, setFormData] = useState<{
+    username: string;
+    email: string;
+    role: string;
+    assignedClients: number[];
+  }>({
     username: user?.username || "",
     email: user?.email || "",
     role: user?.role || "admin",
-    assignedClients: user?.assignedClients || [],
-  })
-  const [loading, setLoading] = useState(false)
-
-  const availableClients = ["Aliat", "Anahuac", "Cesa", "Faro"]
+    assignedClients: (user?.assignedClients || []).map((c: any) => Number(c)),
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open && user) {
@@ -35,35 +41,33 @@ export function EditUserDialog({ open, user, onClose, onSubmit }: EditUserDialog
         username: user.username || "",
         email: user.email,
         role: user.role,
-        assignedClients: user.assignedClients || [],
-      })
+        assignedClients: (user.assignedClients || []).map((c: any) => Number(c)),
+      });
     }
-  }, [open, user])
+  }, [open, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
+    e.preventDefault();
+    setLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     const payload = {
-      ...formData,
-      allowedClients: formData.assignedClients,
-    }
-    delete payload.assignedClients
+      username: formData.username,
+      email: formData.email,
+      role: formData.role as UserRole,
+      allowedClients: formData.assignedClients.map(String),
+    };
+    onSubmit(payload);
+    setLoading(false);
+  };
 
-    onSubmit(payload)
-    setLoading(false)
-  }
-
-  const handleClientToggle = (client: string) => {
+  const handleClientToggle = (clientId: number) => {
     setFormData(prev => {
-      const currentClients = prev.assignedClients || []
-      const newClients = currentClients.includes(client)
-        ? currentClients.filter(c => c !== client)
-        : [...currentClients, client]
-      return { ...prev, assignedClients: newClients }
-    })
-  }
+      const newClients = prev.assignedClients.includes(clientId)
+        ? prev.assignedClients.filter(c => c !== clientId)
+        : [...prev.assignedClients, clientId];
+      return { ...prev, assignedClients: newClients };
+    });
+  };
 
   if (!open || !user) return null
 
@@ -120,26 +124,26 @@ export function EditUserDialog({ open, user, onClose, onSubmit }: EditUserDialog
               <div className="grid grid-cols-2 gap-2">
                 {availableClients.map((client) => (
                   <Button
-                    key={client}
+                    key={client.id}
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => handleClientToggle(client)}
+                    onClick={() => handleClientToggle(client.id)}
                     className={`justify-start ${
-                      formData.assignedClients?.includes(client)
+                      formData.assignedClients?.includes(client.id)
                         ? "bg-purple-600 border-purple-500 text-white"
                         : "border-gray-600 text-gray-300 hover:bg-gray-700"
                     }`}
                   >
-                    {client}
+                    {client.name}
                   </Button>
                 ))}
               </div>
               {formData.assignedClients && formData.assignedClients.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {formData.assignedClients.map((client) => (
-                    <Badge key={client} variant="secondary" className="text-xs">
-                      {client}
+                  {formData.assignedClients.map((clientId) => (
+                    <Badge key={clientId} variant="secondary" className="text-xs">
+                      {availableClients.find(c => c.id === clientId)?.name || clientId}
                     </Badge>
                   ))}
                 </div>
