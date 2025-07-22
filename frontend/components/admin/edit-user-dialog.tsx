@@ -41,7 +41,9 @@ export function EditUserDialog({ open, user, onClose, onSubmit, availableClients
         username: user.username || "",
         email: user.email,
         role: user.role,
-        assignedClients: (user.assignedClients || []).map((c: any) => Number(c)),
+        assignedClients: (user.assignedClients || [])
+          .map((c: any) => Number(c))
+          .filter((id: number) => !isNaN(id)), // Filtra NaN
       });
     }
   }, [open, user]);
@@ -50,11 +52,15 @@ export function EditUserDialog({ open, user, onClose, onSubmit, availableClients
     e.preventDefault();
     setLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Limpiar el array de IDs
+    const allowedClients = formData.assignedClients
+      .filter((id) => id !== null && id !== undefined && !isNaN(id))
+      .map(String);
     const payload = {
       username: formData.username,
       email: formData.email,
       role: formData.role as UserRole,
-      allowedClients: formData.assignedClients.map(String),
+      allowedClients,
     };
     onSubmit(payload);
     setLoading(false);
@@ -70,6 +76,9 @@ export function EditUserDialog({ open, user, onClose, onSubmit, availableClients
   };
 
   if (!open || !user) return null
+
+  // Antes de renderizar, filtra los NaN del array (por si acaso)
+  const assignedClientsClean = formData.assignedClients.filter((id) => !isNaN(id));
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -130,7 +139,7 @@ export function EditUserDialog({ open, user, onClose, onSubmit, availableClients
                     size="sm"
                     onClick={() => handleClientToggle(client.id)}
                     className={`justify-start ${
-                      formData.assignedClients?.includes(client.id)
+                      assignedClientsClean.includes(client.id)
                         ? "bg-purple-600 border-purple-500 text-white"
                         : "border-gray-600 text-gray-300 hover:bg-gray-700"
                     }`}
@@ -139,9 +148,9 @@ export function EditUserDialog({ open, user, onClose, onSubmit, availableClients
                   </Button>
                 ))}
               </div>
-              {formData.assignedClients && formData.assignedClients.length > 0 && (
+              {assignedClientsClean.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {formData.assignedClients.map((clientId) => (
+                  {assignedClientsClean.map((clientId) => (
                     <Badge key={clientId} variant="secondary" className="text-xs">
                       {availableClients.find(c => c.id === clientId)?.name || clientId}
                     </Badge>
