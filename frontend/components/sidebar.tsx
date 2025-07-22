@@ -171,6 +171,21 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
               </Button>
             )}
 
+            {/* Gestión de Asesores: visible para admin y supervisor */}
+            {(user.role === "admin" || user.role === "supervisor") && (
+              <Button 
+                asChild 
+                variant={pathname === "/admin/asesores" ? "default" : "ghost"} 
+                className="w-full justify-start text-sm"
+                size="sm"
+              >
+                <Link href="/admin/asesores">
+                  <UserCog className="mr-2 h-3 w-3" />
+                  Gestión de Asesores
+                </Link>
+              </Button>
+            )}
+
             {/* Administración desplegable */}
             {user.role === "admin" && (
               <Collapsible open={isAdminOpen} onOpenChange={setIsAdminOpen} className="w-full">
@@ -208,17 +223,6 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                       <Link href="/admin/clientes">
                         <Building2 className="mr-2 h-3 w-3" />
                         Gestión de Clientes
-                      </Link>
-                    </Button>
-                    <Button 
-                      asChild 
-                      variant={pathname === "/admin/asesores" ? "default" : "ghost"} 
-                      className="w-full justify-start text-sm"
-                      size="sm"
-                    >
-                      <Link href="/admin/asesores">
-                        <UserCog className="mr-2 h-3 w-3" />
-                        Gestión de Asesores
                       </Link>
                     </Button>
                   </div>
