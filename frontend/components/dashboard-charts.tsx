@@ -58,13 +58,26 @@ export function DashboardCharts() {
   const asesoresNombres = asesoresProcesados.map(a => a.nombre)
   const asesoresValores = asesoresProcesados.map(a => a.ventas)
 
-  useEffect(() => {
-    if (!chartRef.current || !pieChartRef.current) return
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 500, height: 300 });
 
-    // Ajustar resolución para pantallas retina
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setDimensions({ width: rect.width, height: rect.height });
+      }
+    };
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!chartRef.current || !pieChartRef.current) return;
+    const { width, height } = dimensions;
     const dpr = window.devicePixelRatio || 1;
-    const width = 500;
-    const height = 300;
     chartRef.current.width = width * dpr;
     chartRef.current.height = height * dpr;
     chartRef.current.style.width = width + "px";
@@ -73,11 +86,9 @@ export function DashboardCharts() {
     pieChartRef.current.height = height * dpr;
     pieChartRef.current.style.width = width + "px";
     pieChartRef.current.style.height = height + "px";
-
-    const ctx = chartRef.current.getContext("2d")
-    const pieCtx = pieChartRef.current.getContext("2d")
-    if (!ctx || !pieCtx) return
-
+    const ctx = chartRef.current.getContext("2d");
+    const pieCtx = pieChartRef.current.getContext("2d");
+    if (!ctx || !pieCtx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     pieCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -193,7 +204,7 @@ export function DashboardCharts() {
       pieCtx.textAlign = "center"
       pieCtx.fillText("No hay datos de asesores", width / 2, height / 2)
     }
-  }, [activeTab, ventas, asesoresProcesados])
+  }, [activeTab, ventas, asesoresProcesados, dimensions])
 
   if (loading) return <div>Cargando gráficos...</div>
   if (error) return <div className="text-red-500">{error}</div>
@@ -212,7 +223,9 @@ export function DashboardCharts() {
           </Tabs>
         </CardHeader>
         <CardContent>
-          <canvas ref={chartRef} width={500} height={300} className="w-full"></canvas>
+          <div ref={containerRef} className="w-full h-[320px] relative">
+            <canvas ref={chartRef} className="w-full h-full" />
+          </div>
         </CardContent>
       </Card>
 
@@ -227,7 +240,9 @@ export function DashboardCharts() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <canvas ref={pieChartRef} width={500} height={300} className="w-full"></canvas>
+          <div ref={containerRef} className="w-full h-[320px] relative">
+            <canvas ref={pieChartRef} className="w-full h-full" />
+          </div>
         </CardContent>
       </Card>
     </div>

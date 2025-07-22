@@ -27,6 +27,21 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const pieChartRef = useRef<HTMLCanvasElement>(null)
   const [hoveredPieIndex, setHoveredPieIndex] = useState<number | null>(null)
   const [tooltip, setTooltip] = useState<{x: number, y: number, label: string, value: number} | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 500, height: 300 });
+
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setDimensions({ width: rect.width, height: rect.height });
+      }
+    };
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Validación defensiva para cliente
   if (!cliente || cliente === "null" || cliente === "undefined") {
@@ -265,12 +280,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   ]
 
   useEffect(() => {
-    if (!chartRef.current || !pieChartRef.current) return
-
-    // Ajustar resolución para pantallas retina
+    if (!chartRef.current || !pieChartRef.current) return;
+    const { width, height } = dimensions;
     const dpr = window.devicePixelRatio || 1;
-    const width = 500;
-    const height = 300;
     chartRef.current.width = width * dpr;
     chartRef.current.height = height * dpr;
     chartRef.current.style.width = width + "px";
@@ -279,11 +291,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     pieChartRef.current.height = height * dpr;
     pieChartRef.current.style.width = width + "px";
     pieChartRef.current.style.height = height + "px";
-
-    const ctx = chartRef.current.getContext("2d")
-    const pieCtx = pieChartRef.current.getContext("2d")
-    if (!ctx || !pieCtx) return
-
+    const ctx = chartRef.current.getContext("2d");
+    const pieCtx = pieChartRef.current.getContext("2d");
+    if (!ctx || !pieCtx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     pieCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -723,7 +733,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               </div>
             </CardHeader>
             <CardContent className="pb-10">
-              <canvas ref={chartRef} width={500} height={320} className="w-full rounded-lg"></canvas>
+              <div ref={containerRef} className="w-full h-[320px] relative">
+                <canvas ref={chartRef} className="w-full h-full rounded-lg" />
+              </div>
             </CardContent>
           </Card>
 
@@ -737,8 +749,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               </CardDescription>
             </CardHeader>
             <CardContent className="pb-10">
-              <div className="relative">
-                <canvas ref={pieChartRef} width={500} height={320} className="w-full rounded-lg cursor-pointer"></canvas>
+              <div className="relative w-full h-[320px]" ref={containerRef}>
+                <canvas ref={pieChartRef} className="w-full h-full rounded-lg cursor-pointer" />
                 {tooltip && (
                   <div style={{position: 'fixed', left: tooltip.x + 12, top: tooltip.y + 12, zIndex: 50, pointerEvents: 'none'}} className="bg-gray-900/90 text-white text-xs px-3 py-2 rounded-lg shadow-lg border border-blue-400/40">
                     <div className="font-bold">{tooltip.label}</div>
