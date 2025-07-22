@@ -31,12 +31,45 @@ interface Advisor {
   client_ids: number[]
 }
 
+interface Cliente {
+  id: number
+  name: string
+}
+
 export default function AsesoresPage() {
   const [asesores, setAsesores] = useState<Advisor[]>([])
+  const [clientes, setClientes] = useState<Cliente[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [asesorEditando, setAsesorEditando] = useState<Advisor | null>(null)
   const { toast } = useToast()
   const { user } = useAuth();
+
+  // Cargar clientes para mapear nombres
+  useEffect(() => {
+    fetch("https://sistemas-de-ventas-production.up.railway.app/api/clientes", {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem("token")}`
+      },
+      credentials: "include"
+    })
+      .then(res => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setClientes(data)
+      })
+      .catch(() => setClientes([]))
+  }, [])
+
+  // Función para obtener nombres de clientes
+  const getClientNames = (ids: number[] | undefined) => {
+    if (!Array.isArray(ids)) return "";
+    return ids
+      .map(id => {
+        const c = clientes.find(cl => String(cl.id) === String(id));
+        return c ? c.name : id;
+      })
+      .join(", ");
+  };
 
   const cargarAsesores = async () => {
     try {
@@ -163,7 +196,11 @@ export default function AsesoresPage() {
                   <TableRow key={asesor.id}>
                     <TableCell>{asesor.id}</TableCell>
                     <TableCell>{typeof asesor.name === 'string' ? asesor.name : JSON.stringify(asesor.name)}</TableCell>
-                    <TableCell>{asesor.client_name}</TableCell>
+                    <TableCell>
+                      {Array.isArray(asesor.client_ids) && asesor.client_ids.length > 0
+                        ? getClientNames(asesor.client_ids)
+                        : (asesor.client_name || "")}
+                    </TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
