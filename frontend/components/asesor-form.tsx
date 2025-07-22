@@ -101,10 +101,12 @@ export function AsesorForm({ onSuccess, asesorExistente }: AsesorFormProps) {
         ? `/api/advisors/${asesorExistente.id}`
         : "/api/advisors"
       const method = asesorExistente ? "PUT" : "POST"
+      const token = localStorage.getItem("token")
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(values),
         credentials: "include",
