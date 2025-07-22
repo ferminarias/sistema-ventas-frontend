@@ -40,16 +40,22 @@ export default function AsesoresPage() {
 
   const cargarAsesores = async () => {
     try {
-      const response = await fetch("/api/advisors", { credentials: "include" })
-      if (!response.ok) throw new Error("Error al cargar asesores")
-      const data = await response.json()
-      setAsesores(data)
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/advisors", {
+        credentials: "include",
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) throw new Error("Error al cargar asesores");
+      const data = await response.json();
+      setAsesores(data);
     } catch (error) {
       toast({
         title: "Error",
         description: "No se pudieron cargar los asesores",
         variant: "destructive",
-      })
+      });
     }
   }
 
