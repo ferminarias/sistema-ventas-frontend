@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { useAuth } from "@/contexts/auth-context"
 
 interface Advisor {
   id: number
@@ -35,6 +36,7 @@ export default function AsesoresPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [asesorEditando, setAsesorEditando] = useState<Advisor | null>(null)
   const { toast } = useToast()
+  const { user } = useAuth();
 
   const cargarAsesores = async () => {
     try {
@@ -92,6 +94,11 @@ export default function AsesoresPage() {
     cargarAsesores()
   }
 
+  // Filtrar asesores según el rol y clientes asignados
+  const asesoresFiltrados = user?.role === "admin"
+    ? asesores
+    : asesores.filter(a => user?.allowedClients?.includes(String(a.client_id)))
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
@@ -132,30 +139,38 @@ export default function AsesoresPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {asesores.map((asesor) => (
-                <TableRow key={asesor.id}>
-                  <TableCell>{asesor.id}</TableCell>
-                                      <TableCell>{typeof asesor.name === 'string' ? asesor.name : JSON.stringify(asesor.name)}</TableCell>
-                  <TableCell>{asesor.client_name}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditar(asesor)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500"
-                      onClick={() => handleEliminar(asesor.id)}
-                    >
-                      Eliminar
-                    </Button>
+              {asesoresFiltrados.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-gray-400">
+                    No hay asesores para tus clientes asignados.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                asesoresFiltrados.map((asesor) => (
+                  <TableRow key={asesor.id}>
+                    <TableCell>{asesor.id}</TableCell>
+                    <TableCell>{typeof asesor.name === 'string' ? asesor.name : JSON.stringify(asesor.name)}</TableCell>
+                    <TableCell>{asesor.client_name}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditar(asesor)}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500"
+                        onClick={() => handleEliminar(asesor.id)}
+                      >
+                        Eliminar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

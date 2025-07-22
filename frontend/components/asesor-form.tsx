@@ -23,6 +23,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { useEffect, useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useAuth } from "@/contexts/auth-context"
 
 const formSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -46,6 +47,7 @@ interface AsesorFormProps {
 export function AsesorForm({ onSuccess, asesorExistente }: AsesorFormProps) {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const { toast } = useToast()
+  const { user } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,13 +58,13 @@ export function AsesorForm({ onSuccess, asesorExistente }: AsesorFormProps) {
   })
 
   useEffect(() => {
-          fetch("https://sistemas-de-ventas-production.up.railway.app/api/clientes", { 
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem("token")}`
-        },
-        credentials: "include" 
-      })
+    fetch("https://sistemas-de-ventas-production.up.railway.app/api/clientes", { 
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem("token")}`
+      },
+      credentials: "include" 
+    })
       .then(res => res.json())
       .then((data) => {
         if (Array.isArray(data)) setClientes(data)
@@ -76,14 +78,29 @@ export function AsesorForm({ onSuccess, asesorExistente }: AsesorFormProps) {
       })
   }, [])
 
+  // Filtrar clientes según el rol
+  const clientesDisponibles = user?.role === "admin"
+    ? clientes
+    : clientes.filter(c => user?.allowedClients?.includes(String(c.id)))
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Validar que los clientes seleccionados estén permitidos
+    if (user?.role === "supervisor") {
+      const noPermitidos = values.client_ids.filter(id => !user.allowedClients?.includes(String(id)))
+      if (noPermitidos.length > 0) {
+        toast({
+          title: "Permiso denegado",
+          description: "Solo puedes asignar asesores a tus clientes asignados.",
+          variant: "destructive",
+        })
+        return
+      }
+    }
     try {
       const url = asesorExistente 
         ? `/api/advisors/${asesorExistente.id}`
         : "/api/advisors"
-      
       const method = asesorExistente ? "PUT" : "POST"
-      
       const response = await fetch(url, {
         method,
         headers: {
@@ -92,16 +109,13 @@ export function AsesorForm({ onSuccess, asesorExistente }: AsesorFormProps) {
         body: JSON.stringify(values),
         credentials: "include",
       })
-
       if (!response.ok) throw new Error("Error al guardar el asesor")
-
       toast({
         title: "Éxito",
         description: asesorExistente 
           ? "Asesor actualizado correctamente"
           : "Asesor creado correctamente",
       })
-
       onSuccess?.()
     } catch (error) {
       toast({
@@ -135,8 +149,11 @@ export function AsesorForm({ onSuccess, asesorExistente }: AsesorFormProps) {
           render={() => (
             <FormItem>
               <FormLabel>Clientes Asignados</FormLabel>
+              {clientesDisponibles.length === 0 ? (
+                <div className="text-red-400 text-sm mb-2">No tienes clientes asignados. Solicita a un administrador que te asigne clientes para poder gestionar asesores.</div>
+              ) : null}
               <div className="grid grid-cols-2 gap-4">
-                {clientes.map((cliente) => (
+                {clientesDisponibles.map(cliente => (
                   <FormField
                     key={cliente.id}
                     control={form.control}
@@ -160,6 +177,7 @@ export function AsesorForm({ onSuccess, asesorExistente }: AsesorFormProps) {
                                   )
                                 }
                               }}
+                              disabled={clientesDisponibles.length === 0}
                             />
                           </FormControl>
                           <FormLabel className="font-normal">
@@ -176,7 +194,7 @@ export function AsesorForm({ onSuccess, asesorExistente }: AsesorFormProps) {
           )}
         />
 
-        <Button type="submit">
+        <Button type="submit" disabled={clientesDisponibles.length === 0}>
           {asesorExistente ? "Actualizar Asesor" : "Crear Asesor"}
         </Button>
       </form>
