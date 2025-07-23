@@ -77,38 +77,38 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
         {/* Skeleton para los resultados */}
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
+            <div key={i} className="bg-card border border-card rounded-lg p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 space-y-3">
                   {/* Header skeleton */}
                   <div className="flex items-center gap-3">
-                    <div className="h-6 bg-gray-600 rounded w-48 animate-pulse"></div>
+                    <div className="h-6 bg-muted rounded w-48 animate-pulse"></div>
                     <div className="h-6 bg-blue-600/30 rounded w-16 animate-pulse"></div>
                   </div>
                   
                   {/* Info skeleton */}
                   <div className="flex items-center gap-6">
-                    <div className="h-4 bg-gray-600 rounded w-24 animate-pulse"></div>
-                    <div className="h-4 bg-gray-600 rounded w-32 animate-pulse"></div>
-                    <div className="h-4 bg-gray-600 rounded w-28 animate-pulse"></div>
+                    <div className="h-4 bg-muted rounded w-24 animate-pulse"></div>
+                    <div className="h-4 bg-muted rounded w-32 animate-pulse"></div>
+                    <div className="h-4 bg-muted rounded w-28 animate-pulse"></div>
                   </div>
                   
                   {/* Contact skeleton */}
-                  <div className="h-3 bg-gray-600 rounded w-64 animate-pulse"></div>
+                  <div className="h-3 bg-muted rounded w-64 animate-pulse"></div>
                   
                   {/* Files skeleton */}
                   <div className="space-y-2">
-                    <div className="h-4 bg-gray-600 rounded w-32 animate-pulse"></div>
+                    <div className="h-4 bg-muted rounded w-32 animate-pulse"></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {[1, 2].map((j) => (
-                        <div key={j} className="bg-gray-800 border border-gray-600 rounded-lg p-3">
-                          <div className="h-32 bg-gray-600 rounded mb-2 animate-pulse"></div>
+                        <div key={j} className="bg-card border border-card rounded-lg p-3">
+                          <div className="h-32 bg-muted rounded mb-2 animate-pulse"></div>
                           <div className="space-y-1">
-                            <div className="h-3 bg-gray-600 rounded w-full animate-pulse"></div>
-                            <div className="h-3 bg-gray-600 rounded w-2/3 animate-pulse"></div>
+                            <div className="h-3 bg-muted rounded w-full animate-pulse"></div>
+                            <div className="h-3 bg-muted rounded w-2/3 animate-pulse"></div>
                             <div className="flex gap-1 mt-2">
-                              <div className="h-6 bg-gray-600 rounded w-12 animate-pulse"></div>
-                              <div className="h-6 bg-gray-600 rounded w-16 animate-pulse"></div>
+                              <div className="h-6 bg-muted rounded w-12 animate-pulse"></div>
+                              <div className="h-6 bg-muted rounded w-16 animate-pulse"></div>
                             </div>
                           </div>
                         </div>
@@ -119,8 +119,8 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                 
                 {/* Action buttons skeleton */}
                 <div className="flex flex-col gap-2">
-                  <div className="h-8 bg-gray-600 rounded w-20 animate-pulse"></div>
-                  <div className="h-8 bg-gray-600 rounded w-16 animate-pulse"></div>
+                  <div className="h-8 bg-muted rounded w-20 animate-pulse"></div>
+                  <div className="h-8 bg-muted rounded w-16 animate-pulse"></div>
                 </div>
               </div>
               
@@ -137,7 +137,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
   if (comprobantes.length === 0) {
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-12 text-center">
+      <div className="bg-card border border-card rounded-lg p-12 text-center">
         <FileText className="h-12 w-12 text-gray-500 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-white mb-2">No se encontraron comprobantes</h3>
         <p className="text-gray-400">
@@ -153,7 +153,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
         {comprobantes.map((comprobante) => (
           <div
             key={comprobante.venta_id || comprobante.id}
-            className="bg-gray-700 border border-gray-600 rounded-lg p-4 hover:bg-gray-600 transition-colors"
+            className="bg-card border border-card rounded-lg p-4 hover:bg-gray-600 transition-colors"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 space-y-3">
@@ -194,7 +194,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                     <h4 className="text-sm font-medium text-gray-300">Archivos adjuntos:</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {comprobante.archivos.map((archivo, index) => (
-                        <div key={index} className="bg-gray-800 border border-gray-600 rounded-lg p-3">
+                        <div key={index} className="bg-card border border-card rounded-lg p-3">
                           {/* Preview de imagen */}
                           {comprobantesService.isImageFile(archivo.filename) && (
                             <div className="mb-2">
@@ -278,11 +278,11 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
           onClick={handleCloseModal}
         >
           <div 
-            className="bg-gray-800 rounded-xl max-w-5xl max-h-[95vh] overflow-auto border border-gray-600 shadow-2xl"
+            className="bg-card rounded-xl max-w-5xl max-h-[95vh] overflow-auto border border-card shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header del modal */}
-            <div className="p-4 border-b border-gray-600 flex justify-between items-center bg-gray-900 rounded-t-xl">
+            <div className="p-4 border-b border-card flex justify-between items-center bg-gray-900 rounded-t-xl">
               <div>
                 <h3 className="text-lg font-semibold text-white">
                   {currentFile.original_name || currentFile.filename}
@@ -302,7 +302,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
             {/* Contenido del modal */}
             <div className="p-4 space-y-4">
               {/* Información del comprobante */}
-              <div className="bg-gray-700 rounded-lg p-4 space-y-2 text-sm">
+              <div className="bg-card rounded-lg p-4 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Venta ID:</span>
                   <span className="text-white">#{currentVenta.venta_id}</span>
@@ -358,7 +358,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
             </div>
             
             {/* Footer con información del archivo */}
-            <div className="p-4 border-t border-gray-600 bg-gray-900 rounded-b-xl">
+            <div className="p-4 border-t border-card bg-gray-900 rounded-b-xl">
               <div className="flex justify-between items-center text-sm text-gray-400">
                 <div className="flex gap-4">
                   <span>Tipo: {currentFile.tipo}</span>

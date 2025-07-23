@@ -229,7 +229,7 @@ export function NuevaVentaForm() {
                           <SelectItem key={asesor.id} value={asesor.name}>{typeof asesor.name === 'string' ? asesor.name : JSON.stringify(asesor.name)}</SelectItem>
                         ))
                       ) : (
-                        <div className="text-gray-400 px-4 py-2">No hay asesores para este cliente</div>
+                        <div className="text-muted-foreground px-4 py-2">No hay asesores para este cliente</div>
                       )}
                     </SelectContent>
                   </Select>

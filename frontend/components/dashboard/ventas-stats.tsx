@@ -45,15 +45,15 @@ export function VentasStats() {
     return (
       <div className="grid gap-4 md:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="bg-gray-800 border-gray-700">
+          <Card key={i} className="bg-card border-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="h-4 bg-gray-700 rounded w-24 animate-pulse" />
-              <div className="h-4 w-4 bg-gray-700 rounded animate-pulse" />
+              <div className="h-4 bg-muted rounded w-24 animate-pulse" />
+              <div className="h-4 w-4 bg-muted rounded animate-pulse" />
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <div className="h-8 bg-gray-600 rounded w-16 animate-pulse" />
-                <div className="h-3 bg-gray-700 rounded w-32 animate-pulse" />
+                <div className="h-8 bg-muted rounded w-16 animate-pulse" />
+                <div className="h-3 bg-muted rounded w-32 animate-pulse" />
               </div>
               <div className="mt-4">
                 <RailwayLoader size="sm" showText={false} />

@@ -31,9 +31,9 @@ export function RailwayLoader({
   return (
     <div className={cn("flex flex-col items-center justify-center gap-4", className)}>
       {/* Contenedor principal de las barras */}
-      <div className={cn("relative bg-gray-800 rounded-full overflow-hidden", containerSizes[size], sizeClasses[size])}>
+      <div className={cn("relative bg-card rounded-full overflow-hidden", containerSizes[size], sizeClasses[size])}>
         {/* Barra de fondo */}
-        <div className="absolute inset-0 bg-gray-700/50" />
+        <div className="absolute inset-0 bg-muted/50" />
         
         {/* Barras animadas - múltiples para efecto más dinámico */}
         <div className="absolute inset-0 flex">
@@ -54,14 +54,14 @@ export function RailwayLoader({
       {/* Texto de carga */}
       {showText && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400 font-medium animate-pulse">
+          <span className="text-sm text-muted-foreground font-medium animate-pulse">
             {text}
           </span>
           {/* Puntos animados */}
           <div className="flex gap-1">
-            <div className="w-1 h-1 bg-gray-400 rounded-full animate-railway-dot" />
-            <div className="w-1 h-1 bg-gray-400 rounded-full animate-railway-dot-delayed-1" />
-            <div className="w-1 h-1 bg-gray-400 rounded-full animate-railway-dot-delayed-2" />
+            <div className="w-1 h-1 bg-muted rounded-full animate-railway-dot" />
+            <div className="w-1 h-1 bg-muted rounded-full animate-railway-dot-delayed-1" />
+            <div className="w-1 h-1 bg-muted rounded-full animate-railway-dot-delayed-2" />
           </div>
         </div>
       )}
@@ -76,8 +76,8 @@ export function RailwayMetricsSkeleton({ className }: { className?: string }) {
       {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <div className="h-8 bg-gray-800 rounded-lg w-48 animate-pulse" />
-          <div className="h-4 bg-gray-700 rounded w-32 animate-pulse" />
+          <div className="h-8 bg-card rounded-lg w-48 animate-pulse" />
+          <div className="h-4 bg-muted rounded w-32 animate-pulse" />
         </div>
         <RailwayLoader size="sm" showText={false} />
       </div>
@@ -85,14 +85,14 @@ export function RailwayMetricsSkeleton({ className }: { className?: string }) {
       {/* Cards de métricas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+          <div key={i} className="bg-card border border-card rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="h-4 bg-gray-700 rounded w-24 animate-pulse" />
-              <div className="h-8 w-8 bg-gray-700 rounded animate-pulse" />
+              <div className="h-4 bg-muted rounded w-24 animate-pulse" />
+              <div className="h-8 w-8 bg-muted rounded animate-pulse" />
             </div>
             <div className="space-y-2">
-              <div className="h-8 bg-gray-600 rounded w-20 animate-pulse" />
-              <div className="h-3 bg-gray-700 rounded w-32 animate-pulse" />
+              <div className="h-8 bg-muted rounded w-20 animate-pulse" />
+              <div className="h-3 bg-muted rounded w-32 animate-pulse" />
             </div>
             {/* Barra animada de Railway en cada card */}
             <div className="mt-4">
@@ -105,13 +105,13 @@ export function RailwayMetricsSkeleton({ className }: { className?: string }) {
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {[1, 2].map((i) => (
-          <div key={i} className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+          <div key={i} className="bg-card border border-card rounded-lg p-6">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <div className="h-6 bg-gray-700 rounded w-32 animate-pulse" />
-                <div className="h-4 bg-gray-700 rounded w-24 animate-pulse" />
+                <div className="h-6 bg-muted rounded w-32 animate-pulse" />
+                <div className="h-4 bg-muted rounded w-24 animate-pulse" />
               </div>
-              <div className="h-64 bg-gray-700/30 rounded-lg flex items-center justify-center">
+              <div className="h-64 bg-muted/30 rounded-lg flex items-center justify-center">
                 <RailwayLoader size="lg" text="Cargando gráfico..." />
               </div>
             </div>

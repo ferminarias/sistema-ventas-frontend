@@ -23,11 +23,11 @@ export function VentasTable({ ventas, loading }: VentasTableProps) {
     return (
       <div className="space-y-4">
         {/* Encabezado de la tabla con skeleton */}
-        <div className="rounded-md border border-gray-700 bg-gray-800">
-          <div className="flex items-center justify-between p-4 border-b border-gray-700">
+        <div className="rounded-md border border-card bg-card">
+          <div className="flex items-center justify-between p-4 border-b border-border">
             <div className="space-y-2">
-              <Skeleton className="h-6 w-32 bg-gray-700" />
-              <Skeleton className="h-4 w-48 bg-gray-600" />
+              <Skeleton className="h-6 w-32 bg-muted" />
+              <Skeleton className="h-4 w-48 bg-muted" />
             </div>
             <RailwayLoader size="sm" showText={false} />
           </div>
@@ -35,21 +35,21 @@ export function VentasTable({ ventas, loading }: VentasTableProps) {
           {/* Filas de skeleton */}
           <div className="space-y-1 p-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center space-x-4 py-3 border-b border-gray-700/50 last:border-b-0">
-                <Skeleton className="h-4 w-12 bg-gray-700" />
-                <Skeleton className="h-4 w-24 bg-gray-700" />
-                <Skeleton className="h-4 w-24 bg-gray-700" />
-                <Skeleton className="h-4 w-32 bg-gray-700" />
-                <Skeleton className="h-4 w-20 bg-gray-700" />
-                <Skeleton className="h-4 w-20 bg-gray-700" />
-                <Skeleton className="h-4 w-16 bg-gray-700" />
-                <Skeleton className="h-4 w-16 bg-gray-700" />
+              <div key={i} className="flex items-center space-x-4 py-3 border-b border-border/50 last:border-b-0">
+                <Skeleton className="h-4 w-12 bg-muted" />
+                <Skeleton className="h-4 w-24 bg-muted" />
+                <Skeleton className="h-4 w-24 bg-muted" />
+                <Skeleton className="h-4 w-32 bg-muted" />
+                <Skeleton className="h-4 w-20 bg-muted" />
+                <Skeleton className="h-4 w-20 bg-muted" />
+                <Skeleton className="h-4 w-16 bg-muted" />
+                <Skeleton className="h-4 w-16 bg-muted" />
               </div>
             ))}
           </div>
           
           {/* Footer con loader principal */}
-          <div className="flex justify-center py-6 border-t border-gray-700">
+          <div className="flex justify-center py-6 border-t border-border">
             <RailwayLoader size="md" text="Cargando ventas..." />
           </div>
         </div>

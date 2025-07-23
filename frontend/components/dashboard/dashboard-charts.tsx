@@ -398,16 +398,16 @@ export function DashboardCharts() {
     return (
       <div className="grid gap-4 md:grid-cols-2">
         {[1, 2].map((i) => (
-          <Card key={i} className="bg-gray-800 border-gray-700">
+          <Card key={i} className="bg-card border-card">
             <CardHeader>
               <div className="space-y-2">
-                <div className="h-6 bg-gray-700 rounded w-32 animate-pulse" />
-                <div className="h-4 bg-gray-700 rounded w-48 animate-pulse" />
+                <div className="h-6 bg-muted rounded w-32 animate-pulse" />
+                <div className="h-4 bg-muted rounded w-48 animate-pulse" />
               </div>
-              <div className="h-10 bg-gray-700 rounded w-40 animate-pulse mt-4" />
+              <div className="h-10 bg-muted rounded w-40 animate-pulse mt-4" />
             </CardHeader>
             <CardContent>
-              <div className="h-64 bg-gray-700/30 rounded-lg flex items-center justify-center">
+              <div className="h-64 bg-muted/30 rounded-lg flex items-center justify-center">
                 <RailwayLoader size="lg" text={i === 1 ? "Cargando gráfico de ventas..." : "Cargando distribución por asesor..."} />
               </div>
             </CardContent>
@@ -421,16 +421,16 @@ export function DashboardCharts() {
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <Card className="bg-gray-800/50 border-gray-600/50 backdrop-blur-sm shadow-2xl">
+      <Card className="bg-card/50 border-border/50 backdrop-blur-sm shadow-2xl">
         <CardHeader>
           <CardTitle>Ventas</CardTitle>
           <CardDescription>Visualización de ventas por período</CardDescription>
           <Tabs defaultValue="mensual" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 bg-gray-700/50 border-gray-600">
-              <TabsTrigger value="mensual" className="data-[state=active]:bg-gray-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-300">
+            <TabsList className="grid w-full grid-cols-2 bg-muted/50 border-border">
+              <TabsTrigger value="mensual" className="data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground">
                 Mensual
               </TabsTrigger>
-              <TabsTrigger value="semanal" className="data-[state=active]:bg-gray-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-gray-300">
+              <TabsTrigger value="semanal" className="data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground">
                 Semanal
               </TabsTrigger>
             </TabsList>
@@ -443,7 +443,7 @@ export function DashboardCharts() {
         </CardContent>
       </Card>
 
-      <Card className="bg-gray-800/50 border-gray-600/50 backdrop-blur-sm shadow-2xl">
+      <Card className="bg-card/50 border-border/50 backdrop-blur-sm shadow-2xl">
         <CardHeader>
           <CardTitle>Distribución por Asesor</CardTitle>
           <CardDescription>Porcentaje de ventas por asesor</CardDescription>
@@ -463,7 +463,7 @@ export function DashboardCharts() {
                   transform: 'translateY(0px)', 
                   transition: 'opacity 0.18s, transform 0.18s'
                 }} 
-                className="backdrop-blur-md bg-gray-900/80 text-white text-xs px-3 py-2 rounded-xl shadow-2xl border border-blue-400/40 animate-fade-in"
+                className="backdrop-blur-md bg-background/80 text-foreground text-xs px-3 py-2 rounded-xl shadow-2xl border border-blue-400/40 animate-fade-in"
               >
                 <div className="font-bold">{tooltip.label}</div>
                 <div>{tooltip.value} ventas</div>

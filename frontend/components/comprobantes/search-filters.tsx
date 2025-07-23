@@ -42,15 +42,15 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
   }
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+    <div className="bg-card border border-card rounded-lg p-6">
       <div className="flex items-center gap-2 mb-6">
-        <Filter className="h-5 w-5 text-gray-400" />
-        <h3 className="text-lg font-semibold text-white">Filtros de Búsqueda</h3>
+        <Filter className="h-5 w-5 text-muted-foreground" />
+        <h3 className="text-lg font-semibold text-foreground">Filtros de Búsqueda</h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="space-y-2">
-          <Label htmlFor="busqueda" className="text-gray-300 text-sm">
+          <Label htmlFor="busqueda" className="text-muted-foreground text-sm">
             Búsqueda General
           </Label>
           <Input
@@ -58,27 +58,27 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             placeholder="Buscar por nombre, documento, etc."
             value={filters.busqueda || ""}
             onChange={(e) => handleInputChange("busqueda", e.target.value)}
-            className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-500"
+            className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-purple-500"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="cliente_id" className="text-gray-300 text-sm">
+          <Label htmlFor="cliente_id" className="text-muted-foreground text-sm">
             Cliente
           </Label>
           <Select
             value={filters.cliente_id?.toString() || "all"}
             onValueChange={(value) => handleInputChange("cliente_id", value === "all" ? "" : value)}
           >
-            <SelectTrigger className="bg-gray-700 border-gray-600 text-white focus:border-purple-500">
+            <SelectTrigger className="bg-muted border-border text-foreground focus:border-purple-500">
               <SelectValue placeholder="Seleccionar cliente" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-700 border-gray-600">
-              <SelectItem value="all" className="text-white hover:bg-gray-700">
+            <SelectContent className="bg-muted border-border">
+              <SelectItem value="all" className="text-foreground hover:bg-muted">
                 Todos los clientes
               </SelectItem>
               {filtrosDisponibles?.clientes?.map((cliente: any) => (
-                <SelectItem key={cliente.id} value={cliente.id.toString()} className="text-white hover:bg-gray-700">
+                <SelectItem key={cliente.id} value={cliente.id.toString()} className="text-foreground hover:bg-muted">
                   {cliente.name}
                 </SelectItem>
               ))}
@@ -87,22 +87,22 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="tipo_archivo" className="text-gray-300 text-sm">
+          <Label htmlFor="tipo_archivo" className="text-muted-foreground text-sm">
             Tipo de Archivo
           </Label>
           <Select
             value={filters.tipo_archivo || "all"}
             onValueChange={(value) => handleInputChange("tipo_archivo", value === "all" ? "" : value)}
           >
-            <SelectTrigger className="bg-gray-700 border-gray-600 text-white focus:border-purple-500">
+            <SelectTrigger className="bg-muted border-border text-foreground focus:border-purple-500">
               <SelectValue placeholder="Seleccionar tipo" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-700 border-gray-600">
-              <SelectItem value="all" className="text-white hover:bg-gray-700">
+            <SelectContent className="bg-muted border-border">
+              <SelectItem value="all" className="text-foreground hover:bg-muted">
                 Todos los tipos
               </SelectItem>
               {filtrosDisponibles?.tipos_archivo?.map((tipo: any, index: number) => (
-                <SelectItem key={index} value={tipo} className="text-white hover:bg-gray-700">
+                <SelectItem key={index} value={tipo} className="text-foreground hover:bg-muted">
                   {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
                 </SelectItem>
               ))}
@@ -111,7 +111,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="fecha_inicio" className="text-gray-300 text-sm">
+          <Label htmlFor="fecha_inicio" className="text-muted-foreground text-sm">
             Fecha Inicio
           </Label>
           <Input
@@ -121,12 +121,12 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             onChange={(e) => handleInputChange("fecha_inicio", e.target.value)}
             min={filtrosDisponibles?.rango_fechas?.fecha_min}
             max={filtrosDisponibles?.rango_fechas?.fecha_max}
-            className="bg-gray-700 border-gray-600 text-white focus:border-purple-500"
+            className="bg-muted border-border text-foreground focus:border-purple-500"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="fecha_fin" className="text-gray-300 text-sm">
+          <Label htmlFor="fecha_fin" className="text-muted-foreground text-sm">
             Fecha Fin
           </Label>
           <Input
@@ -136,26 +136,26 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             onChange={(e) => handleInputChange("fecha_fin", e.target.value)}
             min={filtrosDisponibles?.rango_fechas?.fecha_min}
             max={filtrosDisponibles?.rango_fechas?.fecha_max}
-            className="bg-gray-700 border-gray-600 text-white focus:border-purple-500"
+            className="bg-muted border-border text-foreground focus:border-purple-500"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="limit" className="text-gray-300 text-sm">
+          <Label htmlFor="limit" className="text-muted-foreground text-sm">
             Resultados por página
           </Label>
           <Select
             value={filters.limit?.toString() || "20"}
             onValueChange={(value) => handleInputChange("limit", value)}
           >
-            <SelectTrigger className="bg-gray-700 border-gray-600 text-white focus:border-purple-500">
+            <SelectTrigger className="bg-muted border-border text-foreground focus:border-purple-500">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-gray-700 border-gray-600">
-              <SelectItem value="10" className="text-white hover:bg-gray-700">10</SelectItem>
-              <SelectItem value="20" className="text-white hover:bg-gray-700">20</SelectItem>
-              <SelectItem value="50" className="text-white hover:bg-gray-700">50</SelectItem>
-              <SelectItem value="100" className="text-white hover:bg-gray-700">100</SelectItem>
+            <SelectContent className="bg-muted border-border">
+              <SelectItem value="10" className="text-foreground hover:bg-muted">10</SelectItem>
+              <SelectItem value="20" className="text-foreground hover:bg-muted">20</SelectItem>
+              <SelectItem value="50" className="text-foreground hover:bg-muted">50</SelectItem>
+              <SelectItem value="100" className="text-foreground hover:bg-muted">100</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -165,7 +165,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
         <Button
           onClick={handleSearch}
           disabled={loading}
-          className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+          className="bg-purple-600 hover:bg-purple-700 text-foreground flex items-center gap-2"
         >
           <Search className="h-4 w-4" />
           {loading ? "Buscando..." : "Buscar Comprobantes"}
@@ -173,7 +173,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
         <Button
           variant="outline"
           onClick={handleReset}
-          className="border-gray-700 text-gray-300 hover:bg-gray-800 flex items-center gap-2 bg-transparent"
+          className="border-border text-muted-foreground hover:bg-card flex items-center gap-2 bg-transparent"
         >
           <RotateCcw className="h-4 w-4" />
           Limpiar Filtros
