@@ -30,6 +30,17 @@ export function ClientManagement({ user }: ClientManagementProps) {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter();
 
+  // Cargar datos iniciales
+  useEffect(() => {
+    loadInitialData()
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      clientService.setCurrentUser(user);
+    }
+  }, [user]);
+
   // Validar que user existe y tiene las propiedades necesarias
   if (!user) {
     return (
@@ -45,17 +56,6 @@ export function ClientManagement({ user }: ClientManagementProps) {
 
   const canCreateClients = user.role === "admin";
   const canDeleteClients = user.role === "admin";
-
-  // Cargar datos iniciales
-  useEffect(() => {
-    loadInitialData()
-  }, [])
-
-  useEffect(() => {
-    if (user) {
-      clientService.setCurrentUser(user);
-    }
-  }, [user]);
 
   const loadInitialData = async () => {
     try {
@@ -166,7 +166,7 @@ export function ClientManagement({ user }: ClientManagementProps) {
 
   if (loading) {
     return (
-      <div className="flex-1 bg-gray-900 text-white overflow-auto">
+      <div className="flex-1 bg-background text-foreground overflow-auto">
         <div className="flex items-center justify-center h-full">
           <div className="flex items-center space-x-2">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -190,7 +190,7 @@ export function ClientManagement({ user }: ClientManagementProps) {
         </div>
       </div>
     )
-  
+  }
 
   return (
     <div className="flex-1 bg-background text-foreground overflow-auto">
@@ -238,7 +238,7 @@ export function ClientManagement({ user }: ClientManagementProps) {
               <p className="text-muted-foreground mb-2">No hay clientes registrados</p>
               <p className="text-gray-500 text-sm">Crea tu primer cliente para comenzar</p>
             </div>
-          ) :
+          ) : (
             <div className="space-y-4">
               {clients.filter(c => c.id !== null && c.id !== undefined).map(cliente => (
                 <div
