@@ -36,13 +36,13 @@ export function MetricsCards({ selectedClient }: MetricsCardsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {metrics.map((metric, idx) => (
-        <Card key={idx} className="bg-gray-800 border-gray-700">
+        <Card key={idx} className="bg-card border-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg text-white">{metric.title}</CardTitle>
+            <CardTitle className="text-lg text-foreground">{metric.title}</CardTitle>
             {metric.icon}
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">{typeof metric.value === 'string' || typeof metric.value === 'number' ? metric.value : JSON.stringify(metric.value)}</div>
+            <div className="text-3xl font-bold text-foreground">{typeof metric.value === 'string' || typeof metric.value === 'number' ? metric.value : JSON.stringify(metric.value)}</div>
             <div className={`text-xs mt-2 ${metric.color}`}>{metric.change}</div>
           </CardContent>
         </Card>
