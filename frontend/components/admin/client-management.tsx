@@ -190,7 +190,7 @@ export function ClientManagement({ user }: ClientManagementProps) {
         </div>
       </div>
     )
-  }
+  
 
   return (
     <div className="flex-1 bg-background text-foreground overflow-auto">
