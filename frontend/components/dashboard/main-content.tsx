@@ -57,19 +57,19 @@ export function MainContent({ user, selectedClient }: MainContentProps) {
   }
 
   return (
-    <div className="flex-1 bg-gray-900 text-white overflow-auto">
+    <div className="flex-1 bg-background text-foreground overflow-auto">
       {/* Header */}
-      <div className="p-6 border-b border-gray-700">
+      <div className="p-6 border-b border-border">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">{title}</h1>
-            <p className="text-gray-400 mt-1">{subtitle}</p>
+            <p className="text-muted-foreground mt-1">{subtitle}</p>
           </div>
 
           <div className="flex space-x-3">
             <Button 
               variant="outline" 
-              className="border-gray-600 text-white hover:bg-gray-700"
+              className="border-border text-foreground hover:bg-muted"
               onClick={handleRefresh}
               disabled={isRefreshing}
             >
@@ -78,7 +78,7 @@ export function MainContent({ user, selectedClient }: MainContentProps) {
             </Button>
             <Button 
               variant="outline" 
-              className="border-gray-600 text-white hover:bg-gray-700"
+              className="border-border text-foreground hover:bg-muted"
               onClick={handleExportExcel}
               disabled={isExporting}
             >
