@@ -113,7 +113,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                     <span>Clientes</span>
                   </div>
                   <ChevronDown 
-                    className={`w-5 h-5 text-gray-400 group-hover:text-white transition-all duration-300 shrink-0 ${isOpen ? "rotate-180" : "rotate-0"}`}
+                    className={`w-5 h-5 text-muted-foreground group-hover:text-foreground transition-all duration-300 shrink-0 ${isOpen ? "rotate-180" : "rotate-0"}`}
                     style={{ width: '20px', height: '20px', minWidth: '20px', minHeight: '20px' }}
                   />
                 </Button>
@@ -138,7 +138,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                         </Button>
                       ))
                     ) : (
-                      <div className="text-gray-400 pl-2 text-sm">No hay clientes disponibles</div>
+                      <div className="text-muted-foreground pl-2 text-sm">No hay clientes disponibles</div>
                     )
                   })()}
                 </div>
@@ -196,7 +196,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                       <span>Administración</span>
                     </div>
                     <ChevronDown 
-                      className={`w-5 h-5 text-gray-400 group-hover:text-white transition-all duration-300 shrink-0 ${isAdminOpen ? "rotate-180" : "rotate-0"}`}
+                      className={`w-5 h-5 text-muted-foreground group-hover:text-foreground transition-all duration-300 shrink-0 ${isAdminOpen ? "rotate-180" : "rotate-0"}`}
                       style={{ width: '20px', height: '20px', minWidth: '20px', minHeight: '20px' }}
                     />
                   </Button>

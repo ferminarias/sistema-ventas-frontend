@@ -24,8 +24,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="text-white text-lg">Cargando...</div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-foreground text-lg">Cargando...</div>
       </div>
     );
   }
@@ -43,4 +43,4 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       </div>
     </div>
   );
-} 
+}
