@@ -118,13 +118,13 @@ export function UserManagement({ user }: UserManagementProps) {
   }
 
   return (
-    <div className="flex-1 bg-gray-900 text-white overflow-auto">
+    <div className="flex-1 bg-background text-foreground overflow-auto">
       {/* Header */}
-      <div className="p-6 border-b border-gray-700">
+      <div className="p-6 border-b border-border">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">Gestión de Usuarios</h1>
-            <p className="text-gray-400 mt-1">Administra usuarios y sus permisos</p>
+            <p className="text-muted-foreground mt-1">Administra usuarios y sus permisos</p>
           </div>
           <Button onClick={() => setShowCreateDialog(true)} className="bg-purple-600 hover:bg-purple-700">
             <Plus className="h-4 w-4 mr-2" />
@@ -134,13 +134,13 @@ export function UserManagement({ user }: UserManagementProps) {
       </div>
 
       {/* Content */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-white flex items-center">
+          <CardTitle className="text-foreground flex items-center">
             <Users className="h-5 w-5 mr-2" />
             Lista de Usuarios
           </CardTitle>
-          <CardDescription className="text-gray-400">Gestiona todos los usuarios del sistema</CardDescription>
+          <CardDescription className="text-muted-foreground">Gestiona todos los usuarios del sistema</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -162,7 +162,7 @@ export function UserManagement({ user }: UserManagementProps) {
                 </thead>
                 <tbody>
                   {users.map((userItem) => (
-                    <tr key={userItem.id} className="border-b border-gray-700 hover:bg-gray-750">
+                    <tr key={userItem.id} className="border-b border-border hover:bg-muted">
                       <td className="p-3">{userItem.username || userItem.name}</td>
                       <td className="p-3">{userItem.email}</td>
                       <td className="p-3">{userItem.role}</td>
@@ -177,7 +177,7 @@ export function UserManagement({ user }: UserManagementProps) {
                               setSelectedUser(userItem)
                               setShowEditDialog(true)
                             }}
-                            className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                            className="border-border text-muted-foreground hover:bg-muted"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -188,7 +188,7 @@ export function UserManagement({ user }: UserManagementProps) {
                               setSelectedUser(userItem)
                               setShowPasswordDialog(true)
                             }}
-                            className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                            className="border-border text-muted-foreground hover:bg-muted"
                           >
                             <Key className="h-4 w-4" />
                           </Button>

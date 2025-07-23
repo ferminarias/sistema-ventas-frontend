@@ -179,7 +179,7 @@ export function ClientManagement({ user }: ClientManagementProps) {
 
   if (error) {
     return (
-      <div className="flex-1 bg-gray-900 text-white overflow-auto">
+      <div className="flex-1 bg-background text-foreground overflow-auto">
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <p className="text-red-400 mb-4">{error}</p>
@@ -193,9 +193,9 @@ export function ClientManagement({ user }: ClientManagementProps) {
   }
 
   return (
-    <div className="flex-1 bg-gray-900 text-white overflow-auto">
+    <div className="flex-1 bg-background text-foreground overflow-auto">
       {/* Header */}
-      <div className="p-6 border-b border-gray-700">
+      <div className="p-6 border-b border-border">
         <div className="flex justify-between items-center">
           <div>
             <div className="flex items-center space-x-2 mb-2">
@@ -207,7 +207,7 @@ export function ClientManagement({ user }: ClientManagementProps) {
                 </Badge>
               )}
             </div>
-            <p className="text-gray-400">
+            <p className="text-muted-foreground">
               {user.role === "admin"
                 ? "Administra todos los clientes del sistema"
                 : `Gestiona tus ${clients.length} clientes asignados`}
@@ -223,83 +223,81 @@ export function ClientManagement({ user }: ClientManagementProps) {
       </div>
 
       {/* Content */}
-      <div className="p-6">
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <Building2 className="h-5 w-5 mr-2" />
-              Lista de Clientes ({clients.length})
-            </CardTitle>
-            <CardDescription className="text-gray-400">Gestiona todos los clientes del sistema</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {clients.filter(c => c.id !== null && c.id !== undefined).length === 0 ? (
-              <div className="text-center py-8">
-                <Building2 className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-400 mb-2">No hay clientes registrados</p>
-                <p className="text-gray-500 text-sm">Crea tu primer cliente para comenzar</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {clients.filter(c => c.id !== null && c.id !== undefined).map(cliente => (
-                  <div
-                    key={cliente.id}
-                    className="flex items-center justify-between p-4 bg-gray-700 rounded-lg"
-                  >
-                    <div>
-                      <h3 className="text-white font-medium">{cliente.name}</h3>
-                      <p className="text-gray-400 text-sm">{cliente.description}</p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push(`/admin/clientes/${cliente.id}/campos`)}
-                        title="Configurar campos personalizados"
-                      >
-                        <Settings className="h-4 w-4 mr-1" />
-                        Campos
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setSelectedClient(cliente);
-                          setShowFormDialog(true);
-                        }}
-                        title="Configurar formulario"
-                      >
-                        <FileText className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setSelectedClient(cliente);
-                          setShowEditDialog(true);
-                        }}
-                        title="Editar cliente"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      {canDeleteClients && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteClient(cliente.id)}
-                          title="Eliminar cliente"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-foreground flex items-center">
+            <Building2 className="h-5 w-5 mr-2" />
+            Lista de Clientes ({clients.length})
+          </CardTitle>
+          <CardDescription className="text-muted-foreground">Gestiona todos los clientes del sistema</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {clients.filter(c => c.id !== null && c.id !== undefined).length === 0 ? (
+            <div className="text-center py-8">
+              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-2">No hay clientes registrados</p>
+              <p className="text-gray-500 text-sm">Crea tu primer cliente para comenzar</p>
+            </div>
+          ) :
+            <div className="space-y-4">
+              {clients.filter(c => c.id !== null && c.id !== undefined).map(cliente => (
+                <div
+                  key={cliente.id}
+                  className="flex items-center justify-between p-4 bg-muted rounded-lg"
+                >
+                  <div>
+                    <h3 className="text-foreground font-medium">{cliente.name}</h3>
+                    <p className="text-muted-foreground text-sm">{cliente.description}</p>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push(`/admin/clientes/${cliente.id}/campos`)}
+                      title="Configurar campos personalizados"
+                    >
+                      <Settings className="h-4 w-4 mr-1" />
+                      Campos
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setSelectedClient(cliente);
+                        setShowFormDialog(true);
+                      }}
+                      title="Configurar formulario"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setSelectedClient(cliente);
+                        setShowEditDialog(true);
+                      }}
+                      title="Editar cliente"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    {canDeleteClients && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteClient(cliente.id)}
+                        title="Eliminar cliente"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Dialogs con handlers reales */}
       {canCreateClients && (
