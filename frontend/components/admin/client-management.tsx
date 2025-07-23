@@ -46,7 +46,7 @@ export function ClientManagement({ user }: ClientManagementProps) {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center text-red-500">
+          <div className="text-center text-destructive">
             Error: No se encontró información del usuario
           </div>
         </CardContent>
@@ -169,8 +169,8 @@ export function ClientManagement({ user }: ClientManagementProps) {
       <div className="flex-1 bg-background text-foreground overflow-auto">
         <div className="flex items-center justify-center h-full">
           <div className="flex items-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Cargando clientes...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span className="text-muted-foreground">Cargando clientes...</span>
           </div>
         </div>
       </div>
@@ -182,8 +182,8 @@ export function ClientManagement({ user }: ClientManagementProps) {
       <div className="flex-1 bg-background text-foreground overflow-auto">
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <p className="text-red-400 mb-4">{error}</p>
-            <Button onClick={loadInitialData} className="bg-purple-600 hover:bg-purple-700">
+            <p className="text-destructive mb-4">{error}</p>
+            <Button onClick={loadInitialData} className="bg-primary hover:bg-primary/90 text-primary-foreground">
               Reintentar
             </Button>
           </div>
@@ -214,7 +214,7 @@ export function ClientManagement({ user }: ClientManagementProps) {
             </p>
           </div>
           {canCreateClients && (
-            <Button onClick={() => setShowCreateDialog(true)} className="bg-purple-600 hover:bg-purple-700">
+            <Button onClick={() => setShowCreateDialog(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <Plus className="h-4 w-4 mr-2" />
               Crear Cliente
             </Button>
@@ -236,7 +236,7 @@ export function ClientManagement({ user }: ClientManagementProps) {
             <div className="text-center py-8">
               <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-2">No hay clientes registrados</p>
-              <p className="text-gray-500 text-sm">Crea tu primer cliente para comenzar</p>
+              <p className="text-muted-foreground/70 text-sm">Crea tu primer cliente para comenzar</p>
             </div>
           ) : (
             <div className="space-y-4">
