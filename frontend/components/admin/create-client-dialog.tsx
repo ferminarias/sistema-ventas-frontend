@@ -94,14 +94,14 @@ export function CreateClientDialog({ open, onClose, onSubmit, availableUsers }: 
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
+      <div className="bg-card rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-2">
             <Building2 className="h-5 w-5 text-purple-400" />
-            <h2 className="text-xl font-bold text-white">Crear Cliente</h2>
+            <h2 className="text-xl font-bold text-foreground">Crear Cliente</h2>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-400 hover:text-white">
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -109,7 +109,7 @@ export function CreateClientDialog({ open, onClose, onSubmit, availableUsers }: 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Información básica */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white">Información Básica</h3>
+            <h3 className="text-lg font-medium text-foreground">Información Básica</h3>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-300">Nombre del Cliente</label>
@@ -137,8 +137,8 @@ export function CreateClientDialog({ open, onClose, onSubmit, availableUsers }: 
 
           {/* Usuarios asignados */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white">Usuarios Asignados</h3>
-            <p className="text-sm text-gray-400">Selecciona qué supervisores tendrán acceso a este cliente</p>
+            <h3 className="text-lg font-medium text-foreground">Usuarios Asignados</h3>
+            <p className="text-sm text-muted-foreground">Selecciona qué supervisores tendrán acceso a este cliente</p>
 
             <div className="grid grid-cols-1 gap-2">
               {supervisors.map((user) => (
@@ -149,8 +149,8 @@ export function CreateClientDialog({ open, onClose, onSubmit, availableUsers }: 
                   onClick={() => handleUserToggle(user.id as number)}
                   className={`justify-start p-3 h-auto ${
                     formData.assignedUsers.includes(user.id as number)
-                      ? "bg-purple-600 border-purple-500 text-white"
-                      : "border-gray-600 text-gray-300 hover:bg-gray-700"
+                      ? "bg-purple-600 border-purple-500 text-foreground"
+                      : "border-border text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   <div className="text-left">
@@ -175,7 +175,7 @@ export function CreateClientDialog({ open, onClose, onSubmit, availableUsers }: 
           {/* Configuración básica de formulario */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium text-white">Campos del Formulario</h3>
+              <h3 className="text-lg font-medium text-foreground">Campos del Formulario</h3>
               <Button type="button" onClick={addBasicField} size="sm" className="bg-purple-600 hover:bg-purple-700">
                 <Plus className="h-4 w-4 mr-1" />
                 Agregar Campo
@@ -228,11 +228,11 @@ export function CreateClientDialog({ open, onClose, onSubmit, availableUsers }: 
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+              className="flex-1 border-border text-muted-foreground hover:bg-muted"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white">
+            <Button type="submit" disabled={loading} className="flex-1 bg-purple-600 hover:bg-purple-700 text-foreground">
               {loading ? "Creando..." : "Crear Cliente"}
             </Button>
           </div>

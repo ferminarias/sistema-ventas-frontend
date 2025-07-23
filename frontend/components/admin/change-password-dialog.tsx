@@ -62,22 +62,22 @@ export function ChangePasswordDialog({ open, user, onClose, onSubmit }: ChangePa
   if (!open || !user) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
+      <div className="bg-card rounded-lg p-6 w-full max-w-md mx-4">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-2">
             <Key className="h-5 w-5 text-purple-400" />
-            <h2 className="text-xl font-bold text-white">Cambiar Contraseña</h2>
+            <h2 className="text-xl font-bold text-foreground">Cambiar Contraseña</h2>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleClose} className="text-gray-400 hover:text-white">
+          <Button variant="ghost" size="sm" onClick={handleClose} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Información del usuario */}
-        <div className="bg-gray-700 p-3 rounded-md mb-4">
-          <p className="text-white font-medium">{user.name}</p>
-          <p className="text-gray-400 text-sm">{user.email}</p>
+        <div className="bg-muted p-3 rounded-md mb-4">
+          <p className="text-foreground font-medium">{user.name}</p>
+          <p className="text-muted-foreground text-sm">{user.email}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -155,7 +155,7 @@ export function ChangePasswordDialog({ open, user, onClose, onSubmit }: ChangePa
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+              className="flex-1 border-gray-600 text-gray-300 hover:bg-muted"
             >
               Cancelar
             </Button>
