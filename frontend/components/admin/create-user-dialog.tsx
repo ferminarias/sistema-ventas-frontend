@@ -177,7 +177,7 @@ export function CreateUserDialog({ open, onClose, onSubmit }: CreateUserDialogPr
             </div>
           )}
 
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="sticky bottom-0 bg-card pt-4 pb-2 z-10 border-t flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
