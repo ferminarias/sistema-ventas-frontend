@@ -53,6 +53,9 @@ export function RailwayCalendar({
 
   const handleDateSelect = React.useCallback((selectedDate: Date) => {
     console.log("RailwayCalendar - Fecha seleccionada:", selectedDate)
+    console.log("RailwayCalendar - Día del mes:", selectedDate.getDate())
+    console.log("RailwayCalendar - Mes:", selectedDate.getMonth() + 1)
+    console.log("RailwayCalendar - Año:", selectedDate.getFullYear())
     onDateChange(selectedDate)
     setIsOpen(false)
   }, [onDateChange])
@@ -100,10 +103,17 @@ export function RailwayCalendar({
     event.preventDefault()
     event.stopPropagation()
     
-    if (isDisabled(day)) return
+    console.log("RailwayCalendar - handleDayClick llamado con día:", day)
+    
+    if (isDisabled(day)) {
+      console.log("RailwayCalendar - Día deshabilitado:", day)
+      return
+    }
     
     const selectedDate = new Date(currentMonth.year, currentMonth.month, day)
-    console.log("RailwayCalendar - Día clickeado:", day, "Fecha creada:", selectedDate)
+    console.log("RailwayCalendar - Fecha creada:", selectedDate)
+    console.log("RailwayCalendar - Verificación - Día:", selectedDate.getDate(), "Mes:", selectedDate.getMonth() + 1, "Año:", selectedDate.getFullYear())
+    
     handleDateSelect(selectedDate)
   }, [currentMonth, isDisabled, handleDateSelect])
 
@@ -198,9 +208,13 @@ export function RailwayCalendar({
                       !isDayDisabled && !isDaySelected && "hover:bg-gray-100"
                     )}
                     disabled={isDayDisabled}
-                    onClick={(e) => handleDayClick(day, e)}
+                    onClick={(e) => {
+                      console.log("RailwayCalendar - Click en día:", day)
+                      handleDayClick(day, e)
+                    }}
                     type="button"
                     data-day={day}
+                    data-testid={`calendar-day-${day}`}
                   >
                     {day}
                   </Button>
