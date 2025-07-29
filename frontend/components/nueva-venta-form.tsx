@@ -100,15 +100,16 @@ export function NuevaVentaForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
     try {
+      // Enviar la fecha como Date object y dejar que el backend la procese
       const ventaData = {
         ...values,
-        fecha_venta: values.fecha_venta.toISOString().split('T')[0],
+        fecha_venta: values.fecha_venta, // Enviar como Date object
         asesor: values.asesor,
         cliente: String(selectedCliente),
       }
-      console.log("Enviando datos:", ventaData)
+      console.log("Enviando datos al backend:", ventaData)
       const response = await ventasApi.createVenta(ventaData)
-      console.log("Respuesta:", response)
+      console.log("Respuesta del backend:", response)
       toast({
         title: "Venta registrada",
         description: `La venta ha sido registrada exitosamente para el cliente seleccionado.`,
@@ -248,10 +249,6 @@ export function NuevaVentaForm() {
                   />
                 </FormControl>
                 <FormMessage />
-                {/* Debug info - remover en producción */}
-                <div className="text-xs text-gray-500 mt-1">
-                  Fecha actual: {field.value ? field.value.toISOString() : 'No seleccionada'}
-                </div>
               </FormItem>
             )}
           />

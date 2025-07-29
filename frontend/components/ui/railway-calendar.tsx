@@ -51,11 +51,11 @@ export function RailwayCalendar({
     return { year: now.getFullYear(), month: now.getMonth() }
   })
 
-  const handleDateSelect = (selectedDate: Date) => {
+  const handleDateSelect = React.useCallback((selectedDate: Date) => {
     console.log("RailwayCalendar - Fecha seleccionada:", selectedDate)
     onDateChange(selectedDate)
     setIsOpen(false)
-  }
+  }, [onDateChange])
 
   const goToPreviousMonth = () => {
     setCurrentMonth(prev => {
@@ -96,6 +96,17 @@ export function RailwayCalendar({
     return checkDate > today || checkDate < new Date(1900, 0, 1)
   }
 
+  const handleDayClick = React.useCallback((day: number, event: React.MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    
+    if (isDisabled(day)) return
+    
+    const selectedDate = new Date(currentMonth.year, currentMonth.month, day)
+    console.log("RailwayCalendar - Día clickeado:", day, "Fecha creada:", selectedDate)
+    handleDateSelect(selectedDate)
+  }, [currentMonth, isDisabled, handleDateSelect])
+
   const daysInMonth = getDaysInMonth(currentMonth.year, currentMonth.month)
   const firstDayOfMonth = getFirstDayOfMonth(currentMonth.year, currentMonth.month)
   
@@ -133,6 +144,7 @@ export function RailwayCalendar({
               size="sm"
               onClick={goToPreviousMonth}
               className="h-8 w-8 p-0"
+              type="button"
             >
               ←
             </Button>
@@ -144,6 +156,7 @@ export function RailwayCalendar({
               size="sm"
               onClick={goToNextMonth}
               className="h-8 w-8 p-0"
+              type="button"
             >
               →
             </Button>
@@ -173,22 +186,25 @@ export function RailwayCalendar({
               const isDaySelected = isSelected(day)
               
               return (
-                <Button
-                  key={day}
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "h-8 w-8 p-0 text-xs",
-                    isDayToday && "bg-blue-100 text-blue-900 font-bold",
-                    isDaySelected && "bg-blue-600 text-white hover:bg-blue-700",
-                    isDayDisabled && "text-muted-foreground opacity-50 cursor-not-allowed",
-                    !isDayDisabled && !isDaySelected && "hover:bg-gray-100"
-                  )}
-                  disabled={isDayDisabled}
-                  onClick={() => !isDayDisabled && handleDateSelect(new Date(currentMonth.year, currentMonth.month, day))}
-                >
-                  {day}
-                </Button>
+                <div key={day} className="relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-8 w-8 p-0 text-xs relative z-10",
+                      isDayToday && "bg-blue-100 text-blue-900 font-bold",
+                      isDaySelected && "bg-blue-600 text-white hover:bg-blue-700",
+                      isDayDisabled && "text-muted-foreground opacity-50 cursor-not-allowed",
+                      !isDayDisabled && !isDaySelected && "hover:bg-gray-100"
+                    )}
+                    disabled={isDayDisabled}
+                    onClick={(e) => handleDayClick(day, e)}
+                    type="button"
+                    data-day={day}
+                  >
+                    {day}
+                  </Button>
+                </div>
               )
             })}
           </div>
