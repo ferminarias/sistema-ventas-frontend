@@ -138,9 +138,16 @@ export function ClientManagement({ user }: ClientManagementProps) {
     }
   }
 
-  // ✅ HANDLER REAL para configurar formulario
-  const handleUpdateFormConfig = async (clientId: number, formConfig: any) => {
+  // ✅ HANDLER REAL para configurar formulario y logo
+  const handleUpdateFormConfig = async (clientId: number, formConfig: any, logo?: string) => {
     try {
+      // Si hay un logo nuevo (base64), subirlo primero
+      if (logo && logo.startsWith('data:image/')) {
+        const updatedClientWithLogo = await clientService.uploadClientLogo(clientId, logo);
+        setClients(prev => prev.map(c => c.id === clientId ? updatedClientWithLogo : c));
+      }
+
+      // Actualizar configuración del formulario
       const updateData: UpdateClientRequest = {
         id: clientId,
         formConfig

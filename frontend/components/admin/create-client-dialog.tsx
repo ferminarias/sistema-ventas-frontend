@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { X, Building2, Plus } from "lucide-react"
 import type { CreateClientRequest, FormField } from "@/types/client"
 import type { User } from "@/types/auth"
+import { FileUpload } from "@/components/ui/file-upload"
 
 interface CreateClientDialogProps {
   open: boolean
@@ -23,6 +24,7 @@ export function CreateClientDialog({ open, onClose, onSubmit, availableUsers }: 
     description: "",
     assignedUsers: [],
     formConfig: [],
+    logo: "",
   })
   const [loading, setLoading] = useState(false)
 
@@ -51,6 +53,7 @@ export function CreateClientDialog({ open, onClose, onSubmit, availableUsers }: 
       description: "",
       assignedUsers: [],
       formConfig: [],
+      logo: "",
     })
   }
 
@@ -131,6 +134,19 @@ export function CreateClientDialog({ open, onClose, onSubmit, availableUsers }: 
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500"
+              />
+            </div>
+
+            {/* Logo del cliente */}
+            <div className="space-y-2">
+              <FileUpload
+                label="Logo del Cliente"
+                placeholder="Arrastra o selecciona el logo de la universidad"
+                value={formData.logo}
+                onChange={(value) => setFormData({ ...formData, logo: value })}
+                accept="image/*"
+                maxSize={2}
+                className="bg-gray-700"
               />
             </div>
           </div>

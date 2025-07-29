@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 interface DashboardHeaderProps {
   cliente?: string
+  clienteLogo?: string
 }
 
 // Función para capitalizar correctamente el nombre del cliente
@@ -17,7 +18,7 @@ const formatClientName = (name: string) => {
   return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
 }
 
-export function DashboardHeader({ cliente }: DashboardHeaderProps) {
+export function DashboardHeader({ cliente, clienteLogo }: DashboardHeaderProps) {
   const { toast } = useToast()
   const [isExporting, setIsExporting] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -59,10 +60,38 @@ export function DashboardHeader({ cliente }: DashboardHeaderProps) {
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
         {/* Sección de contenido principal */}
         <div className="flex-1 min-w-0 space-y-3">
-          {/* Título principal con tipografía moderna */}
-          <h1 className="text-display text-3xl md:text-4xl lg:text-5xl text-white">
-            {formattedClientName ? `Dashboard de ${formattedClientName}` : "Dashboard de Ventas"}
-          </h1>
+          {/* Header con logo y título */}
+          <div className="flex items-center gap-4">
+            {/* Logo del cliente */}
+            {clienteLogo && (
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center overflow-hidden shadow-lg">
+                  <img 
+                    src={clienteLogo} 
+                    alt={`Logo de ${formattedClientName}`}
+                    className="w-full h-full object-contain p-2"
+                    onError={(e) => {
+                      // Fallback si la imagen no carga
+                      const target = e.target as HTMLImageElement
+                      target.style.display = 'none'
+                      target.parentElement!.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center text-white/60 text-2xl font-bold">
+                          ${formattedClientName?.charAt(0) || 'U'}
+                        </div>
+                      `
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Título principal con tipografía moderna */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-display text-3xl md:text-4xl lg:text-5xl text-white">
+                {formattedClientName ? `Dashboard de ${formattedClientName}` : "Dashboard de Ventas"}
+              </h1>
+            </div>
+          </div>
           
           {/* Descripción con mejor contraste y tipografía */}
           <div className="flex items-start gap-3">

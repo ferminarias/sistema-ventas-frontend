@@ -2,24 +2,27 @@ import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { X, Plus, GripVertical, Eye } from "lucide-react"
+import { X, Plus, GripVertical, Eye, Image } from "lucide-react"
 import type { Client, FormField } from "@/types/client"
+import { FileUpload } from "@/components/ui/file-upload"
 
 interface ConfigureFormDialogProps {
   open: boolean
   client: Client | null
   onClose: () => void
-  onSubmit: (formConfig: FormField[]) => void
+  onSubmit: (formConfig: FormField[], logo?: string) => void
 }
 
 export function ConfigureFormDialog({ open, client, onClose, onSubmit }: ConfigureFormDialogProps) {
   const [fields, setFields] = useState<FormField[]>([])
+  const [clientLogo, setClientLogo] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
 
   useEffect(() => {
     if (client) {
       setFields(client.formConfig || [])
+      setClientLogo(client.logo || "")
     }
   }, [client])
 
@@ -53,7 +56,7 @@ export function ConfigureFormDialog({ open, client, onClose, onSubmit }: Configu
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    onSubmit(fields)
+    onSubmit(fields, clientLogo)
     setLoading(false)
   }
 
@@ -65,51 +68,79 @@ export function ConfigureFormDialog({ open, client, onClose, onSubmit }: Configu
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-2">
             <Eye className="h-5 w-5 text-purple-400" />
-            <h2 className="text-xl font-bold text-white">Configurar Formulario</h2>
+            <h2 className="text-xl font-bold text-white">Configurar Cliente: {client.name}</h2>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-400 hover:text-white">
             <X className="h-4 w-4" />
           </Button>
         </div>
+        
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-medium text-white">Campos del Formulario</h3>
-            <Button type="button" onClick={addField} size="sm" className="bg-purple-600 hover:bg-purple-700">
-              <Plus className="h-4 w-4 mr-1" />
-              Agregar Campo
-            </Button>
-          </div>
-          {fields.length === 0 ? (
-            <p className="text-gray-400">No hay campos configurados.</p>
-          ) : (
-            <div className="space-y-2">
-              {fields.map((field, idx) => (
-                <div key={field.id} className="flex items-center justify-between p-3 bg-gray-700 rounded-md">
-                  <div className="flex items-center gap-2">
-                    <GripVertical
-                      className="h-4 w-4 cursor-pointer text-gray-400"
-                      onClick={() => moveField(idx, idx - 1)}
-                    />
-                    <GripVertical
-                      className="h-4 w-4 cursor-pointer text-gray-400"
-                      onClick={() => moveField(idx, idx + 1)}
-                    />
-                    <span className="text-white text-sm">{typeof field.label === 'string' ? field.label : JSON.stringify(field.label)}</span>
-                    <Badge variant="outline" className="ml-2 text-xs">{field.type}</Badge>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeField(field.id)}
-                    className="text-red-400 hover:text-red-300"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+          {/* Sección del Logo del Cliente */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Image className="h-5 w-5 text-blue-400" />
+              <h3 className="text-lg font-medium text-white">Logo del Cliente</h3>
             </div>
-          )}
+            <div className="p-4 bg-gray-700 rounded-lg">
+              <FileUpload
+                label="Logo de la Universidad"
+                placeholder="Arrastra o selecciona el logo de la universidad"
+                value={clientLogo}
+                onChange={setClientLogo}
+                accept="image/*"
+                maxSize={2}
+                className="bg-gray-600"
+              />
+              <p className="text-xs text-gray-400 mt-2">
+                El logo aparecerá en el dashboard, sidebar y formularios de venta de este cliente.
+              </p>
+            </div>
+          </div>
+
+          {/* Sección de Campos del Formulario */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium text-white">Campos del Formulario</h3>
+              <Button type="button" onClick={addField} size="sm" className="bg-purple-600 hover:bg-purple-700">
+                <Plus className="h-4 w-4 mr-1" />
+                Agregar Campo
+              </Button>
+            </div>
+            
+            {fields.length === 0 ? (
+              <p className="text-gray-400">No hay campos configurados.</p>
+            ) : (
+              <div className="space-y-2">
+                {fields.map((field, idx) => (
+                  <div key={field.id} className="flex items-center justify-between p-3 bg-gray-700 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <GripVertical
+                        className="h-4 w-4 cursor-pointer text-gray-400"
+                        onClick={() => moveField(idx, idx - 1)}
+                      />
+                      <GripVertical
+                        className="h-4 w-4 cursor-pointer text-gray-400"
+                        onClick={() => moveField(idx, idx + 1)}
+                      />
+                      <span className="text-white text-sm">{typeof field.label === 'string' ? field.label : JSON.stringify(field.label)}</span>
+                      <Badge variant="outline" className="ml-2 text-xs">{field.type}</Badge>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeField(field.id)}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-between items-center mt-4">
             <Button type="button" variant="outline" onClick={() => setShowPreview((p) => !p)}>
               <Eye className="h-4 w-4 mr-1" />
@@ -125,6 +156,7 @@ export function ConfigureFormDialog({ open, client, onClose, onSubmit }: Configu
             </div>
           </div>
         </form>
+        
         {showPreview && (
           <div className="mt-6 p-4 bg-gray-900 rounded-lg">
             <h4 className="text-white font-semibold mb-2">Preview del Formulario</h4>

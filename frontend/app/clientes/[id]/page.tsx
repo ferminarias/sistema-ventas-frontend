@@ -17,6 +17,7 @@ interface Client {
   createdAt: string;
   assignedUsers: number[];
   formConfig: any[];
+  logo?: string;
 }
 
 export default function ClienteDashboardPage() {
@@ -53,12 +54,36 @@ export default function ClienteDashboardPage() {
 
   return (
     <div className="flex-1 bg-gray-900 text-white overflow-auto">
-      <DashboardHeader cliente={client.name} />
+      <DashboardHeader cliente={client.name} clienteLogo={client.logo} />
       <div className="p-6 space-y-6">
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle>Información del Cliente</CardTitle>
-            <CardDescription>{client.description}</CardDescription>
+            <div className="flex items-center gap-4">
+              {/* Logo del cliente en la tarjeta de información */}
+              {client.logo && (
+                <div className="w-16 h-16 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center overflow-hidden shadow-lg">
+                  <img 
+                    src={client.logo} 
+                    alt={`Logo de ${client.name}`}
+                    className="w-full h-full object-contain p-2"
+                    onError={(e) => {
+                      // Fallback si la imagen no carga
+                      const target = e.target as HTMLImageElement
+                      target.style.display = 'none'
+                      target.parentElement!.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center text-white/60 text-2xl font-bold">
+                          ${client.name.charAt(0).toUpperCase()}
+                        </div>
+                      `
+                    }}
+                  />
+                </div>
+              )}
+              <div>
+                <CardTitle>Cliente {client.name} - Universidad</CardTitle>
+                <CardDescription>{client.description}</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-gray-300">ID: {client.id}</div>

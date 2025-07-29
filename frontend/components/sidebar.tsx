@@ -26,6 +26,7 @@ interface Client {
   createdAt: string
   assignedUsers: number[]
   formConfig: any[]
+  logo?: string
 }
 
 // Mapeo de colores por cliente
@@ -132,7 +133,30 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                           size="sm"
                         >
                           <Link href={`/clientes/${client.id}`}>
-                            <div className={`w-2 h-2 rounded-full mr-3 ${getClientColor(client.name, client.id)}`}></div>
+                            {/* Logo del cliente o fallback con color */}
+                            {client.logo ? (
+                              <div className="w-6 h-6 rounded-md mr-3 overflow-hidden bg-white/10 border border-white/20 flex items-center justify-center">
+                                <img 
+                                  src={client.logo} 
+                                  alt={`Logo ${client.name}`}
+                                  className="w-full h-full object-contain p-1"
+                                  onError={(e) => {
+                                    // Fallback si la imagen no carga
+                                    const target = e.target as HTMLImageElement
+                                    target.style.display = 'none'
+                                    target.parentElement!.innerHTML = `
+                                      <div class="w-full h-full rounded-md ${getClientColor(client.name, client.id)} flex items-center justify-center">
+                                        <span class="text-white text-xs font-bold">${client.name.charAt(0).toUpperCase()}</span>
+                                      </div>
+                                    `
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <div className={`w-6 h-6 rounded-md mr-3 ${getClientColor(client.name, client.id)} flex items-center justify-center`}>
+                                <span className="text-white text-xs font-bold">{client.name.charAt(0).toUpperCase()}</span>
+                              </div>
+                            )}
                             <span className="truncate">{typeof client.name === 'string' ? client.name : JSON.stringify(client.name)}</span>
                           </Link>
                         </Button>

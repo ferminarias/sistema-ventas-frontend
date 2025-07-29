@@ -2,181 +2,192 @@
 
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { X, Upload, File, Image } from "lucide-react"
-import { clientFieldsService } from "@/services/client-fields-service"
-import { useToast } from "@/components/ui/use-toast"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Upload, X, Image, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface FileUploadProps {
-  field: {
-    id: string;
-    label: string;
-    required: boolean;
-    help_text?: string;
-  };
-  value?: string;
-  onChange: (value: string | null) => void;
-  disabled?: boolean;
+  value?: string
+  onChange: (value: string) => void
+  onFileChange?: (file: File) => void
+  label?: string
+  placeholder?: string
+  accept?: string
+  maxSize?: number // en MB
+  className?: string
+  disabled?: boolean
+  required?: boolean
 }
 
-export function FileUpload({ field, value, onChange, disabled }: FileUploadProps) {
-  const [uploading, setUploading] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [dragOver, setDragOver] = useState(false)
+export function FileUpload({
+  value,
+  onChange,
+  onFileChange,
+  label = "Archivo",
+  placeholder = "Seleccionar archivo...",
+  accept = "image/*",
+  maxSize = 5, // 5MB por defecto
+  className,
+  disabled = false,
+  required = false
+}: FileUploadProps) {
+  const [isUploading, setIsUploading] = useState(false)
+  const [preview, setPreview] = useState<string | null>(value || null)
+  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { toast } = useToast()
 
-  const handleFileSelect = async (file: File) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
     if (!file) return
 
-    // Validar tamaño (máximo 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "Error",
-        description: "El archivo no puede ser mayor a 10MB",
-        variant: "destructive",
-      })
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      setError("Solo se permiten archivos de imagen")
       return
     }
 
+    // Validar tamaño
+    if (file.size > maxSize * 1024 * 1024) {
+      setError(`El archivo es demasiado grande. Máximo ${maxSize}MB`)
+      return
+    }
+
+    setError(null)
+    setIsUploading(true)
+
     try {
-      setUploading(true)
-      setProgress(0)
+      // Crear preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const result = e.target?.result as string
+        setPreview(result)
+        onChange(result)
+      }
+      reader.readAsDataURL(file)
 
-      // Simular progress
-      const progressInterval = setInterval(() => {
-        setProgress(prev => Math.min(prev + 10, 90))
-      }, 100)
-
-      const fileUrl = await clientFieldsService.uploadFile(file, field.id)
-      
-      clearInterval(progressInterval)
-      setProgress(100)
-      
-      onChange(fileUrl)
-      
-      toast({
-        title: "Éxito",
-        description: "Archivo subido correctamente",
-      })
+      // Llamar callback si existe
+      if (onFileChange) {
+        onFileChange(file)
+      }
     } catch (error) {
-      console.error('Error uploading file:', error)
-      toast({
-        title: "Error",
-        description: "Error al subir el archivo",
-        variant: "destructive",
-      })
+      setError("Error al procesar el archivo")
+      console.error("Error processing file:", error)
     } finally {
-      setUploading(false)
-      setProgress(0)
+      setIsUploading(false)
     }
   }
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setDragOver(false)
-    
-    const files = Array.from(e.dataTransfer.files)
-    if (files.length > 0) {
-      handleFileSelect(files[0])
-    }
-  }
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    if (files.length > 0) {
-      handleFileSelect(files[0])
-    }
-  }
-
-  const removeFile = () => {
-    onChange(null)
+  const handleRemove = () => {
+    setPreview(null)
+    onChange("")
+    setError(null)
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+      fileInputRef.current.value = ""
     }
   }
 
-  const getFileIcon = (fileName: string) => {
-    const extension = fileName.split('.').pop()?.toLowerCase()
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension || '')) {
-      return <Image className="h-4 w-4" />
+  const handleClick = () => {
+    if (!disabled) {
+      fileInputRef.current?.click()
     }
-    return <File className="h-4 w-4" />
-  }
-
-  const getFileName = (url: string) => {
-    return url.split('/').pop() || 'archivo'
   }
 
   return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium">
-        {typeof field.label === 'string' ? field.label : JSON.stringify(field.label)}
-        {field.required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      
-      {field.help_text && (
-        <p className="text-sm text-muted-foreground">{field.help_text}</p>
+    <div className={cn("space-y-3", className)}>
+      {label && (
+        <Label className="text-sm font-medium">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </Label>
       )}
 
-      {value ? (
-        // Archivo ya subido
-        <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
-          {getFileIcon(value)}
-          <span className="text-sm flex-1 truncate">{getFileName(value)}</span>
+      <div className="space-y-3">
+        {/* Preview del logo */}
+        {preview && (
+          <div className="relative">
+            <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center">
+              <img
+                src={preview}
+                alt="Preview"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
+              onClick={handleRemove}
+              disabled={disabled}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+
+        {/* Área de carga */}
+        {!preview && (
+          <div
+            className={cn(
+              "w-full h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors",
+              disabled
+                ? "border-gray-200 bg-gray-50 cursor-not-allowed"
+                : "border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100",
+              error && "border-red-300 bg-red-50"
+            )}
+            onClick={handleClick}
+          >
+            {isUploading ? (
+              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            ) : (
+              <>
+                <Image className="h-6 w-6 text-gray-400 mb-2" />
+                <p className="text-sm text-gray-600 text-center">
+                  {placeholder}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Máximo {maxSize}MB
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Input oculto */}
+        <Input
+          ref={fileInputRef}
+          type="file"
+          accept={accept}
+          onChange={handleFileSelect}
+          className="hidden"
+          disabled={disabled}
+        />
+
+        {/* Botón de carga alternativa */}
+        {!preview && (
           <Button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={removeFile}
-            disabled={disabled}
+            variant="outline"
+            onClick={handleClick}
+            disabled={disabled || isUploading}
+            className="w-full"
           >
-            <X className="h-4 w-4" />
+            <Upload className="mr-2 h-4 w-4" />
+            {isUploading ? "Subiendo..." : "Seleccionar Logo"}
           </Button>
-        </div>
-      ) : (
-        // Zona de drop para subir archivo
-        <div
-          className={`border-2 border-dashed rounded-md p-6 text-center transition-colors ${
-            dragOver 
-              ? 'border-primary bg-primary/5' 
-              : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-          } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-          onDrop={handleDrop}
-          onDragOver={(e) => {
-            e.preventDefault()
-            setDragOver(true)
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onClick={() => !disabled && fileInputRef.current?.click()}
-        >
-          <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground mb-2">
-            Arrastra un archivo aquí o haz click para seleccionar
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Máximo 10MB
-          </p>
-          
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            onChange={handleFileInputChange}
-            disabled={disabled}
-          />
-        </div>
-      )}
+        )}
 
-      {uploading && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span>Subiendo archivo...</span>
-            <span>{progress}%</span>
-          </div>
-          <Progress value={progress} className="h-2" />
-        </div>
-      )}
+        {/* Mensaje de error */}
+        {error && (
+          <p className="text-sm text-red-600">{error}</p>
+        )}
+
+        {/* Información adicional */}
+        <p className="text-xs text-gray-500">
+          Formatos soportados: JPG, PNG, GIF. Tamaño máximo: {maxSize}MB
+        </p>
+      </div>
     </div>
   )
 } 

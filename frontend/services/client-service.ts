@@ -202,7 +202,12 @@ class ClientService {
         credentials: 'include',
         mode: 'cors'
       })
-      return handleResponse<Client>(response)
+      
+      if (!response.ok) {
+        throw new Error('Error updating client');
+      }
+      
+      return response.json();
     } catch (error) {
       console.error('Error en updateClient:', error)
       if (error instanceof ApiError) {
@@ -262,6 +267,43 @@ class ClientService {
         throw error
       }
       throw new ApiError("Error al obtener cliente", 500)
+    }
+  }
+
+  // Subir logo del cliente
+  async uploadClientLogo(clientId: number, logoBase64: string): Promise<Client> {
+    if (!this.currentUser) {
+      throw new ApiError("Debes iniciar sesión para subir logos", 401)
+    }
+
+    if (!canAccessClient(this.currentUser, Number(clientId))) {
+      throw new ApiError("No tienes permiso para actualizar este cliente", 403)
+    }
+
+    try {
+      const url = `${API_URL}/api/clientes/${clientId}/logo`
+      const requestBody = { logo: logoBase64 }
+      logRequest('POST', url, getAuthHeaders(false), requestBody)
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: getAuthHeaders(false),
+        body: JSON.stringify(requestBody),
+        credentials: 'include',
+        mode: 'cors'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Error uploading logo');
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error('Error en uploadClientLogo:', error)
+      if (error instanceof ApiError) {
+        throw error
+      }
+      throw new ApiError("Error al subir logo del cliente", 500)
     }
   }
 }
