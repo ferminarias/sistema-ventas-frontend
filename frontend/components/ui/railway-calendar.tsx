@@ -52,10 +52,8 @@ export function RailwayCalendar({
   })
 
   const handleDateSelect = React.useCallback((selectedDate: Date) => {
-    console.log("RailwayCalendar - Fecha seleccionada:", selectedDate)
-    console.log("RailwayCalendar - Día del mes:", selectedDate.getDate())
-    console.log("RailwayCalendar - Mes:", selectedDate.getMonth() + 1)
-    console.log("RailwayCalendar - Año:", selectedDate.getFullYear())
+    // Log silencioso para debugging en producción si es necesario
+    // console.log("RailwayCalendar - Fecha seleccionada:", selectedDate)
     onDateChange(selectedDate)
     setIsOpen(false)
   }, [onDateChange])
@@ -103,11 +101,11 @@ export function RailwayCalendar({
     event.preventDefault()
     event.stopPropagation()
     
-    console.log("RailwayCalendar - handleDayClick llamado con día:", day)
-    console.log("RailwayCalendar - currentMonth:", currentMonth)
+    // Log silencioso para debugging en producción si es necesario
+    // console.log("RailwayCalendar - handleDayClick llamado con día:", day)
     
     if (isDisabled(day)) {
-      console.log("RailwayCalendar - Día deshabilitado:", day)
+      // console.log("RailwayCalendar - Día deshabilitado:", day)
       return
     }
     
@@ -118,8 +116,7 @@ export function RailwayCalendar({
     selectedDate.setDate(day)
     selectedDate.setHours(0, 0, 0, 0)
     
-    console.log("RailwayCalendar - Fecha creada con setDate:", selectedDate)
-    console.log("RailwayCalendar - Verificación - Día:", selectedDate.getDate(), "Mes:", selectedDate.getMonth() + 1, "Año:", selectedDate.getFullYear())
+    // console.log("RailwayCalendar - Fecha creada con setDate:", selectedDate)
     
     handleDateSelect(selectedDate)
   }, [currentMonth, isDisabled, handleDateSelect])
@@ -216,7 +213,7 @@ export function RailwayCalendar({
                     )}
                     disabled={isDayDisabled}
                     onClick={(e) => {
-                      console.log("RailwayCalendar - Click en día:", day)
+                      // console.log("RailwayCalendar - Click en día:", day)
                       handleDayClick(day, e)
                     }}
                     type="button"

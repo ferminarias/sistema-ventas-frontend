@@ -79,20 +79,46 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
         );
 
       case 'date':
-        // Función para manejar cambios de fecha con RailwayCalendar
+        // Función mejorada para manejar cambios de fecha con RailwayCalendar
         const handleDateChange = (date: Date | undefined) => {
-          console.log("DynamicField - Fecha seleccionada:", date)
+          // Log silencioso para debugging en producción si es necesario
+          // console.log("DynamicField - Fecha seleccionada:", date)
+          
+          // Convertir Date a string para el formulario de manera más precisa
           if (date) {
-            console.log("DynamicField - Día del mes:", date.getDate())
-            console.log("DynamicField - Mes:", date.getMonth() + 1)
-            console.log("DynamicField - Año:", date.getFullYear())
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            const dateString = `${year}-${month}-${day}`
+            // console.log("DynamicField - Fecha convertida a string:", dateString)
+            fieldProps.onChange(dateString)
+          } else {
+            fieldProps.onChange('')
           }
-          // Convertir Date a string para el formulario
-          fieldProps.onChange(date ? date.toISOString().split('T')[0] : '')
         }
 
-        // Convertir string a Date para RailwayCalendar
-        const currentDate = fieldProps.value ? new Date(fieldProps.value) : undefined
+        // Convertir string a Date para RailwayCalendar de manera más precisa
+        let currentDate: Date | undefined = undefined
+        if (fieldProps.value) {
+          try {
+            // Si es un string ISO (YYYY-MM-DD)
+            if (typeof fieldProps.value === 'string' && fieldProps.value.includes('-')) {
+              const [year, month, day] = fieldProps.value.split('-').map(Number)
+              currentDate = new Date()
+              currentDate.setFullYear(year)
+              currentDate.setMonth(month - 1)
+              currentDate.setDate(day)
+              currentDate.setHours(0, 0, 0, 0)
+            } else {
+              // Si es un Date object
+              currentDate = new Date(fieldProps.value)
+            }
+            // console.log("DynamicField - Fecha convertida a Date:", currentDate)
+          } catch (error) {
+            console.error("DynamicField - Error convirtiendo fecha:", error)
+            currentDate = undefined
+          }
+        }
 
         return (
           <RailwayCalendar

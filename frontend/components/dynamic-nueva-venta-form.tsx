@@ -209,11 +209,25 @@ export function DynamicNuevaVentaForm() {
     }
   }, [clientFields, form])
 
+  // Debug: Watch fecha_venta changes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'fecha_venta') {
+        // Log silencioso para debugging en producción si es necesario
+        // console.log("DynamicNuevaVentaForm - fecha_venta cambió:", value.fecha_venta)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
+
   const onSubmit = async (values: any) => {
     if (!selectedCliente) return
 
     setIsSubmitting(true)
     try {
+      // Log silencioso para debugging en producción si es necesario
+      // console.log("DynamicNuevaVentaForm - onSubmit - fecha_venta:", values.fecha_venta)
+      
       const ventaData = {
         ...values,
         cliente: selectedCliente,
