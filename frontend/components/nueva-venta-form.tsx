@@ -6,18 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useToast } from "@/components/ui/use-toast"
-import { CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ventasApi } from "@/lib/api/ventas"
 import { useAuth } from "@/contexts/auth-context"
+import { RailwayCalendar } from "@/components/ui/railway-calendar"
 
 const formSchema = z.object({
   nombre: z.string().min(2, {
@@ -142,7 +137,7 @@ export function NuevaVentaForm() {
             </SelectTrigger>
             <SelectContent>
               {clientesDisponibles.map((cliente) => (
-                                          <SelectItem key={cliente.id} value={String(cliente.id)}>{typeof cliente.name === 'string' ? cliente.name : JSON.stringify(cliente.name)}</SelectItem>
+                <SelectItem key={cliente.id} value={String(cliente.id)}>{typeof cliente.name === 'string' ? cliente.name : JSON.stringify(cliente.name)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -245,29 +240,18 @@ export function NuevaVentaForm() {
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel className="text-label">Fecha de Venta</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                      >
-                        {field.value ? format(field.value, "PPP", { locale: es }) : <span>Seleccionar fecha</span>}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <FormControl>
+                  <RailwayCalendar
+                    date={field.value}
+                    onDateChange={field.onChange}
+                    placeholder="Seleccionar fecha de venta"
+                  />
+                </FormControl>
                 <FormMessage />
+                {/* Debug info - remover en producción */}
+                <div className="text-xs text-gray-500 mt-1">
+                  Fecha actual: {field.value ? field.value.toISOString() : 'No seleccionada'}
+                </div>
               </FormItem>
             )}
           />
