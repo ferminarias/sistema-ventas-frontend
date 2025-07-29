@@ -3,10 +3,69 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Info, RefreshCw, FileSpreadsheet, Plus } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export function TypographyExamples() {
   return (
     <div className="space-y-8 p-6">
+      {/* Ejemplo del nuevo Dashboard Header */}
+      <div className="bg-gray-900 p-6 rounded-lg">
+        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div className="flex-1 min-w-0 space-y-3">
+            <h1 className="text-display text-3xl md:text-4xl lg:text-5xl text-white">
+              Dashboard de Anahuac
+            </h1>
+            <div className="flex items-start gap-3">
+              <p className="text-body text-gray-200 leading-relaxed max-w-2xl">
+                Gestiona, analiza y potencia las ventas de Anahuac desde un solo panel centralizado.
+              </p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-5 w-5 text-gray-400 hover:text-gray-300 cursor-help mt-1 flex-shrink-0 transition-colors" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs bg-gray-800 border-gray-700 text-gray-200">
+                    <span className="text-sm">
+                      Este panel te permite visualizar métricas clave, analizar tendencias y tomar decisiones informadas.
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 sm:flex-none bg-gray-800/50 border-gray-600 text-gray-200 hover:bg-gray-700/50 hover:border-gray-500 transition-all duration-200"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline text-button">Actualizar</span>
+                <span className="sm:hidden text-button">Refrescar</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 sm:flex-none bg-gray-800/50 border-gray-600 text-gray-200 hover:bg-gray-700/50 hover:border-gray-500 transition-all duration-200"
+              >
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline text-button">Exportar Excel</span>
+                <span className="sm:hidden text-button">Excel</span>
+              </Button>
+            </div>
+            <Button 
+              size="sm"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              <span className="text-button">Nueva Venta</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Ejemplo de Header Principal */}
       <div className="space-y-4">
         <h1 className="text-display text-4xl md:text-5xl lg:text-6xl">
