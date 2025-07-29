@@ -38,12 +38,12 @@ export function MetricsCards({ selectedClient }: MetricsCardsProps) {
       {metrics.map((metric, idx) => (
         <Card key={idx} className="bg-card border-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg text-foreground">{metric.title}</CardTitle>
+            <CardTitle className="text-heading text-lg">{metric.title}</CardTitle>
             {metric.icon}
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-foreground">{typeof metric.value === 'string' || typeof metric.value === 'number' ? metric.value : JSON.stringify(metric.value)}</div>
-            <div className={`text-xs mt-2 ${metric.color}`}>{metric.change}</div>
+            <div className={`text-caption mt-2 ${metric.color}`}>{metric.change}</div>
           </CardContent>
         </Card>
       ))}

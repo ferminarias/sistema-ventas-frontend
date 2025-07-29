@@ -83,9 +83,9 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
       <div className="flex flex-col" style={{ height: '100vh' }}>
         {/* Header fijo */}
         <div className="flex h-16 items-center justify-center border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
+          <Link href="/" className="flex items-center gap-2">
             <BarChart3 className="h-6 w-6" />
-            <span className="text-sm font-bold">SISTEMA VENTAS NODS</span>
+            <span className="text-label font-bold">SISTEMA VENTAS NODS</span>
           </Link>
         </div>
         

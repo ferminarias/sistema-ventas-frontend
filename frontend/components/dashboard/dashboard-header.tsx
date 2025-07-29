@@ -38,11 +38,11 @@ export function DashboardHeader({ cliente }: DashboardHeaderProps) {
 
   return (
     <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+      <div className="space-y-2">
+        <h1 className="text-display text-3xl md:text-4xl lg:text-5xl">
           {cliente ? `Dashboard - ${cliente}` : "Dashboard General"}
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-caption">
           {cliente ? `Ventas de ${cliente}` : "Ventas de todos los clientes"}
         </p>
       </div>

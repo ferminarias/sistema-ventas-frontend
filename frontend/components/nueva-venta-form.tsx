@@ -154,7 +154,7 @@ export function NuevaVentaForm() {
             name="nombre"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre</FormLabel>
+                <FormLabel className="text-label">Nombre</FormLabel>
                 <FormControl>
                   <Input placeholder="Juan" {...field} />
                 </FormControl>
@@ -168,7 +168,7 @@ export function NuevaVentaForm() {
             name="apellido"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Apellido</FormLabel>
+                <FormLabel className="text-label">Apellido</FormLabel>
                 <FormControl>
                   <Input placeholder="Pérez" {...field} />
                 </FormControl>
@@ -184,7 +184,7 @@ export function NuevaVentaForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-label">Email</FormLabel>
                 <FormControl>
                   <Input placeholder="correo@ejemplo.com" type="email" {...field} />
                 </FormControl>
@@ -198,7 +198,7 @@ export function NuevaVentaForm() {
             name="telefono"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Teléfono</FormLabel>
+                <FormLabel className="text-label">Teléfono</FormLabel>
                 <FormControl>
                   <Input placeholder="123456789" {...field} />
                 </FormControl>
@@ -214,7 +214,7 @@ export function NuevaVentaForm() {
             name="asesor"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Asesor</FormLabel>
+                <FormLabel className="text-label">Asesor</FormLabel>
                 <FormControl>
                   <Select
                     value={field.value}
@@ -229,7 +229,7 @@ export function NuevaVentaForm() {
                           <SelectItem key={asesor.id} value={asesor.name}>{typeof asesor.name === 'string' ? asesor.name : JSON.stringify(asesor.name)}</SelectItem>
                         ))
                       ) : (
-                        <div className="text-muted-foreground px-4 py-2">No hay asesores para este cliente</div>
+                        <div className="text-caption px-4 py-2">No hay asesores para este cliente</div>
                       )}
                     </SelectContent>
                   </Select>
@@ -244,7 +244,7 @@ export function NuevaVentaForm() {
             name="fecha_venta"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Fecha de Venta</FormLabel>
+                <FormLabel className="text-label">Fecha de Venta</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>

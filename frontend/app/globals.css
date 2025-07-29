@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -69,12 +72,103 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-variation-settings: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-variation-settings: normal;
+  }
+  
+  /* Tipografía moderna para headings */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-variation-settings: normal;
+  }
+  
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl lg:text-5xl;
+  }
+  
+  h3 {
+    @apply text-2xl md:text-3xl lg:text-4xl;
+  }
+  
+  h4 {
+    @apply text-xl md:text-2xl lg:text-3xl;
+  }
+  
+  h5 {
+    @apply text-lg md:text-xl lg:text-2xl;
+  }
+  
+  h6 {
+    @apply text-base md:text-lg lg:text-xl;
+  }
+  
+  /* Tipografía para párrafos */
+  p {
+    @apply leading-relaxed;
+  }
+  
+  /* Tipografía para botones */
+  button, .btn {
+    @apply font-medium tracking-wide;
+  }
+  
+  /* Tipografía para inputs */
+  input, textarea, select {
+    @apply font-normal;
+  }
+  
+  /* Tipografía para código */
+  code, pre {
+    @apply font-mono;
   }
 }
 
 @layer utilities {
+  /* Utilidades tipográficas modernas */
+  .text-display {
+    @apply font-display font-bold tracking-tight;
+  }
+  
+  .text-heading {
+    @apply font-semibold tracking-tight;
+  }
+  
+  .text-body {
+    @apply font-normal leading-relaxed;
+  }
+  
+  .text-caption {
+    @apply text-sm font-medium text-muted-foreground;
+  }
+  
+  .text-label {
+    @apply text-sm font-semibold tracking-wide uppercase;
+  }
+  
+  .text-code {
+    @apply font-mono text-sm;
+  }
+  
+  .text-button {
+    @apply font-medium tracking-wide;
+  }
+  
   /* Utilidades para truncado de texto multilinea */
   .line-clamp-1 {
     overflow: hidden;
