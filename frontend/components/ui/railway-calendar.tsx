@@ -104,14 +104,21 @@ export function RailwayCalendar({
     event.stopPropagation()
     
     console.log("RailwayCalendar - handleDayClick llamado con día:", day)
+    console.log("RailwayCalendar - currentMonth:", currentMonth)
     
     if (isDisabled(day)) {
       console.log("RailwayCalendar - Día deshabilitado:", day)
       return
     }
     
-    const selectedDate = new Date(currentMonth.year, currentMonth.month, day)
-    console.log("RailwayCalendar - Fecha creada:", selectedDate)
+    // Crear la fecha de manera más precisa
+    const selectedDate = new Date()
+    selectedDate.setFullYear(currentMonth.year)
+    selectedDate.setMonth(currentMonth.month)
+    selectedDate.setDate(day)
+    selectedDate.setHours(0, 0, 0, 0)
+    
+    console.log("RailwayCalendar - Fecha creada con setDate:", selectedDate)
     console.log("RailwayCalendar - Verificación - Día:", selectedDate.getDate(), "Mes:", selectedDate.getMonth() + 1, "Año:", selectedDate.getFullYear())
     
     handleDateSelect(selectedDate)
