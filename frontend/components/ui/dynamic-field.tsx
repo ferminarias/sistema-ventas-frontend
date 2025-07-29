@@ -4,14 +4,11 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { RailwayCalendar } from "@/components/ui/railway-calendar"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { FileUpload } from "@/components/ui/file-upload"
 import type { ClientField } from "@/services/client-fields-service"
@@ -82,39 +79,28 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
         );
 
       case 'date':
+        // Función para manejar cambios de fecha con RailwayCalendar
+        const handleDateChange = (date: Date | undefined) => {
+          console.log("DynamicField - Fecha seleccionada:", date)
+          if (date) {
+            console.log("DynamicField - Día del mes:", date.getDate())
+            console.log("DynamicField - Mes:", date.getMonth() + 1)
+            console.log("DynamicField - Año:", date.getFullYear())
+          }
+          // Convertir Date a string para el formulario
+          fieldProps.onChange(date ? date.toISOString().split('T')[0] : '')
+        }
+
+        // Convertir string a Date para RailwayCalendar
+        const currentDate = fieldProps.value ? new Date(fieldProps.value) : undefined
+
         return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !fieldProps.value && "text-muted-foreground"
-                )}
-                disabled={disabled}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {fieldProps.value ? (
-                  format(new Date(fieldProps.value), "PPP", { locale: es })
-                ) : (
-                  <span>{field.placeholder || "Seleccionar fecha"}</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={fieldProps.value ? new Date(fieldProps.value) : undefined}
-                onSelect={(date) => fieldProps.onChange(date?.toISOString().split('T')[0])}
-                disabled={(date) => 
-                  disabled || 
-                  date > new Date() || 
-                  date < new Date("1900-01-01")
-                }
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <RailwayCalendar
+            date={currentDate}
+            onDateChange={handleDateChange}
+            placeholder={field.placeholder || "Seleccionar fecha"}
+            disabled={disabled}
+          />
         );
 
       case 'file':

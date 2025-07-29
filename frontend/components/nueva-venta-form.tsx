@@ -99,22 +99,12 @@ export function NuevaVentaForm() {
 
   // Función mejorada para manejar cambios de fecha
   const handleDateChange = (date: Date | undefined) => {
-    console.log("NuevaVentaForm - Fecha seleccionada:", date)
-    if (date) {
-      console.log("NuevaVentaForm - Día del mes:", date.getDate())
-      console.log("NuevaVentaForm - Mes:", date.getMonth() + 1)
-      console.log("NuevaVentaForm - Año:", date.getFullYear())
-    }
     form.setValue("fecha_venta", date || new Date())
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
     try {
-      // Log de debugging para la fecha
-      console.log("NuevaVentaForm - Fecha en onSubmit:", values.fecha_venta)
-      console.log("NuevaVentaForm - Día del mes en onSubmit:", values.fecha_venta.getDate())
-      
       // Enviar la fecha como Date object y dejar que el backend la procese
       const ventaData = {
         ...values,
@@ -267,17 +257,6 @@ export function NuevaVentaForm() {
               </FormItem>
             )}
           />
-        </div>
-
-        {/* Debug info para fecha */}
-        <div className="p-4 bg-muted/50 rounded-lg">
-          <p className="text-sm text-muted-foreground mb-2">Debug - Fecha actual en el formulario:</p>
-          <p className="text-xs font-mono">
-            {form.watch("fecha_venta") ? 
-              `${form.watch("fecha_venta").toLocaleDateString('es-ES')} (Día: ${form.watch("fecha_venta").getDate()}, Mes: ${form.watch("fecha_venta").getMonth() + 1}, Año: ${form.watch("fecha_venta").getFullYear()})` : 
-              'No hay fecha seleccionada'
-            }
-          </p>
         </div>
 
         <div className="flex justify-end space-x-4">
