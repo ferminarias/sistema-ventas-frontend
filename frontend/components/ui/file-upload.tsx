@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,10 +32,18 @@ export function FileUpload({
   disabled = false,
   required = false
 }: FileUploadProps) {
+  // Asegurar que value siempre sea un string
+  const currentValue = typeof value === 'string' ? value : ""
+  
   const [isUploading, setIsUploading] = useState(false)
-  const [preview, setPreview] = useState<string | null>(value || null)
+  const [preview, setPreview] = useState<string | null>(currentValue || null)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Actualizar preview cuando cambie el value
+  useEffect(() => {
+    setPreview(currentValue || null)
+  }, [currentValue])
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]

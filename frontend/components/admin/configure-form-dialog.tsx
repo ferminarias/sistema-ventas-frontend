@@ -22,6 +22,7 @@ export function ConfigureFormDialog({ open, client, onClose, onSubmit }: Configu
   useEffect(() => {
     if (client) {
       setFields(client.formConfig || [])
+      // Asegurar que clientLogo siempre sea un string
       setClientLogo(client.logo || "")
     }
   }, [client])
@@ -56,7 +57,12 @@ export function ConfigureFormDialog({ open, client, onClose, onSubmit }: Configu
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    onSubmit(fields, clientLogo)
+    
+    // Asegurar que clientLogo sea un string válido
+    const logoToSubmit = typeof clientLogo === 'string' ? clientLogo : ""
+    console.log("Submitting with logo:", typeof logoToSubmit, logoToSubmit);
+    
+    onSubmit(fields, logoToSubmit)
     setLoading(false)
   }
 
@@ -87,7 +93,10 @@ export function ConfigureFormDialog({ open, client, onClose, onSubmit }: Configu
                 label="Logo de la Universidad"
                 placeholder="Arrastra o selecciona el logo de la universidad"
                 value={clientLogo}
-                onChange={setClientLogo}
+                onChange={(value: string) => {
+                  console.log("FileUpload onChange called with:", typeof value, value);
+                  setClientLogo(value || "");
+                }}
                 accept="image/*"
                 maxSize={2}
                 className="bg-gray-600"
