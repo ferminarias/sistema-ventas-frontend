@@ -141,22 +141,36 @@ export function ClientManagement({ user }: ClientManagementProps) {
   // ✅ HANDLER REAL para configurar formulario y logo
   const handleUpdateFormConfig = async (clientId: number, formConfig: any, logo?: string) => {
     try {
+      console.log("🔍 handleUpdateFormConfig called with:", {
+        clientId,
+        formConfigLength: formConfig.length,
+        logoType: typeof logo,
+        logoStartsWithData: logo?.startsWith('data:image/'),
+        logoPreview: logo?.substring(0, 50) + "..."
+      });
+
       // Si hay un logo nuevo (base64), subirlo primero
       if (logo && logo.startsWith('data:image/')) {
+        console.log("🚀 Subiendo logo a Cloudinary...");
         const updatedClientWithLogo = await clientService.uploadClientLogo(clientId, logo);
+        console.log("✅ Logo subido exitosamente:", updatedClientWithLogo);
         setClients(prev => prev.map(c => c.id === clientId ? updatedClientWithLogo : c));
+      } else {
+        console.log("⚠️ No hay logo base64 para subir");
       }
 
       // Actualizar configuración del formulario
+      console.log("📝 Actualizando configuración del formulario...");
       const updateData: UpdateClientRequest = {
         id: clientId,
         formConfig
       };
       const updatedClient = await clientService.updateClient(clientId, updateData);
+      console.log("✅ Formulario actualizado:", updatedClient);
       setClients(prev => prev.map(c => c.id === clientId ? updatedClient : c));
       setShowFormDialog(false);
     } catch (error) {
-      console.error("Error updating form config:", error);
+      console.error("❌ Error updating form config:", error);
       setError("Error al actualizar la configuración del formulario. Por favor, intenta de nuevo.");
     }
   }

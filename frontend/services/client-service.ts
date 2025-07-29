@@ -272,6 +272,12 @@ class ClientService {
 
   // Subir logo del cliente
   async uploadClientLogo(clientId: number, logoBase64: string): Promise<Client> {
+    console.log("🔍 uploadClientLogo called with:", {
+      clientId,
+      logoBase64Length: logoBase64.length,
+      logoBase64Preview: logoBase64.substring(0, 50) + "..."
+    });
+
     if (!this.currentUser) {
       throw new ApiError("Debes iniciar sesión para subir logos", 401)
     }
@@ -283,6 +289,9 @@ class ClientService {
     try {
       const url = `${API_URL}/api/clientes/${clientId}/logo`
       const requestBody = { logo: logoBase64 }
+      console.log("🚀 Making request to:", url);
+      console.log("📦 Request body size:", JSON.stringify(requestBody).length);
+      
       logRequest('POST', url, getAuthHeaders(false), requestBody)
       
       const response = await fetch(url, {
@@ -293,13 +302,20 @@ class ClientService {
         mode: 'cors'
       })
       
+      console.log("📡 Response status:", response.status);
+      console.log("📡 Response headers:", Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
-        throw new Error('Error uploading logo');
+        const errorText = await response.text();
+        console.error("❌ Response error:", errorText);
+        throw new Error(`Error uploading logo: ${response.status} ${response.statusText}`);
       }
       
-      return response.json();
+      const result = await response.json();
+      console.log("✅ Logo upload successful:", result);
+      return result;
     } catch (error) {
-      console.error('Error en uploadClientLogo:', error)
+      console.error('❌ Error en uploadClientLogo:', error)
       if (error instanceof ApiError) {
         throw error
       }
