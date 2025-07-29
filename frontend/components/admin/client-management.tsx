@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Settings, Building2, Users, Loader2, Shield, FileText, MoreHorizontal } from "lucide-react"
+import { Plus, Edit, Trash2, Settings, Building2, Users, Loader2, Shield, FileText, MoreHorizontal, ExternalLink, Calendar, UserCheck } from "lucide-react"
 import { CreateClientDialog } from "./create-client-dialog"
 import { EditClientDialog } from "./edit-client-dialog"
 import { ConfigureFormDialog } from "./configure-form-dialog"
@@ -194,27 +194,32 @@ export function ClientManagement({ user }: ClientManagementProps) {
 
   return (
     <div className="flex-1 bg-background text-foreground overflow-auto">
-      {/* Header */}
-      <div className="p-6 border-b border-border">
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="flex items-center space-x-2 mb-2">
-              <h1 className="text-3xl font-bold">Gestión de Clientes</h1>
+      {/* Header Rediseñado */}
+      <div className="px-8 py-6 border-b border-border/50">
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <h1 className="text-display text-2xl md:text-3xl font-semibold tracking-tight">
+                Gestión de Clientes
+              </h1>
               {user.role === "supervisor" && (
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="secondary" className="text-xs px-2 py-1">
                   <Shield className="h-3 w-3 mr-1" />
                   Vista limitada
                 </Badge>
               )}
             </div>
-            <p className="text-muted-foreground">
+            <p className="text-body text-muted-foreground">
               {user.role === "admin"
-                ? "Administra todos los clientes del sistema"
+                ? "Administra y configura todos los clientes del sistema"
                 : `Gestiona tus ${clients.length} clientes asignados`}
             </p>
           </div>
           {canCreateClients && (
-            <Button onClick={() => setShowCreateDialog(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button 
+              onClick={() => setShowCreateDialog(true)} 
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm hover:shadow-md transition-all duration-200"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Crear Cliente
             </Button>
@@ -222,82 +227,189 @@ export function ClientManagement({ user }: ClientManagementProps) {
         </div>
       </div>
 
-      {/* Content */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground flex items-center">
-            <Building2 className="h-5 w-5 mr-2" />
-            Lista de Clientes ({clients.length})
-          </CardTitle>
-          <CardDescription className="text-muted-foreground">Gestiona todos los clientes del sistema</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {clients.filter(c => c.id !== null && c.id !== undefined).length === 0 ? (
-            <div className="text-center py-8">
-              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-2">No hay clientes registrados</p>
-              <p className="text-muted-foreground/70 text-sm">Crea tu primer cliente para comenzar</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {clients.filter(c => c.id !== null && c.id !== undefined).map(cliente => (
-                <div
-                  key={cliente.id}
-                  className="flex items-center justify-between p-4 bg-muted rounded-lg"
-                >
-                  <div>
-                    <h3 className="text-foreground font-medium">{cliente.name}</h3>
-                    <p className="text-muted-foreground text-sm">{cliente.description}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => router.push(`/admin/clientes/${cliente.id}/campos`)}
-                      title="Configurar campos personalizados"
-                    >
-                      <Settings className="h-4 w-4 mr-1" />
-                      Campos
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setSelectedClient(cliente);
-                        setShowFormDialog(true);
-                      }}
-                      title="Configurar formulario"
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setSelectedClient(cliente);
-                        setShowEditDialog(true);
-                      }}
-                      title="Editar cliente"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    {canDeleteClients && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteClient(cliente.id)}
-                        title="Eliminar cliente"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+      {/* Contenido Principal */}
+      <div className="p-8">
+        {/* Estadísticas Rápidas */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="bg-card/50 border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-caption text-muted-foreground">Total Clientes</p>
+                  <p className="text-heading text-2xl font-semibold">{clients.length}</p>
                 </div>
-              ))}
+                <Building2 className="h-8 w-8 text-muted-foreground/60" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-card/50 border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-caption text-muted-foreground">Activos</p>
+                  <p className="text-heading text-2xl font-semibold text-green-600">
+                    {clients.filter(c => c.id !== null && c.id !== undefined).length}
+                  </p>
+                </div>
+                <UserCheck className="h-8 w-8 text-green-600/60" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-card/50 border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-caption text-muted-foreground">Configurados</p>
+                  <p className="text-heading text-2xl font-semibold text-blue-600">
+                    {clients.filter(c => c.formConfig).length}
+                  </p>
+                </div>
+                <Settings className="h-8 w-8 text-blue-600/60" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Lista de Clientes Rediseñada */}
+        <Card className="bg-card border-border/50 shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-heading text-lg font-medium flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-muted-foreground" />
+                  Clientes del Sistema
+                </CardTitle>
+                <CardDescription className="text-caption text-muted-foreground mt-1">
+                  {clients.length} cliente{clients.length !== 1 ? 's' : ''} registrado{clients.length !== 1 ? 's' : ''}
+                </CardDescription>
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          
+          <CardContent className="p-0">
+            {clients.filter(c => c.id !== null && c.id !== undefined).length === 0 ? (
+              <div className="text-center py-12 px-6">
+                <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Building2 className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-heading text-lg font-medium mb-2">No hay clientes registrados</h3>
+                <p className="text-body text-muted-foreground mb-4">
+                  Comienza creando tu primer cliente para gestionar ventas
+                </p>
+                {canCreateClients && (
+                  <Button 
+                    onClick={() => setShowCreateDialog(true)}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear Primer Cliente
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="divide-y divide-border/50">
+                {clients.filter(c => c.id !== null && c.id !== undefined).map((cliente, index) => (
+                  <div
+                    key={cliente.id}
+                    className="group hover:bg-muted/30 transition-colors duration-200"
+                  >
+                    <div className="flex items-center justify-between p-6">
+                      {/* Información del Cliente */}
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                          <span className="text-white font-semibold text-sm">
+                            {cliente.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-heading text-base font-medium truncate">
+                              {cliente.name}
+                            </h3>
+                            {cliente.formConfig && (
+                              <Badge variant="outline" className="text-xs">
+                                <Settings className="h-3 w-3 mr-1" />
+                                Configurado
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-body text-sm text-muted-foreground line-clamp-1">
+                            {cliente.description || "Sin descripción"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Acciones */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/clientes/${cliente.id}`)}
+                          className="h-8 w-8 p-0 hover:bg-muted"
+                          title="Ver dashboard"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/admin/clientes/${cliente.id}/campos`)}
+                          className="h-8 w-8 p-0 hover:bg-muted"
+                          title="Configurar campos"
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedClient(cliente);
+                            setShowFormDialog(true);
+                          }}
+                          className="h-8 w-8 p-0 hover:bg-muted"
+                          title="Configurar formulario"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedClient(cliente);
+                            setShowEditDialog(true);
+                          }}
+                          className="h-8 w-8 p-0 hover:bg-muted"
+                          title="Editar cliente"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        
+                        {canDeleteClients && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClient(cliente.id)}
+                            className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                            title="Eliminar cliente"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Dialogs con handlers reales */}
       {canCreateClients && (
