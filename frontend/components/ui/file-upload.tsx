@@ -61,8 +61,15 @@ export function FileUpload({
       const reader = new FileReader()
       reader.onload = (e) => {
         const result = e.target?.result as string
-        setPreview(result)
-        onChange(result)
+        if (result) {
+          setPreview(result)
+          // Asegurar que onChange reciba un string válido
+          onChange(result)
+        }
+      }
+      reader.onerror = () => {
+        setError("Error al leer el archivo")
+        setIsUploading(false)
       }
       reader.readAsDataURL(file)
 
@@ -80,6 +87,7 @@ export function FileUpload({
 
   const handleRemove = () => {
     setPreview(null)
+    // Asegurar que onChange reciba un string vacío
     onChange("")
     setError(null)
     if (fileInputRef.current) {
