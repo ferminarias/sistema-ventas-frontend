@@ -368,8 +368,16 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                         label="Comprobante Principal"
                         placeholder="Seleccionar imagen..."
                         accept="image/*"
-                        maxSize={5}
+                        maxSize={2} // Reducir a 2MB para evitar errores del backend
                       />
+                      
+                      {/* Aviso sobre tamaño */}
+                      <div className="bg-yellow-900/50 border border-yellow-600 rounded p-3">
+                        <p className="text-yellow-300 text-sm">
+                          ⚠️ <strong>Importante:</strong> Las imágenes deben ser menores a 2MB.
+                          Si tu imagen es muy grande, comprímela usando herramientas como TinyPNG.
+                        </p>
+                      </div>
                       
                       {/* Preview de archivos nuevos */}
                       {Object.entries(archivosNuevos).length > 0 && (

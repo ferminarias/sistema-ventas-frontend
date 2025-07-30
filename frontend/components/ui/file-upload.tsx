@@ -25,10 +25,11 @@ export function FileUpload({
   value,
   onChange,
   onFileChange,
+  field,
   label = "Archivo",
   placeholder = "Seleccionar archivo...",
   accept = "image/*",
-  maxSize = 5, // 5MB por defecto
+  maxSize = 2, // 2MB por defecto para evitar errores del backend
   className,
   disabled = false,
   required = false
@@ -203,6 +204,11 @@ export function FileUpload({
         {/* Información adicional */}
         <p className="text-xs text-gray-500">
           Formatos soportados: JPG, PNG, GIF. Tamaño máximo: {maxSize}MB
+          {maxSize <= 2 && (
+            <span className="block mt-1">
+              💡 Si tu imagen es muy grande, comprímela usando TinyPNG o similar
+            </span>
+          )}
         </p>
       </div>
     </div>
