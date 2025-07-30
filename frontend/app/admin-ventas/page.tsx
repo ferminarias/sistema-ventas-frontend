@@ -135,14 +135,24 @@ export default function AdminVentasPage() {
     setDeleteModal({show: true, venta})
   }
 
-  const confirmarEdicion = async (ventaEditada: Partial<VentaAdmin>) => {
+  const confirmarEdicion = async (ventaEditada: Partial<VentaAdmin> & { archivos_eliminar?: string[], archivos_nuevos?: Record<string, string> }) => {
     if (!editModal.venta) return
     
     try {
-      await adminVentasService.editarVenta(editModal.venta.id, ventaEditada)
+      const response = await adminVentasService.editarVenta(editModal.venta.id, ventaEditada)
+      
+      // Mensaje de éxito más detallado
+      let mensaje = "Venta actualizada correctamente"
+      if (ventaEditada.archivos_eliminar && ventaEditada.archivos_eliminar.length > 0) {
+        mensaje += `. ${ventaEditada.archivos_eliminar.length} archivo(s) eliminado(s)`
+      }
+      if (ventaEditada.archivos_nuevos && Object.keys(ventaEditada.archivos_nuevos).length > 0) {
+        mensaje += `. ${Object.keys(ventaEditada.archivos_nuevos).length} archivo(s) agregado(s)`
+      }
+      
       toast({
         title: "Éxito",
-        description: "Venta actualizada correctamente",
+        description: mensaje,
       })
       setEditModal({show: false, venta: null})
       cargarDatos() // Recargar lista

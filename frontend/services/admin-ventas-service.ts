@@ -126,14 +126,21 @@ export const adminVentasService = {
   },
 
   // Editar venta
-  async editarVenta(id: number, data: Partial<VentaAdmin>): Promise<{message: string; venta: VentaAdmin}> {
+  async editarVenta(id: number, data: Partial<VentaAdmin> & { archivos_eliminar?: string[], archivos_nuevos?: Record<string, string> }): Promise<{message: string; venta: VentaAdmin}> {
     try {
+      console.log("🔄 Editando venta:", id, "con datos:", {
+        ...data,
+        archivos_nuevos: data.archivos_nuevos ? Object.keys(data.archivos_nuevos).map(key => 
+          `${key}: ${data.archivos_nuevos![key].substring(0, 50)}...`
+        ) : undefined
+      })
+      
       const response = await fetch(`${API_BASE}/api/ventas/${id}`, {
         method: 'PUT',
-        headers: getAuthHeaders(false),
-        body: JSON.stringify(data),
+        headers: getAuthHeaders(true),
         credentials: 'include',
-        mode: 'cors'
+        mode: 'cors',
+        body: JSON.stringify(data)
       })
       
       return handleResponse<{message: string; venta: VentaAdmin}>(response)

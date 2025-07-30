@@ -11,6 +11,7 @@ interface FileUploadProps {
   value?: string
   onChange: (value: string) => void
   onFileChange?: (file: File) => void
+  field?: { id: string; label: string; type: string } // Información del campo
   label?: string
   placeholder?: string
   accept?: string
