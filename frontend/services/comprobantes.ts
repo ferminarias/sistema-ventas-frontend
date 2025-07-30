@@ -210,7 +210,19 @@ class ComprobantesService {
   // Obtener URL de preview para mostrar archivos directamente
   getPreviewUrl(filename: string): string {
     const token = localStorage.getItem("token")
-    return `${API_BASE_URL}/api/comprobantes/preview/${filename}?token=${token}`
+    
+    // Si es una URL completa de Cloudinary, devolverla directamente
+    if (filename.startsWith('https://res.cloudinary.com/')) {
+      return filename
+    }
+    
+    // Si es archivo local temporal (empieza con 'local_')
+    if (filename.startsWith('local_')) {
+      return `${API_BASE_URL}/api/files/local/${filename}${token ? `?token=${token}` : ''}`
+    }
+    
+    // Para archivos normales, usar endpoint de preview
+    return `${API_BASE_URL}/api/comprobantes/preview/${filename}${token ? `?token=${token}` : ''}`
   }
 
   // Detectar si un archivo es imagen
