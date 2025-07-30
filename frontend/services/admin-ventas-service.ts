@@ -135,9 +135,12 @@ export const adminVentasService = {
         ) : undefined
       })
       
+      const headers = getAuthHeaders(false) // ✅ false para incluir Content-Type: application/json
+      console.log("📡 Headers enviados:", headers)
+      
       const response = await fetch(`${API_BASE}/api/ventas/${id}`, {
         method: 'PUT',
-        headers: getAuthHeaders(true),
+        headers,
         credentials: 'include',
         mode: 'cors',
         body: JSON.stringify(data)
