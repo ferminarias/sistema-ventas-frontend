@@ -143,7 +143,7 @@ export function NuevaVentaForm() {
             </SelectTrigger>
             <SelectContent>
               {clientesDisponibles.map((cliente) => (
-                <SelectItem key={cliente.id} value={String(cliente.id)}>{typeof cliente.name === 'string' ? cliente.name : JSON.stringify(cliente.name)}</SelectItem>
+                                          <SelectItem key={cliente.id} value={String(cliente.id)}>{typeof cliente.name === 'string' ? cliente.name : JSON.stringify(cliente.name)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -246,13 +246,13 @@ export function NuevaVentaForm() {
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel className="text-label">Fecha de Venta</FormLabel>
-                <FormControl>
+                    <FormControl>
                   <RailwayCalendar
                     date={field.value}
                     onDateChange={handleDateChange}
                     placeholder="Seleccionar fecha de venta"
                   />
-                </FormControl>
+                    </FormControl>
                 <FormMessage />
               </FormItem>
             )}
