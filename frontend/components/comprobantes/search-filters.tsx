@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,10 +15,56 @@ interface SearchFiltersProps {
 }
 
 export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }: SearchFiltersProps) {
+  // Debug: Log de filtrosDisponibles para ver la estructura
+  useEffect(() => {
+    if (filtrosDisponibles) {
+      console.log("🔍 Filtros disponibles:", {
+        clientes: filtrosDisponibles.clientes?.length || 0,
+        tipos_archivo: filtrosDisponibles.tipos_archivo?.length || 0,
+        muestra_clientes: filtrosDisponibles.clientes?.slice(0, 2),
+        muestra_tipos: filtrosDisponibles.tipos_archivo?.slice(0, 2)
+      })
+    }
+  }, [filtrosDisponibles])
+
   const [filters, setFilters] = useState<ComprobanteFilters>({
-    page: 1,
-    limit: 20,
+    busqueda: "",
+    cliente_id: undefined,
+    tipo_archivo: "",
+    fecha_inicio: "",
+    fecha_fin: "",
+    limit: 20
   })
+
+  // Función helper para obtener el valor seguro de un tipo de archivo
+  const getTipoValue = (tipo: any): string => {
+    if (typeof tipo === 'object' && tipo.value) {
+      return tipo.value
+    }
+    return tipo || ''
+  }
+
+  // Función helper para obtener el label seguro de un tipo de archivo
+  const getTipoLabel = (tipo: any): string => {
+    if (typeof tipo === 'object' && tipo.label) {
+      return tipo.label
+    }
+    if (typeof tipo === 'string') {
+      return tipo.charAt(0).toUpperCase() + tipo.slice(1)
+    }
+    return 'Desconocido'
+  }
+
+  // Función helper para obtener el nombre seguro de un cliente
+  const getClienteName = (cliente: any): string => {
+    if (typeof cliente === 'object' && cliente.name) {
+      return cliente.name
+    }
+    if (typeof cliente === 'string') {
+      return cliente
+    }
+    return 'Cliente sin nombre'
+  }
 
   const handleInputChange = (field: keyof ComprobanteFilters, value: string) => {
     setFilters((prev) => ({
@@ -79,7 +125,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
               </SelectItem>
               {filtrosDisponibles?.clientes?.map((cliente: any) => (
                 <SelectItem key={cliente.id} value={cliente.id.toString()} className="text-foreground hover:bg-muted">
-                  {cliente.name}
+                  {getClienteName(cliente)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -102,8 +148,8 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
                 Todos los tipos
               </SelectItem>
               {filtrosDisponibles?.tipos_archivo?.map((tipo: any, index: number) => (
-                <SelectItem key={index} value={tipo} className="text-foreground hover:bg-muted">
-                  {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+                <SelectItem key={index} value={getTipoValue(tipo)} className="text-foreground hover:bg-muted">
+                  {getTipoLabel(tipo)}
                 </SelectItem>
               ))}
             </SelectContent>

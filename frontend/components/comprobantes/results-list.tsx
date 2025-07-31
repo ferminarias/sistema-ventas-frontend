@@ -67,6 +67,18 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
     return `https://sistemas-de-ventas-production.up.railway.app/api/comprobantes/preview/${filename}${token ? `?token=${token}` : ''}`
   }
 
+  // Obtener URL de descarga con autenticación
+  const getDownloadUrl = (filename: string) => {
+    const token = localStorage.getItem('token')
+    return `https://sistemas-de-ventas-production.up.railway.app/api/comprobantes/descargar/${filename}${token ? `?token=${token}` : ''}`
+  }
+
+  // Obtener nombre amigable para mostrar
+  const getDisplayName = (archivo: ArchivoComprobante) => {
+    // Usar original_name si está disponible, sino filename
+    return archivo.original_name || archivo.filename
+  }
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -220,7 +232,9 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
                           {/* Información del archivo */}
                           <div className="space-y-1">
-                            <p className="text-xs font-medium text-white truncate">{archivo.original_name}</p>
+                            <p className="text-xs font-medium text-white truncate">
+                              {getDisplayName(archivo)}
+                            </p>
                             <p className="text-xs text-gray-400">
                               {archivo.tipo} • {archivo.size_mb.toFixed(1)} MB
                             </p>
@@ -285,7 +299,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
             <div className="p-4 border-b border-card flex justify-between items-center bg-gray-900 rounded-t-xl">
               <div>
                 <h3 className="text-lg font-semibold text-white">
-                  {currentFile.original_name || currentFile.filename}
+                  {getDisplayName(currentFile)}
                 </h3>
                 <p className="text-sm text-gray-400">
                   Venta #{currentVenta.venta_id} - {currentVenta.cliente_nombre}

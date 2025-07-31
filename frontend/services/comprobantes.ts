@@ -221,8 +221,14 @@ class ComprobantesService {
       return `${API_BASE_URL}/api/files/local/${filename}${token ? `?token=${token}` : ''}`
     }
     
-    // Para archivos normales, usar endpoint de preview
+    // Para archivos normales, usar endpoint de preview con autenticación
     return `${API_BASE_URL}/api/comprobantes/preview/${filename}${token ? `?token=${token}` : ''}`
+  }
+
+  // Obtener URL de descarga con autenticación
+  getDownloadUrl(filename: string): string {
+    const token = localStorage.getItem("token")
+    return `${API_BASE_URL}/api/comprobantes/descargar/${filename}${token ? `?token=${token}` : ''}`
   }
 
   // Detectar si un archivo es imagen

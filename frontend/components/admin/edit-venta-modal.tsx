@@ -307,7 +307,9 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                                 <Image className="h-4 w-4 text-blue-400 flex-shrink-0" />
                                 <div className="min-w-0">
                                   <p className="text-white text-sm font-medium truncate">{archivo.field_id}</p>
-                                  <p className="text-gray-400 text-xs truncate">{archivo.original_name}</p>
+                                  <p className="text-gray-400 text-xs truncate">
+                                    {archivo.original_name || archivo.filename}
+                                  </p>
                                 </div>
                               </div>
                               <div className="flex gap-1">

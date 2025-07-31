@@ -64,11 +64,15 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
             <h3 className="font-medium text-white mb-2">Información del Cliente</h3>
             <div className="flex justify-between">
               <span className="text-gray-400">Nombre:</span>
-              <span className="text-white">{comprobante.cliente.nombre}</span>
+              <span className="text-white">
+                {typeof comprobante.cliente === 'object' ? comprobante.cliente.name : comprobante.cliente}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Documento:</span>
-              <span className="text-white">{comprobante.cliente.documento}</span>
+              <span className="text-white">
+                {typeof comprobante.cliente === 'object' ? comprobante.cliente.documento : 'N/A'}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Email:</span>
