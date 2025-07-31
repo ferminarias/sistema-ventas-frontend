@@ -135,6 +135,17 @@ export const adminVentasService = {
         ) : undefined
       })
       
+      // Logging detallado del payload
+      console.log("📡 Payload completo a enviar:", {
+        id,
+        dataKeys: Object.keys(data),
+        hasArchivosEliminar: !!data.archivos_eliminar,
+        archivosEliminarCount: data.archivos_eliminar?.length || 0,
+        hasArchivosNuevos: !!data.archivos_nuevos,
+        archivosNuevosCount: data.archivos_nuevos ? Object.keys(data.archivos_nuevos).length : 0,
+        archivosNuevosKeys: data.archivos_nuevos ? Object.keys(data.archivos_nuevos) : []
+      })
+      
       const headers = getAuthHeaders(false) // ✅ false para incluir Content-Type: application/json
       console.log("📡 Headers enviados:", headers)
       
@@ -144,6 +155,12 @@ export const adminVentasService = {
         credentials: 'include',
         mode: 'cors',
         body: JSON.stringify(data)
+      })
+      
+      console.log("📡 Respuesta del servidor:", {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
       })
       
       return handleResponse<{message: string; venta: VentaAdmin}>(response)

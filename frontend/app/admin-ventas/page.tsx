@@ -138,8 +138,17 @@ export default function AdminVentasPage() {
   const confirmarEdicion = async (ventaEditada: Partial<VentaAdmin> & { archivos_eliminar?: string[], archivos_nuevos?: Record<string, string> }) => {
     if (!editModal.venta) return
     
+    console.log("📎 confirmarEdicion recibió:", {
+      ventaId: editModal.venta.id,
+      archivosEliminar: ventaEditada.archivos_eliminar,
+      archivosNuevos: ventaEditada.archivos_nuevos ? Object.keys(ventaEditada.archivos_nuevos) : undefined,
+      archivosNuevosCount: ventaEditada.archivos_nuevos ? Object.keys(ventaEditada.archivos_nuevos).length : 0
+    })
+    
     try {
       const response = await adminVentasService.editarVenta(editModal.venta.id, ventaEditada)
+      
+      console.log("📎 Respuesta del backend:", response)
       
       // Mensaje de éxito más detallado
       let mensaje = "Venta actualizada correctamente"
@@ -157,6 +166,7 @@ export default function AdminVentasPage() {
       setEditModal({show: false, venta: null})
       cargarDatos() // Recargar lista
     } catch (error: any) {
+      console.error("📎 Error en confirmarEdicion:", error)
       toast({
         title: "Error",
         description: error.message || "Error al actualizar venta",

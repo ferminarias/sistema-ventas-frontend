@@ -103,10 +103,20 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
   }
 
   const handleAgregarArchivo = (fieldId: string, base64: string) => {
-    setArchivosNuevos(prev => ({
-      ...prev,
-      [fieldId]: base64
-    }))
+    console.log("📎 Agregando archivo:", {
+      fieldId,
+      base64Length: base64.length,
+      base64Preview: base64.substring(0, 100) + "..."
+    })
+    
+    setArchivosNuevos(prev => {
+      const nuevos = {
+        ...prev,
+        [fieldId]: base64
+      }
+      console.log("📎 Estado actual de archivos nuevos:", Object.keys(nuevos))
+      return nuevos
+    })
     
     toast({
       title: "Archivo agregado",
@@ -139,6 +149,12 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
     e.preventDefault()
     setLoading(true)
     try {
+      console.log("📎 Estado antes de enviar:", {
+        archivosAEliminar,
+        archivosNuevos: Object.keys(archivosNuevos),
+        archivosNuevosCount: Object.keys(archivosNuevos).length
+      })
+      
       const payload = {
         ...formData,
         ...(archivosAEliminar.length > 0 && { archivos_eliminar: archivosAEliminar }),
@@ -362,8 +378,13 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                       <FileUpload
                         value=""
                         onChange={(base64) => {
+                          console.log("📎 FileUpload onChange llamado con:", {
+                            base64Length: base64 ? base64.length : 0,
+                            base64Preview: base64 ? base64.substring(0, 100) + "..." : "null"
+                          })
                           if (base64) {
                             const fieldId = `imagen_comprobante_${Date.now()}`
+                            console.log("📎 Llamando handleAgregarArchivo con fieldId:", fieldId)
                             handleAgregarArchivo(fieldId, base64)
                           }
                         }}
