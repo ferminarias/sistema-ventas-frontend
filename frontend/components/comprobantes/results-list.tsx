@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Eye, Download, FileText, Calendar, User, CreditCard, Settings, X } from "lucide-react"
@@ -16,6 +16,17 @@ interface ResultsListProps {
 }
 
 export function ResultsList({ comprobantes, loading = false }: ResultsListProps) {
+  // Debug: Log de estructura de datos
+  useEffect(() => {
+    if (comprobantes.length > 0) {
+      console.log("🔍 Estructura de comprobantes:", {
+        total: comprobantes.length,
+        muestra_comprobante: comprobantes[0],
+        archivos_primer_comprobante: comprobantes[0].archivos?.slice(0, 1)
+      })
+    }
+  }, [comprobantes])
+
   const [previewFile, setPreviewFile] = useState<Comprobante | null>(null)
   const [downloading, setDownloading] = useState<string | null>(null)
   
@@ -77,6 +88,17 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
   const getDisplayName = (archivo: ArchivoComprobante) => {
     // Usar original_name si está disponible, sino filename
     return archivo.original_name || archivo.filename
+  }
+
+  // Obtener tipo de archivo de forma segura
+  const getTipoArchivo = (archivo: ArchivoComprobante) => {
+    if (typeof archivo.tipo === 'object') {
+      return (archivo.tipo as any).label || (archivo.tipo as any).value || 'Desconocido'
+    }
+    if (typeof archivo.tipo === 'string') {
+      return archivo.tipo
+    }
+    return 'Desconocido'
   }
 
   if (loading) {
@@ -236,7 +258,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                               {getDisplayName(archivo)}
                             </p>
                             <p className="text-xs text-gray-400">
-                              {archivo.tipo} • {archivo.size_mb.toFixed(1)} MB
+                              {getTipoArchivo(archivo)} • {archivo.size_mb.toFixed(1)} MB
                             </p>
                             
                             {/* Botones de acción */}
