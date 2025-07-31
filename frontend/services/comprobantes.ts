@@ -91,48 +91,40 @@ const ensureRenderableValue = (value: any): any => {
 class ComprobantesService {
   // Obtener filtros disponibles
   async getFiltrosDisponibles(): Promise<FiltrosDisponibles> {
+    console.log("🔍 Iniciando getFiltrosDisponibles...")
+    
+    const token = localStorage.getItem("token")
+    console.log("🔐 Token para filtros:", {
+      existe: !!token,
+      longitud: token?.length || 0
+    })
+    
     const response = await fetch(`${API_BASE_URL}/api/comprobantes/filtros`, {
       headers: getAuthHeaders(),
       credentials: "include"
     })
-
+    
+    console.log("📡 Response de filtros:", {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      url: response.url
+    })
+    
     if (!response.ok) {
-      throw new Error("Error al obtener filtros disponibles")
+      const errorText = await response.text()
+      console.error("❌ Error en getFiltrosDisponibles:", errorText)
+      throw new Error(`Error al obtener filtros: ${response.status} ${response.statusText}`)
     }
-
-    const backendFilters = await response.json()
-
-    // Mapeo correcto con limpieza agresiva
-    const cleanedFilters: FiltrosDisponibles = {
-      clientes: (backendFilters.clientes || []).map((cliente: any) => {
-        const cleanedCliente = cleanObject(cliente)
-        return {
-          id: ensureRenderableValue(cleanedCliente.id || cleanedCliente) || 0,
-          name: ensureRenderableValue(cleanedCliente.name || cleanedCliente.nombre || cleanedCliente) || 'Sin nombre'
-        }
-      }),
-      asesores: (backendFilters.asesores || []).map((asesor: any) => {
-        const cleanedAsesor = cleanObject(asesor)
-        return {
-          id: ensureRenderableValue(cleanedAsesor.id || cleanedAsesor) || 0,
-          name: ensureRenderableValue(cleanedAsesor.name || cleanedAsesor.nombre || cleanedAsesor) || 'Sin nombre'
-        }
-      }),
-      tipos_archivo: (backendFilters.tipos_archivo || []).map((tipo: any) => {
-        return ensureRenderableValue(extractValue(tipo)) || 'Desconocido'
-      }),
-      rango_fechas: {
-        fecha_min: ensureRenderableValue(extractValue(backendFilters.rango_fechas?.fecha_min)) || '2020-01-01',
-        fecha_max: ensureRenderableValue(extractValue(backendFilters.rango_fechas?.fecha_max)) || new Date().toISOString().split('T')[0]
-      },
-      estadisticas: {
-        total_comprobantes: ensureRenderableValue(extractValue(backendFilters.estadisticas?.total_comprobantes)) || 0,
-        total_clientes: ensureRenderableValue(extractValue(backendFilters.estadisticas?.total_clientes)) || 0,
-        tipos_mas_comunes: (backendFilters.estadisticas?.tipos_mas_comunes || []).map((tipo: any) => ensureRenderableValue(extractValue(tipo)))
-      }
-    }
-
-    return cleanedFilters
+    
+    const data = await response.json()
+    console.log("✅ Filtros obtenidos:", {
+      clientes: data.clientes?.length || 0,
+      tipos_archivo: data.tipos_archivo?.length || 0,
+      rango_fechas: data.rango_fechas
+    })
+    
+    return this.ensureAllValuesRenderable(data)
   }
 
   // Realizar búsqueda de comprobantes

@@ -28,15 +28,32 @@ export function useComprobantesSearch() {
     loadFiltros()
   }, [])
 
-  const search = useCallback(async (filters: ComprobanteFilters) => {
+  const searchComprobantes = useCallback(async (filters: ComprobanteFilters) => {
+    console.log("🔍 Iniciando búsqueda de comprobantes con filtros:", filters)
+    
     setLoading(true)
     setError(null)
-
+    
     try {
+      const token = localStorage.getItem('token')
+      console.log("🔐 Token para búsqueda:", {
+        existe: !!token,
+        longitud: token?.length || 0
+      })
+      
       const response = await comprobantesService.searchComprobantes(filters)
+      
+      console.log("✅ Búsqueda exitosa:", {
+        total: response.total,
+        comprobantes: response.comprobantes?.length || 0,
+        pagina: response.pagina,
+        total_paginas: response.total_paginas
+      })
+      
       setData(response)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al buscar comprobantes")
+      console.error("❌ Error en búsqueda de comprobantes:", err)
+      setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setLoading(false)
     }
@@ -53,7 +70,7 @@ export function useComprobantesSearch() {
     loading,
     loadingFiltros,
     error,
-    search,
+    search: searchComprobantes,
     reset,
   }
 } 

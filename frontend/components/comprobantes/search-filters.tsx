@@ -24,7 +24,17 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
         muestra_clientes: filtrosDisponibles.clientes?.slice(0, 2),
         muestra_tipos: filtrosDisponibles.tipos_archivo?.slice(0, 2)
       })
+    } else {
+      console.log("⚠️ filtrosDisponibles es null/undefined")
     }
+    
+    // Debug: Verificar token de autenticación
+    const token = localStorage.getItem('token')
+    console.log("🔐 Token de autenticación:", {
+      existe: !!token,
+      longitud: token?.length || 0,
+      preview: token ? `${token.substring(0, 20)}...` : 'No hay token'
+    })
   }, [filtrosDisponibles])
 
   const [filters, setFilters] = useState<ComprobanteFilters>({
