@@ -47,11 +47,11 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
           <div className="bg-gray-700 rounded-lg p-4 space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Tipo:</span>
-              <span className="text-white">{comprobante.tipo_comprobante}</span>
+              <span className="text-white">{typeof comprobante.tipo_comprobante === 'string' ? comprobante.tipo_comprobante : 'Tipo no especificado'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Número:</span>
-              <span className="text-white">{comprobante.numero_comprobante}</span>
+              <span className="text-white">{typeof comprobante.numero_comprobante === 'string' ? comprobante.numero_comprobante : 'Número no especificado'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Fecha:</span>
@@ -85,11 +85,11 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
             <h3 className="font-medium text-white mb-2">Información de la Venta</h3>
             <div className="flex justify-between">
               <span className="text-gray-400">Estado:</span>
-              <span className="text-white">{comprobante.venta.estado}</span>
+              <span className="text-white">{typeof comprobante.venta?.estado === 'string' ? comprobante.venta.estado : 'Estado no especificado'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Asesor:</span>
-              <span className="text-white">{comprobante.asesor}</span>
+              <span className="text-white">{typeof comprobante.asesor === 'string' ? comprobante.asesor : 'Asesor no especificado'}</span>
             </div>
           </div>
 
@@ -97,7 +97,7 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
           <div className="bg-gray-700 rounded-lg p-4 text-sm">
             <h3 className="font-medium text-white mb-2">Archivo Adjunto</h3>
             <div className="flex justify-between items-center">
-              <span className="font-medium text-white">{comprobante.archivo_nombre}</span>
+              <span className="font-medium text-white">{typeof comprobante.archivo_nombre === 'string' ? comprobante.archivo_nombre : 'Archivo sin nombre'}</span>
               <Button
                 onClick={handleDownload}
                 disabled={downloading}

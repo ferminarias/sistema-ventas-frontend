@@ -21,8 +21,15 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
     if (comprobantes.length > 0) {
       console.log("🔍 Estructura de comprobantes:", {
         total: comprobantes.length,
-        muestra_comprobante: comprobantes[0],
-        archivos_primer_comprobante: comprobantes[0].archivos?.slice(0, 1)
+        muestra_comprobante: JSON.stringify(comprobantes[0], null, 2),
+        archivos_primer_comprobante: comprobantes[0].archivos?.map(archivo => ({
+          filename: archivo.filename,
+          original_name: archivo.original_name,
+          tipo: archivo.tipo,
+          tipo_tipo: typeof archivo.tipo,
+          size_mb: archivo.size_mb,
+          file_url: archivo.file_url
+        }))
       })
     }
   }, [comprobantes])
@@ -87,7 +94,13 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
   // Obtener nombre amigable para mostrar
   const getDisplayName = (archivo: ArchivoComprobante) => {
     // Usar original_name si está disponible, sino filename
-    return archivo.original_name || archivo.filename
+    if (typeof archivo.original_name === 'string') {
+      return archivo.original_name
+    }
+    if (typeof archivo.filename === 'string') {
+      return archivo.filename
+    }
+    return 'Archivo sin nombre'
   }
 
   // Obtener tipo de archivo de forma segura
@@ -99,6 +112,24 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
       return archivo.tipo
     }
     return 'Desconocido'
+  }
+
+  // Función segura para verificar si es imagen
+  const isImageFile = (filename: any) => {
+    if (typeof filename !== 'string') return false
+    return comprobantesService.isImageFile(filename)
+  }
+
+  // Función segura para verificar si es PDF
+  const isPdfFile = (filename: any) => {
+    if (typeof filename !== 'string') return false
+    return comprobantesService.isPdfFile(filename)
+  }
+
+  // Función segura para verificar si se puede previsualizar
+  const canPreview = (filename: any) => {
+    if (typeof filename !== 'string') return false
+    return comprobantesService.canPreview(filename)
   }
 
   if (loading) {
@@ -189,14 +220,13 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
             key={comprobante.venta_id || comprobante.id}
             className="bg-card border border-card rounded-lg p-4 hover:bg-gray-600 transition-colors"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 space-y-3">
-                {/* Header principal */}
-                <div className="flex items-center gap-3">
-                  <h3 className="text-white font-semibold text-lg">
-                    {comprobante.nombre} {comprobante.apellido}
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-lg font-semibold text-white truncate">
+                    {typeof comprobante.nombre === 'string' ? comprobante.nombre : 'Sin nombre'} {typeof comprobante.apellido === 'string' ? comprobante.apellido : ''}
                   </h3>
-                  <Badge className="bg-blue-600 text-white">
+                  <Badge variant="secondary" className="bg-blue-600 text-white">
                     Venta #{comprobante.venta_id}
                   </Badge>
                 </div>
@@ -209,17 +239,17 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                   </div>
                   <div className="flex items-center gap-1">
                     <User className="h-4 w-4" />
-                    {comprobante.cliente_nombre}
+                    {typeof comprobante.cliente_nombre === 'string' ? comprobante.cliente_nombre : 'Cliente sin nombre'}
                   </div>
                   <div className="flex items-center gap-1">
                     <Settings className="h-4 w-4" />
-                    {comprobante.asesor}
+                    {typeof comprobante.asesor === 'string' ? comprobante.asesor : 'Asesor no especificado'}
                   </div>
                 </div>
 
                 {/* Información del cliente */}
                 <div className="text-xs text-gray-500">
-                  Email: {comprobante.email} • Teléfono: {comprobante.telefono}
+                  Email: {typeof comprobante.email === 'string' ? comprobante.email : 'Email no disponible'} • Teléfono: {typeof comprobante.telefono === 'string' ? comprobante.telefono : 'Teléfono no disponible'}
                 </div>
 
                 {/* Preview de archivos */}
@@ -230,11 +260,11 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                       {comprobante.archivos.map((archivo, index) => (
                         <div key={index} className="bg-card border border-card rounded-lg p-3">
                           {/* Preview de imagen */}
-                          {comprobantesService.isImageFile(archivo.filename) && (
+                          {isImageFile(archivo.filename) && (
                             <div className="mb-2">
                               <img 
-                                src={comprobantesService.getPreviewUrl(archivo.filename)} 
-                                alt={archivo.original_name}
+                                src={comprobantesService.getPreviewUrl(typeof archivo.filename === 'string' ? archivo.filename : '')} 
+                                alt={typeof archivo.original_name === 'string' ? archivo.original_name : 'Imagen'}
                                 className="w-full h-32 object-cover rounded border border-gray-600"
                                 onError={(e) => {
                                   e.currentTarget.style.display = 'none'
@@ -244,7 +274,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                           )}
                           
                           {/* Preview de PDF */}
-                          {comprobantesService.isPdfFile(archivo.filename) && (
+                          {isPdfFile(archivo.filename) && (
                             <div className="mb-2">
                               <div className="w-full h-32 bg-red-100 rounded border border-gray-600 flex items-center justify-center">
                                 <FileText className="h-12 w-12 text-red-600" />
@@ -258,12 +288,12 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                               {getDisplayName(archivo)}
                             </p>
                             <p className="text-xs text-gray-400">
-                              {getTipoArchivo(archivo)} • {archivo.size_mb.toFixed(1)} MB
+                              {getTipoArchivo(archivo)} • {typeof archivo.size_mb === 'number' ? archivo.size_mb.toFixed(1) : '0.0'} MB
                             </p>
                             
                             {/* Botones de acción */}
                                                          <div className="flex gap-1 mt-2">
-                               {comprobantesService.canPreview(archivo.filename) && (
+                               {canPreview(archivo.filename) && (
                                  <Button
                                    size="sm"
                                    variant="outline"
@@ -277,11 +307,11 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                                <Button
                                  size="sm"
                                  onClick={() => handleDownloadFile(archivo)}
-                                 disabled={downloading === archivo.filename}
+                                 disabled={downloading === (typeof archivo.filename === 'string' ? archivo.filename : '')}
                                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1"
                                >
                                  <Download className="h-3 w-3 mr-1" />
-                                 {downloading === archivo.filename ? "..." : "Descargar"}
+                                 {downloading === (typeof archivo.filename === 'string' ? archivo.filename : '') ? "..." : "Descargar"}
                                </Button>
                              </div>
                           </div>
@@ -294,7 +324,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                 {/* Fallback para estructura antigua */}
                 {(!comprobante.archivos || comprobante.archivos.length === 0) && comprobante.archivo_nombre && (
                   <div className="text-xs text-gray-500">
-                    Archivo: {comprobante.archivo_nombre}
+                    Archivo: {typeof comprobante.archivo_nombre === 'string' ? comprobante.archivo_nombre : 'Archivo sin nombre'}
                   </div>
                 )}
               </div>
@@ -324,44 +354,46 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                   {getDisplayName(currentFile)}
                 </h3>
                 <p className="text-sm text-gray-400">
-                  Venta #{currentVenta.venta_id} - {currentVenta.cliente_nombre}
+                  Venta #{currentVenta.venta_id} - {typeof currentVenta.cliente_nombre === 'string' ? currentVenta.cliente_nombre : 'Cliente sin nombre'}
                 </p>
               </div>
-              <button 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleCloseModal}
-                className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700 transition-colors"
+                className="text-gray-400 hover:text-white"
               >
-                <X className="h-5 w-5" />
-              </button>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
             
             {/* Contenido del modal */}
             <div className="p-4 space-y-4">
-              {/* Información del comprobante */}
-              <div className="bg-card rounded-lg p-4 space-y-2 text-sm">
-                <div className="flex justify-between">
+              {/* Información del archivo */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
                   <span className="text-gray-400">Venta ID:</span>
                   <span className="text-white">#{currentVenta.venta_id}</span>
                 </div>
-                <div className="flex justify-between">
+                <div>
                   <span className="text-gray-400">Cliente:</span>
-                  <span className="text-white">{currentVenta.cliente_nombre}</span>
+                  <span className="text-white">{typeof currentVenta.cliente_nombre === 'string' ? currentVenta.cliente_nombre : 'Cliente sin nombre'}</span>
                 </div>
-                <div className="flex justify-between">
+                <div>
                   <span className="text-gray-400">Archivo:</span>
-                  <span className="text-white">{currentFile.original_name || currentFile.filename}</span>
+                  <span className="text-white">{typeof currentFile.original_name === 'string' ? currentFile.original_name : (typeof currentFile.filename === 'string' ? currentFile.filename : 'Archivo sin nombre')}</span>
                 </div>
-                <div className="flex justify-between">
+                <div>
                   <span className="text-gray-400">Tamaño:</span>
-                  <span className="text-white">{currentFile.size_mb ? `${currentFile.size_mb.toFixed(1)} MB` : 'N/A'}</span>
+                  <span className="text-white">{typeof currentFile.size_mb === 'number' ? `${currentFile.size_mb.toFixed(1)} MB` : 'N/A'}</span>
                 </div>
               </div>
 
               {currentFile.tipo === 'imagen' ? (
                 <div className="flex justify-center">
                   <img 
-                    src={getPreviewUrl(currentFile.filename)}
-                    alt={currentFile.original_name || currentFile.filename}
+                    src={getPreviewUrl(typeof currentFile.filename === 'string' ? currentFile.filename : '')}
+                    alt={typeof currentFile.original_name === 'string' ? currentFile.original_name : (typeof currentFile.filename === 'string' ? currentFile.filename : 'Archivo')}
                     className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
                     onError={(e) => {
                       console.error('Error cargando imagen:', e)
@@ -372,16 +404,16 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
               ) : currentFile.filename?.toLowerCase().endsWith('.pdf') ? (
                 <div className="bg-white rounded-lg overflow-hidden">
                   <iframe 
-                    src={getPreviewUrl(currentFile.filename)}
+                    src={getPreviewUrl(typeof currentFile.filename === 'string' ? currentFile.filename : '')}
                     className="w-full h-[70vh]"
-                    title={currentFile.original_name || currentFile.filename}
+                    title={typeof currentFile.original_name === 'string' ? currentFile.original_name : (typeof currentFile.filename === 'string' ? currentFile.filename : 'Archivo')}
                   />
                 </div>
               ) : (
                 <div className="text-center py-12 text-gray-400">
                   <FileText className="h-16 w-16 mx-auto mb-4 text-gray-500" />
                   <p className="text-xl mb-2">Vista previa no disponible</p>
-                  <p className="mb-6">Tipo de archivo: {currentFile.tipo}</p>
+                  <p className="mb-6">Tipo de archivo: {typeof currentFile.tipo === 'object' ? (currentFile.tipo as any).label || (currentFile.tipo as any).value || 'Desconocido' : currentFile.tipo}</p>
                   <Button
                     onClick={() => handleDownloadFile(currentFile)}
                     className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -397,18 +429,17 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
             <div className="p-4 border-t border-card bg-gray-900 rounded-b-xl">
               <div className="flex justify-between items-center text-sm text-gray-400">
                 <div className="flex gap-4">
-                  <span>Tipo: {currentFile.tipo}</span>
-                  <span>Tamaño: {currentFile.size_mb?.toFixed(1)} MB</span>
+                  <span>Tipo: {typeof currentFile.tipo === 'object' ? (currentFile.tipo as any).label || (currentFile.tipo as any).value || 'Desconocido' : currentFile.tipo}</span>
+                  <span>Tamaño: {typeof currentFile.size_mb === 'number' ? currentFile.size_mb.toFixed(1) : '0.0'} MB</span>
                   <span>Subido: {formatDate(currentFile.uploaded_at)}</span>
                 </div>
                 <Button
-                  size="sm"
                   onClick={() => handleDownloadFile(currentFile)}
-                  disabled={downloading === currentFile.filename}
+                  disabled={downloading === (typeof currentFile.filename === 'string' ? currentFile.filename : '')}
                   className="bg-purple-600 hover:bg-purple-700 text-white"
                 >
-                  <Download className="h-4 w-4 mr-1" />
-                  {downloading === currentFile.filename ? "Descargando..." : "Descargar"}
+                  <Download className="h-4 w-4 mr-2" />
+                  {downloading === (typeof currentFile.filename === 'string' ? currentFile.filename : '') ? "Descargando..." : "Descargar"}
                 </Button>
               </div>
             </div>
