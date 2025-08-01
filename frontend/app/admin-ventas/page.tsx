@@ -145,10 +145,28 @@ export default function AdminVentasPage() {
       archivosNuevosCount: ventaEditada.archivos_nuevos ? Object.keys(ventaEditada.archivos_nuevos).length : 0
     })
     
+    // Verificar estructura detallada de archivos_nuevos
+    if (ventaEditada.archivos_nuevos) {
+      console.log("📎 Estructura detallada de archivos_nuevos:", 
+        Object.entries(ventaEditada.archivos_nuevos).map(([key, value]) => ({
+          fieldId: key,
+          isBase64: typeof value === 'string' && value.startsWith('data:'),
+          length: typeof value === 'string' ? value.length : 0,
+          preview: typeof value === 'string' ? value.substring(0, 100) + '...' : 'No es string'
+        }))
+      )
+    }
+    
     try {
+      console.log("📎 Enviando petición al backend...")
       const response = await adminVentasService.editarVenta(editModal.venta.id, ventaEditada)
       
-      console.log("📎 Respuesta del backend:", response)
+      console.log("📎 Respuesta completa del backend:", {
+        message: response.message,
+        venta: response.venta,
+        ventaTieneArchivos: response.venta?.tiene_archivos,
+        ventaCamposAdicionales: response.venta?.campos_adicionales
+      })
       
       // Mensaje de éxito más detallado
       let mensaje = "Venta actualizada correctamente"
@@ -163,10 +181,39 @@ export default function AdminVentasPage() {
         title: "Éxito",
         description: mensaje,
       })
+      
+      console.log("📎 Cerrando modal y recargando datos...")
       setEditModal({show: false, venta: null})
-      cargarDatos() // Recargar lista
+      
+      // Verificar inmediatamente si los archivos se guardaron
+      if (ventaEditada.archivos_nuevos && Object.keys(ventaEditada.archivos_nuevos).length > 0) {
+        console.log("📎 Verificando si los archivos se guardaron...")
+        setTimeout(async () => {
+          try {
+            const ventaActualizada = await adminVentasService.getVentaById(editModal.venta!.id)
+            console.log("📎 Verificación post-guardado:", {
+              tieneArchivos: ventaActualizada.tiene_archivos,
+              camposAdicionales: ventaActualizada.campos_adicionales,
+              archivosEncontrados: ventaActualizada.campos_adicionales ? Object.keys(ventaActualizada.campos_adicionales) : []
+            })
+          } catch (error) {
+            console.error("📎 Error verificando archivos guardados:", error)
+          }
+        }, 2000)
+      }
+      
+      // Recargar después de un pequeño delay para asegurar que el backend procesó
+      setTimeout(() => {
+        console.log("📎 Recargando datos de admin ventas...")
+        cargarDatos()
+      }, 1000)
+      
     } catch (error: any) {
-      console.error("📎 Error en confirmarEdicion:", error)
+      console.error("📎 Error completo en confirmarEdicion:", {
+        error,
+        message: error.message,
+        stack: error.stack
+      })
       toast({
         title: "Error",
         description: error.message || "Error al actualizar venta",

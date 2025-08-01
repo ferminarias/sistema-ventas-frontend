@@ -452,6 +452,39 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                         />
                       </div>
                       
+                      {/* Test para verificar búsqueda de comprobantes */}
+                      <div className="bg-orange-900/50 border border-orange-600 rounded p-3">
+                        <Label className="text-orange-300 text-sm">🔍 Test de Búsqueda</Label>
+                        <Button
+                          type="button"
+                          onClick={async () => {
+                            console.log("🔍 Probando búsqueda de comprobantes para venta:", venta.id)
+                            try {
+                              const { comprobantesService } = await import('@/services/comprobantes')
+                              const result = await comprobantesService.searchComprobantes({
+                                busqueda: venta.id.toString(),
+                                page: 1,
+                                limit: 20
+                              })
+                              console.log("🔍 Resultado de búsqueda:", {
+                                total: result.total,
+                                comprobantes: result.comprobantes?.length || 0,
+                                comprobantesEncontrados: result.comprobantes?.map(c => ({
+                                  id: c.id,
+                                  venta_id: c.venta_id,
+                                  archivos: c.archivos?.length || 0
+                                }))
+                              })
+                            } catch (error) {
+                              console.error("🔍 Error en búsqueda de prueba:", error)
+                            }
+                          }}
+                          className="mt-2 bg-orange-600 hover:bg-orange-700 text-white w-full"
+                        >
+                          🔍 Probar Búsqueda de Comprobantes
+                        </Button>
+                      </div>
+                      
                       {/* Aviso sobre tamaño */}
                       <div className="bg-yellow-900/50 border border-yellow-600 rounded p-3">
                         <p className="text-yellow-300 text-sm">

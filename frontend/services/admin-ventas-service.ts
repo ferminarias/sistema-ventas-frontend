@@ -211,5 +211,35 @@ export const adminVentasService = {
       }
       throw new ApiError("Error al obtener estadísticas", 500)
     }
+  },
+
+  // Obtener venta específica para verificar archivos
+  async getVentaById(id: number): Promise<VentaAdmin> {
+    try {
+      console.log("🔍 Obteniendo venta específica:", id)
+      
+      const response = await fetch(`${API_BASE}/api/ventas/${id}`, {
+        method: 'GET',
+        headers: getAuthHeaders(true),
+        credentials: 'include',
+        mode: 'cors'
+      })
+      
+      const result = await handleResponse<{venta: VentaAdmin}>(response)
+      
+      console.log("🔍 Venta obtenida:", {
+        id: result.venta.id,
+        tieneArchivos: result.venta.tiene_archivos,
+        camposAdicionales: result.venta.campos_adicionales
+      })
+      
+      return result.venta
+    } catch (error) {
+      console.error('Error en getVentaById:', error)
+      if (error instanceof ApiError) {
+        throw error
+      }
+      throw new ApiError("Error al obtener venta", 500)
+    }
   }
 } 
