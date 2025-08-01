@@ -17,6 +17,17 @@ export default function BusquedaComprobantesPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
+  
+  // DEBUG: Log para entender el problema de auth
+  useEffect(() => {
+    console.log("🔐 Estado de autenticación en comprobantes:", {
+      authLoading,
+      user: user ? `${user.email} (${user.role})` : null,
+      hasToken: !!localStorage.getItem('token'),
+      timestamp: new Date().toISOString()
+    })
+  }, [authLoading, user])
+  
   const [currentFilters, setCurrentFilters] = useState<ComprobanteFilters>({
     page: 1,
     limit: 20,
@@ -57,9 +68,27 @@ export default function BusquedaComprobantesPage() {
 
   // Mostrar loading mientras se verifica autenticación
   if (authLoading) {
+    // Timeout de emergencia - si pasan 10 segundos, mostrar error
+    setTimeout(() => {
+      if (authLoading) {
+        console.error("⚠️ Timeout de autenticación - forzando recarga")
+        window.location.reload()
+      }
+    }, 10000)
+    
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <RailwayLoader size="lg" text="Verificando permisos..." />
+        <div className="text-center">
+          <RailwayLoader size="lg" text="Verificando permisos..." />
+          <p className="text-gray-400 text-sm mt-4">
+            Si esta pantalla persiste, <button 
+              onClick={() => window.location.reload()} 
+              className="text-purple-500 underline hover:text-purple-400"
+            >
+              refresca la página
+            </button>
+          </p>
+        </div>
       </div>
     )
   }

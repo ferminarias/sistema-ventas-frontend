@@ -123,7 +123,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             Cliente
           </Label>
           <Select
-            value={filters.cliente_id?.toString() || "all"}
+            value={filters.cliente_id ? filters.cliente_id.toString() : "all"}
             onValueChange={(value) => handleInputChange("cliente_id", value === "all" ? "" : value)}
           >
             <SelectTrigger className="bg-muted border-border text-foreground focus:border-purple-500">
@@ -133,11 +133,17 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
               <SelectItem value="all" className="text-foreground hover:bg-muted">
                 Todos los clientes
               </SelectItem>
-              {filtrosDisponibles?.clientes?.map((cliente: any) => (
-                <SelectItem key={cliente.id} value={cliente.id.toString()} className="text-foreground hover:bg-muted">
-                  {getClienteName(cliente)}
-                </SelectItem>
-              ))}
+              {filtrosDisponibles?.clientes?.map((cliente: any) => {
+                // Protección contra cliente.id undefined
+                const clienteId = cliente.id || cliente.cliente_id || 'unknown'
+                const clienteKey = `cliente-${clienteId}`
+                
+                return (
+                  <SelectItem key={clienteKey} value={clienteId.toString()} className="text-foreground hover:bg-muted">
+                    {getClienteName(cliente)}
+                  </SelectItem>
+                )
+              })}
             </SelectContent>
           </Select>
         </div>
@@ -201,7 +207,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             Resultados por página
           </Label>
           <Select
-            value={filters.limit?.toString() || "20"}
+            value={filters.limit ? filters.limit.toString() : "20"}
             onValueChange={(value) => handleInputChange("limit", value)}
           >
             <SelectTrigger className="bg-muted border-border text-foreground focus:border-purple-500">

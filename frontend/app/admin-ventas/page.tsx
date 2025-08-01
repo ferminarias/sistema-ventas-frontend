@@ -207,14 +207,17 @@ export default function AdminVentasPage() {
             })
             
             // Verificar también si aparece en búsqueda de comprobantes
-            console.log("🔍 Verificando búsqueda de comprobantes para venta:", ventaIdParaVerificacion) // ✅ Usar ID guardado
+            console.log("🔍 Verificando búsqueda de comprobantes para venta:", ventaIdParaVerificacion)
             const { comprobantesService } = await import('@/services/comprobantes')
+            
+            // Primero buscar por ID específico
             const resultadoBusqueda = await comprobantesService.searchComprobantes({
-              busqueda: ventaIdParaVerificacion.toString(), // ✅ Usar ID guardado
+              busqueda: ventaIdParaVerificacion.toString(),
               page: 1,
               limit: 20
             })
-            console.log("🔍 Resultado de búsqueda post-edición:", {
+            console.log("🔍 Resultado de búsqueda post-edición (por ID):", {
+              filtro_usado: `busqueda: ${ventaIdParaVerificacion.toString()}`,
               total: resultadoBusqueda.total,
               comprobantes: resultadoBusqueda.comprobantes?.length || 0,
               comprobantesDetalle: resultadoBusqueda.comprobantes?.map(c => ({
@@ -222,6 +225,17 @@ export default function AdminVentasPage() {
                 venta_id: c.venta_id,
                 archivos: c.archivos?.length || 0
               }))
+            })
+            
+            // También buscar sin filtros para ver si aparece en general
+            const resultadoGeneral = await comprobantesService.searchComprobantes({
+              page: 1,
+              limit: 20
+            })
+            console.log("🔍 Resultado de búsqueda general:", {
+              total: resultadoGeneral.total,
+              comprobantes: resultadoGeneral.comprobantes?.length || 0,
+              ventasEncontradas: resultadoGeneral.comprobantes?.map(c => c.venta_id).filter(id => id === ventaIdParaVerificacion)
             })
           } catch (error) {
             console.error("📎 Error verificando archivos guardados:", error)
