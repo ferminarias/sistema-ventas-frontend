@@ -29,8 +29,6 @@ interface ArchivoAdjunto {
 }
 
 export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: Props) {
-  console.log("🔧 EditVentaModal renderizado con venta:", venta.id)
-  
   const { toast } = useToast()
   const [formData, setFormData] = useState({
     nombre: venta.nombre,
@@ -52,16 +50,11 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
 
   // Cargar archivos adjuntos existentes
   useEffect(() => {
-    console.log("🔧 useEffect ejecutándose para venta:", venta.id)
-    console.log("🔧 venta.tiene_archivos:", venta.tiene_archivos)
-    console.log("🔧 venta.campos_adicionales:", venta.campos_adicionales)
+    if (!venta.tiene_archivos) {
+      return
+    }
     
     const cargarArchivos = async () => {
-      if (!venta.tiene_archivos) {
-        console.log("🔧 No tiene archivos, saltando carga")
-        return
-      }
-      
       setCargandoArchivos(true)
       try {
         // Intentar extraer archivos desde campos_adicionales o usar endpoint específico
@@ -73,7 +66,8 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
             if (typeof value === 'string' && (
               value.startsWith('https://res.cloudinary.com/') || 
               value.startsWith('local_') ||
-              value.includes('/api/comprobantes/')
+              value.includes('/api/comprobantes/') ||
+              value.startsWith('/static/uploads/') // ✅ Agregar detección para archivos locales
             )) {
               archivos.push({
                 field_id: fieldId,
@@ -84,11 +78,9 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
             }
           })
           
-          console.log("🔧 Archivos encontrados:", archivos)
           setArchivosActuales(archivos)
         }
       } catch (error) {
-        console.error('Error cargando archivos:', error)
         toast({
           title: "Advertencia",
           description: "No se pudieron cargar algunos archivos adjuntos",
@@ -113,23 +105,14 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
   }
 
   const handleAgregarArchivo = (fieldId: string, base64: string) => {
-    console.log("📎 handleAgregarArchivo llamado con:", {
-      fieldId,
-      base64Length: base64.length,
-      base64Preview: base64.substring(0, 100) + "..."
-    })
-    
     setArchivosNuevos(prev => {
       const nuevos = {
         ...prev,
         [fieldId]: base64
       }
-      console.log("📎 Estado actual de archivos nuevos:", Object.keys(nuevos))
-      console.log("📎 Total de archivos nuevos:", Object.keys(nuevos).length)
       return nuevos
     })
     
-    console.log("📎 Toast mostrado")
     toast({
       title: "Archivo agregado",
       description: "El archivo se subirá al guardar los cambios"
@@ -158,15 +141,9 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log("🔧 handleSubmit ejecutándose")
     e.preventDefault()
     setLoading(true)
     try {
-      console.log("📎 Estado antes de enviar:", {
-        archivosAEliminar,
-        archivosNuevos: Object.keys(archivosNuevos),
-        archivosNuevosCount: Object.keys(archivosNuevos).length
-      })
       
       const payload = {
         ...formData,
@@ -174,16 +151,7 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
         ...(Object.keys(archivosNuevos).length > 0 && { archivos_nuevos: archivosNuevos })
       }
       
-      console.log("📎 Payload de edición con archivos:", {
-        ...payload,
-        archivos_nuevos: Object.keys(archivosNuevos).map(key => ({
-          [key]: `${archivosNuevos[key].substring(0, 50)}...`
-        }))
-      })
-      
-      console.log("📎 Llamando onSave con payload")
       await onSave(payload)
-      console.log("📎 onSave completado exitosamente")
     } catch (error) {
       console.error("📎 Error en handleSubmit:", error)
     } finally {
@@ -392,31 +360,11 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                   <div>
                     <Label className="text-white text-sm">Agregar Nuevos Comprobantes</Label>
                     <div className="space-y-3 mt-2">
-                      {/* Botón de test para verificar funcionamiento */}
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          console.log("🧪 Test: Botón clickeado")
-                          const testBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-                          const fieldId = `test_imagen_${Date.now()}`
-                          console.log("🧪 Test: Agregando imagen de prueba")
-                          handleAgregarArchivo(fieldId, testBase64)
-                        }}
-                        className="bg-purple-600 hover:bg-purple-700 text-white mb-2"
-                      >
-                        🧪 Test: Agregar Imagen de Prueba
-                      </Button>
-                      
                       <FileUpload
                         value=""
                         onChange={(base64) => {
-                          console.log("📎 FileUpload onChange llamado con:", {
-                            base64Length: base64 ? base64.length : 0,
-                            base64Preview: base64 ? base64.substring(0, 100) + "..." : "null"
-                          })
                           if (base64) {
                             const fieldId = `imagen_comprobante_${Date.now()}`
-                            console.log("📎 Llamando handleAgregarArchivo con fieldId:", fieldId)
                             handleAgregarArchivo(fieldId, base64)
                           }
                         }}
@@ -425,65 +373,6 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                         accept="image/*"
                         maxSize={2} // Reducir a 2MB para evitar errores del backend
                       />
-                      
-                      {/* Test alternativo con input file directo */}
-                      <div className="bg-blue-900/50 border border-blue-600 rounded p-3">
-                        <Label className="text-blue-300 text-sm">🧪 Test Alternativo (Input File Directo)</Label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              console.log("🧪 Test: Archivo seleccionado directamente:", file.name, file.size)
-                              const reader = new FileReader()
-                              reader.onload = (e) => {
-                                const base64 = e.target?.result as string
-                                if (base64) {
-                                  console.log("🧪 Test: Base64 generado, llamando handleAgregarArchivo")
-                                  const fieldId = `test_directo_${Date.now()}`
-                                  handleAgregarArchivo(fieldId, base64)
-                                }
-                              }
-                              reader.readAsDataURL(file)
-                            }
-                          }}
-                          className="mt-2 text-blue-300"
-                        />
-                      </div>
-                      
-                      {/* Test para verificar búsqueda de comprobantes */}
-                      <div className="bg-orange-900/50 border border-orange-600 rounded p-3">
-                        <Label className="text-orange-300 text-sm">🔍 Test de Búsqueda</Label>
-                        <Button
-                          type="button"
-                          onClick={async () => {
-                            console.log("🔍 Probando búsqueda de comprobantes para venta:", venta.id)
-                            try {
-                              const { comprobantesService } = await import('@/services/comprobantes')
-                              const result = await comprobantesService.searchComprobantes({
-                                busqueda: venta.id.toString(),
-                                page: 1,
-                                limit: 20
-                              })
-                              console.log("🔍 Resultado de búsqueda:", {
-                                total: result.total,
-                                comprobantes: result.comprobantes?.length || 0,
-                                comprobantesEncontrados: result.comprobantes?.map(c => ({
-                                  id: c.id,
-                                  venta_id: c.venta_id,
-                                  archivos: c.archivos?.length || 0
-                                }))
-                              })
-                            } catch (error) {
-                              console.error("🔍 Error en búsqueda de prueba:", error)
-                            }
-                          }}
-                          className="mt-2 bg-orange-600 hover:bg-orange-700 text-white w-full"
-                        >
-                          🔍 Probar Búsqueda de Comprobantes
-                        </Button>
-                      </div>
                       
                       {/* Aviso sobre tamaño */}
                       <div className="bg-yellow-900/50 border border-yellow-600 rounded p-3">

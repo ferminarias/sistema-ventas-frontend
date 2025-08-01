@@ -225,15 +225,24 @@ export const adminVentasService = {
         mode: 'cors'
       })
       
-      const result = await handleResponse<{venta: VentaAdmin}>(response)
+      const result = await handleResponse<any>(response)
       
-      console.log("🔍 Venta obtenida:", {
-        id: result.venta.id,
-        tieneArchivos: result.venta.tiene_archivos,
-        camposAdicionales: result.venta.campos_adicionales
+      console.log("🔍 Respuesta completa del backend:", result)
+      
+      // El backend puede devolver directamente la venta o en un objeto {venta: ...}
+      const venta = result.venta || result
+      
+      if (!venta || !venta.id) {
+        throw new Error("Venta no encontrada en la respuesta del backend")
+      }
+      
+      console.log("🔍 Venta procesada:", {
+        id: venta.id,
+        tieneArchivos: venta.tiene_archivos,
+        camposAdicionales: venta.campos_adicionales
       })
       
-      return result.venta
+      return venta
     } catch (error) {
       console.error('Error en getVentaById:', error)
       if (error instanceof ApiError) {
