@@ -81,14 +81,12 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
   // Obtener URL de preview con autenticación
   const getPreviewUrl = (filename: string) => {
-    const token = localStorage.getItem('token')
-    return `https://sistemas-de-ventas-production.up.railway.app/api/comprobantes/preview/${filename}${token ? `?token=${token}` : ''}`
+    return comprobantesService.getPreviewUrl(filename) // ✅ Usar servicio en lugar de hardcodear
   }
 
   // Obtener URL de descarga con autenticación
   const getDownloadUrl = (filename: string) => {
-    const token = localStorage.getItem('token')
-    return `https://sistemas-de-ventas-production.up.railway.app/api/comprobantes/descargar/${filename}${token ? `?token=${token}` : ''}`
+    return comprobantesService.getDownloadUrl(filename) // ✅ Usar servicio en lugar de hardcodear
   }
 
   // Obtener nombre amigable para mostrar

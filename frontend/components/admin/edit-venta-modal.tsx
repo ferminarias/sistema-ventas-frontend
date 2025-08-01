@@ -37,7 +37,19 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
     telefono: venta.telefono,
     asesor: venta.asesor,
     cliente: venta.cliente,
-    fecha_venta: venta.fecha_venta.split('T')[0] // Solo la fecha
+    fecha_venta: (() => {
+      // Convertir la fecha a formato yyyy-MM-dd de manera robusta
+      try {
+        const date = new Date(venta.fecha_venta)
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      } catch {
+        // Fallback si la fecha no es válida
+        return new Date().toISOString().split('T')[0]
+      }
+    })()
   })
   const [loading, setLoading] = useState(false)
   

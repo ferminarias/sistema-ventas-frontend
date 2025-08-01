@@ -168,6 +168,14 @@ export default function AdminVentasPage() {
         ventaCamposAdicionales: response.venta?.campos_adicionales
       })
       
+      // Actualizar la venta en la lista local inmediatamente
+      if (response.venta) {
+        setVentas(prev => prev.map(v => 
+          v.id === response.venta.id ? { ...v, ...response.venta } : v
+        ))
+        console.log("📎 Venta actualizada en lista local")
+      }
+      
       // Mensaje de éxito más detallado
       let mensaje = "Venta actualizada correctamente"
       if (ventaEditada.archivos_eliminar && ventaEditada.archivos_eliminar.length > 0) {
@@ -183,6 +191,7 @@ export default function AdminVentasPage() {
       })
       
       console.log("📎 Cerrando modal y recargando datos...")
+      const ventaIdParaVerificacion = editModal.venta.id // ✅ Guardar antes de cerrar modal
       setEditModal({show: false, venta: null})
       
       // Verificar inmediatamente si los archivos se guardaron
@@ -190,11 +199,29 @@ export default function AdminVentasPage() {
         console.log("📎 Verificando si los archivos se guardaron...")
         setTimeout(async () => {
           try {
-            const ventaActualizada = await adminVentasService.getVentaById(editModal.venta!.id)
+            const ventaActualizada = await adminVentasService.getVentaById(ventaIdParaVerificacion) // ✅ Usar ID guardado
             console.log("📎 Verificación post-guardado:", {
               tieneArchivos: ventaActualizada.tiene_archivos,
               camposAdicionales: ventaActualizada.campos_adicionales,
               archivosEncontrados: ventaActualizada.campos_adicionales ? Object.keys(ventaActualizada.campos_adicionales) : []
+            })
+            
+            // Verificar también si aparece en búsqueda de comprobantes
+            console.log("🔍 Verificando búsqueda de comprobantes para venta:", ventaIdParaVerificacion) // ✅ Usar ID guardado
+            const { comprobantesService } = await import('@/services/comprobantes')
+            const resultadoBusqueda = await comprobantesService.searchComprobantes({
+              busqueda: ventaIdParaVerificacion.toString(), // ✅ Usar ID guardado
+              page: 1,
+              limit: 20
+            })
+            console.log("🔍 Resultado de búsqueda post-edición:", {
+              total: resultadoBusqueda.total,
+              comprobantes: resultadoBusqueda.comprobantes?.length || 0,
+              comprobantesDetalle: resultadoBusqueda.comprobantes?.map(c => ({
+                id: c.id,
+                venta_id: c.venta_id,
+                archivos: c.archivos?.length || 0
+              }))
             })
           } catch (error) {
             console.error("📎 Error verificando archivos guardados:", error)

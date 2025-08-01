@@ -75,16 +75,35 @@ const cleanObject = (obj: any): any => {
 const ensureRenderableValue = (value: any): any => {
   if (value === null || value === undefined) return ''
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
-  if (Array.isArray(value)) return value.map(ensureRenderableValue)
-  if (typeof value === 'object') {
-    // Si después de la limpieza sigue siendo un objeto, convertir a string
-    const cleaned = cleanObject(value)
-    if (typeof cleaned === 'object' && cleaned !== null) {
-      // Como último recurso, convertir a string legible
-      return JSON.stringify(cleaned)
-    }
-    return cleaned
+  
+  if (Array.isArray(value)) {
+    return value.map(ensureRenderableValue)
   }
+  
+  if (typeof value === 'object') {
+    // Primero intentar extraer el valor usando extractValue
+    const extracted = extractValue(value)
+    
+    // Si después de la extracción sigue siendo un objeto, convertir agresivamente
+    if (typeof extracted === 'object' && extracted !== null) {
+      // Si tiene propiedades conocidas que pueden ser renderizables
+      if ('label' in extracted && typeof extracted.label === 'string') return extracted.label
+      if ('value' in extracted && (typeof extracted.value === 'string' || typeof extracted.value === 'number')) return extracted.value
+      if ('name' in extracted && typeof extracted.name === 'string') return extracted.name
+      if ('text' in extracted && typeof extracted.text === 'string') return extracted.text
+      if ('title' in extracted && typeof extracted.title === 'string') return extracted.title
+      
+      // Como último recurso, convertir a string simple
+      try {
+        return JSON.stringify(extracted)
+      } catch {
+        return '[objeto complejo]'
+      }
+    }
+    
+    return extracted
+  }
+  
   return String(value)
 }
 
@@ -129,6 +148,8 @@ class ComprobantesService {
 
   // Realizar búsqueda de comprobantes
   async searchComprobantes(filters: ComprobanteFilters): Promise<ComprobanteSearchResponse> {
+    console.log("🔍 searchComprobantes llamado con filtros:", filters)
+    
     const params = new URLSearchParams()
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -143,17 +164,20 @@ class ComprobantesService {
     })
 
     if (!response.ok) {
+      console.error("❌ Error en respuesta de búsqueda:", response.status, response.statusText)
       throw new Error("Error al buscar comprobantes")
     }
 
     const backendResponse = await response.json()
+    console.log("📊 Total encontrado:", backendResponse.pagination?.total_results || 0)
 
     // Mapear la respuesta del backend con limpieza agresiva
     const mappedResponse: ComprobanteSearchResponse = {
       comprobantes: (backendResponse.resultados || []).map((comprobante: any) => {
         const cleaned = cleanObject(comprobante)
         // Asegurar que todos los valores sean renderizables
-        return this.ensureAllValuesRenderable(cleaned)
+        const renderable = this.ensureAllValuesRenderable(cleaned)
+        return renderable
       }),
       total: ensureRenderableValue(extractValue(backendResponse.pagination?.total_results)) || 0,
       page: ensureRenderableValue(extractValue(backendResponse.pagination?.current_page)) || 1,
@@ -161,6 +185,7 @@ class ComprobantesService {
       total_pages: ensureRenderableValue(extractValue(backendResponse.pagination?.total_pages)) || 1
     }
 
+    console.log("🎯 Comprobantes procesados:", mappedResponse.comprobantes?.length || 0)
     return mappedResponse
   }
 
@@ -168,12 +193,17 @@ class ComprobantesService {
   private ensureAllValuesRenderable(obj: any): any {
     if (obj === null || obj === undefined) return obj
     if (typeof obj !== 'object') return ensureRenderableValue(obj)
-    if (Array.isArray(obj)) return obj.map(item => this.ensureAllValuesRenderable(item))
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.ensureAllValuesRenderable(item))
+    }
     
     const result: any = {}
     for (const [key, value] of Object.entries(obj)) {
-      result[key] = this.ensureAllValuesRenderable(value)
+      // Asegurar que cada valor sea renderable
+      result[key] = ensureRenderableValue(value)
     }
+    
     return result
   }
 
