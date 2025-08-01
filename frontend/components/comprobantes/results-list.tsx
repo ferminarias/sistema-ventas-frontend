@@ -55,11 +55,27 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
   }
 
   const handleDownloadFile = async (archivo: import("@/types/comprobante").ArchivoComprobante) => {
-    setDownloading(archivo.filename)
+    // Obtener filename de manera consistente
+    const filename = getFilename(archivo)
+    const originalName = archivo.original_name || archivo.filename || 'archivo_descarga'
+    
+    console.log("🔽 Iniciando descarga:", {
+      filename,
+      originalName,
+      archivo_completo: archivo
+    })
+    
+    if (!filename) {
+      console.error("❌ No se encontró filename para descargar")
+      return
+    }
+    
+    setDownloading(filename)
     try {
-      await comprobantesService.downloadFile(archivo.filename, archivo.original_name)
+      await comprobantesService.downloadFile(filename, originalName)
+      console.log("✅ Descarga exitosa")
     } catch (error) {
-      console.error("Error al descargar archivo:", error)
+      console.error("❌ Error al descargar archivo:", error)
     } finally {
       setDownloading(null)
     }
@@ -81,12 +97,12 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
   // Obtener URL de preview con autenticación
   const getPreviewUrl = (filename: string) => {
-    return comprobantesService.getPreviewUrl(filename) // ✅ Usar servicio en lugar de hardcodear
+    return comprobantesService.getPreviewUrl(filename)
   }
 
   // Obtener URL de descarga con autenticación
   const getDownloadUrl = (filename: string) => {
-    return comprobantesService.getDownloadUrl(filename) // ✅ Usar servicio en lugar de hardcodear
+    return comprobantesService.getDownloadUrl(filename)
   }
 
   // Obtener nombre amigable para mostrar
@@ -99,6 +115,11 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
       return archivo.filename
     }
     return 'Archivo sin nombre'
+  }
+
+  // Helper para obtener filename de manera consistente
+  const getFilename = (archivo: ArchivoComprobante) => {
+    return archivo.filename || archivo.file_url || archivo.original_name || ''
   }
 
   // Obtener tipo de archivo de forma segura
@@ -126,85 +147,38 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
   // Función segura para verificar si se puede previsualizar
   const canPreview = (filename: any) => {
-    if (typeof filename !== 'string') return false
-    return comprobantesService.canPreview(filename)
+    // Siempre permitir preview para debugging, pero hacer más inteligente
+    const actualFilename = typeof filename === 'string' ? filename : ''
+    
+    // Si es una imagen o PDF, siempre permitir
+    if (actualFilename && (comprobantesService.isImageFile(actualFilename) || comprobantesService.isPdfFile(actualFilename))) {
+      return true
+    }
+    
+    // Para debugging: mostrar botón Ver para todos los archivos
+    return true
   }
 
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="text-center py-8">
-          <RailwayLoader size="lg" text="Buscando comprobantes..." />
-        </div>
-        
-        {/* Skeleton para los resultados */}
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-card border border-card rounded-lg p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-3">
-                  {/* Header skeleton */}
-                  <div className="flex items-center gap-3">
-                    <div className="h-6 bg-muted rounded w-48 animate-pulse"></div>
-                    <div className="h-6 bg-blue-600/30 rounded w-16 animate-pulse"></div>
-                  </div>
-                  
-                  {/* Info skeleton */}
-                  <div className="flex items-center gap-6">
-                    <div className="h-4 bg-muted rounded w-24 animate-pulse"></div>
-                    <div className="h-4 bg-muted rounded w-32 animate-pulse"></div>
-                    <div className="h-4 bg-muted rounded w-28 animate-pulse"></div>
-                  </div>
-                  
-                  {/* Contact skeleton */}
-                  <div className="h-3 bg-muted rounded w-64 animate-pulse"></div>
-                  
-                  {/* Files skeleton */}
-                  <div className="space-y-2">
-                    <div className="h-4 bg-muted rounded w-32 animate-pulse"></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {[1, 2].map((j) => (
-                        <div key={j} className="bg-card border border-card rounded-lg p-3">
-                          <div className="h-32 bg-muted rounded mb-2 animate-pulse"></div>
-                          <div className="space-y-1">
-                            <div className="h-3 bg-muted rounded w-full animate-pulse"></div>
-                            <div className="h-3 bg-muted rounded w-2/3 animate-pulse"></div>
-                            <div className="flex gap-1 mt-2">
-                              <div className="h-6 bg-muted rounded w-12 animate-pulse"></div>
-                              <div className="h-6 bg-muted rounded w-16 animate-pulse"></div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Action buttons skeleton */}
-                <div className="flex flex-col gap-2">
-                  <div className="h-8 bg-muted rounded w-20 animate-pulse"></div>
-                  <div className="h-8 bg-muted rounded w-16 animate-pulse"></div>
-                </div>
-              </div>
-              
-              {/* Mini railway loader per card */}
-              <div className="mt-4 flex justify-center">
-                <RailwayLoader size="sm" showText={false} />
-              </div>
-            </div>
-          ))}
-        </div>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-card border border-card rounded-lg p-4 animate-pulse">
+            <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
+            <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+          </div>
+        ))}
       </div>
     )
   }
 
-  if (comprobantes.length === 0) {
+  if (!comprobantes || comprobantes.length === 0) {
     return (
-      <div className="bg-card border border-card rounded-lg p-12 text-center">
-        <FileText className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-white mb-2">No se encontraron comprobantes</h3>
-        <p className="text-gray-400">
-          Intenta ajustar los filtros de búsqueda para encontrar los comprobantes que necesitas.
+      <div className="text-center py-12">
+        <FileText className="mx-auto h-12 w-12 text-gray-600" />
+        <h3 className="mt-2 text-sm font-semibold text-gray-300">No hay comprobantes</h3>
+        <p className="mt-1 text-sm text-gray-500">
+          No se encontraron comprobantes que coincidan con los filtros aplicados.
         </p>
       </div>
     )
@@ -246,72 +220,58 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                 </div>
 
                 {/* Información del cliente */}
-                <div className="text-xs text-gray-500">
-                  Email: {typeof comprobante.email === 'string' ? comprobante.email : 'Email no disponible'} • Teléfono: {typeof comprobante.telefono === 'string' ? comprobante.telefono : 'Teléfono no disponible'}
+                <div className="flex items-center gap-6 text-sm text-gray-500 mt-1">
+                  <div className="flex items-center gap-1">
+                    <CreditCard className="h-4 w-4" />
+                    {typeof comprobante.email === 'string' ? comprobante.email : 'Email no disponible'}
+                  </div>
+                  {comprobante.telefono && (
+                    <div>
+                      Tel: {typeof comprobante.telefono === 'string' ? comprobante.telefono : 'No disponible'}
+                    </div>
+                  )}
                 </div>
 
-                {/* Preview de archivos */}
+                {/* Archivos adjuntos */}
                 {comprobante.archivos && comprobante.archivos.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-300">Archivos adjuntos:</h4>
+                  <div className="mt-3">
+                    <h4 className="text-sm font-medium text-gray-300 mb-2">Archivos adjuntos:</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {comprobante.archivos.map((archivo, index) => (
-                        <div key={index} className="bg-card border border-card rounded-lg p-3">
-                          {/* Preview de imagen */}
-                          {isImageFile(archivo.filename) && (
-                            <div className="mb-2">
-                              <img 
-                                src={comprobantesService.getPreviewUrl(typeof archivo.filename === 'string' ? archivo.filename : '')} 
-                                alt={typeof archivo.original_name === 'string' ? archivo.original_name : 'Imagen'}
-                                className="w-full h-32 object-cover rounded border border-gray-600"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none'
-                                }}
-                              />
-                            </div>
-                          )}
-                          
-                          {/* Preview de PDF */}
-                          {isPdfFile(archivo.filename) && (
-                            <div className="mb-2">
-                              <div className="w-full h-32 bg-red-100 rounded border border-gray-600 flex items-center justify-center">
-                                <FileText className="h-12 w-12 text-red-600" />
+                        <div key={index} className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-white truncate">
+                                {getDisplayName(archivo)}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {getTipoArchivo(archivo)} • {typeof archivo.size_mb === 'number' ? archivo.size_mb.toFixed(1) : '0.0'} MB
+                              </p>
+                              
+                              {/* Botones de acción */}
+                              <div className="flex gap-1 mt-2">
+                                {canPreview(getFilename(archivo)) && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleVerComprobante(archivo, comprobante)}
+                                    className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs px-2 py-1"
+                                  >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    Ver
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleDownloadFile(archivo)}
+                                  disabled={downloading === getFilename(archivo)}
+                                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1"
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  {downloading === getFilename(archivo) ? "..." : "Descargar"}
+                                </Button>
                               </div>
                             </div>
-                          )}
-
-                          {/* Información del archivo */}
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium text-white truncate">
-                              {getDisplayName(archivo)}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {getTipoArchivo(archivo)} • {typeof archivo.size_mb === 'number' ? archivo.size_mb.toFixed(1) : '0.0'} MB
-                            </p>
-                            
-                            {/* Botones de acción */}
-                                                         <div className="flex gap-1 mt-2">
-                               {canPreview(archivo.filename) && (
-                                 <Button
-                                   size="sm"
-                                   variant="outline"
-                                   onClick={() => handleVerComprobante(archivo, comprobante)}
-                                   className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs px-2 py-1"
-                                 >
-                                   <Eye className="h-3 w-3 mr-1" />
-                                   Ver
-                                 </Button>
-                               )}
-                               <Button
-                                 size="sm"
-                                 onClick={() => handleDownloadFile(archivo)}
-                                 disabled={downloading === (typeof archivo.filename === 'string' ? archivo.filename : '')}
-                                 className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1"
-                               >
-                                 <Download className="h-3 w-3 mr-1" />
-                                 {downloading === (typeof archivo.filename === 'string' ? archivo.filename : '') ? "..." : "Descargar"}
-                               </Button>
-                             </div>
                           </div>
                         </div>
                       ))}
@@ -337,24 +297,11 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
       {/* Modal de vista previa con fondo borroso */}
       {showModal && currentFile && currentVenta && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={handleCloseModal}
-        >
-          <div 
-            className="bg-card rounded-xl max-w-5xl max-h-[95vh] overflow-auto border border-card shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 border border-gray-700 rounded-xl max-w-4xl max-h-[90vh] overflow-hidden">
             {/* Header del modal */}
-            <div className="p-4 border-b border-card flex justify-between items-center bg-gray-900 rounded-t-xl">
-              <div>
-                <h3 className="text-lg font-semibold text-white">
-                  {getDisplayName(currentFile)}
-                </h3>
-                <p className="text-sm text-gray-400">
-                  Venta #{currentVenta.venta_id} - {typeof currentVenta.cliente_nombre === 'string' ? currentVenta.cliente_nombre : 'Cliente sin nombre'}
-                </p>
-              </div>
+            <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
+              <h3 className="text-lg font-semibold text-white">Vista Previa</h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -364,8 +311,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            
-            {/* Contenido del modal */}
+
             <div className="p-4 space-y-4">
               {/* Información del archivo */}
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -389,41 +335,27 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
               {currentFile.tipo === 'imagen' ? (
                 <div className="flex justify-center">
-                  <img 
-                    src={getPreviewUrl(typeof currentFile.filename === 'string' ? currentFile.filename : '')}
-                    alt={typeof currentFile.original_name === 'string' ? currentFile.original_name : (typeof currentFile.filename === 'string' ? currentFile.filename : 'Archivo')}
-                    className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
+                  <img
+                    src={getPreviewUrl(getFilename(currentFile))}
+                    alt={getDisplayName(currentFile)}
+                    className="max-w-full max-h-96 object-contain rounded-lg"
                     onError={(e) => {
-                      console.error('Error cargando imagen:', e)
-                      e.currentTarget.src = "/placeholder.svg"
+                      const target = e.target as HTMLImageElement
+                      target.src = '/placeholder.jpg'
                     }}
                   />
                 </div>
-              ) : currentFile.filename?.toLowerCase().endsWith('.pdf') ? (
-                <div className="bg-white rounded-lg overflow-hidden">
-                  <iframe 
-                    src={getPreviewUrl(typeof currentFile.filename === 'string' ? currentFile.filename : '')}
-                    className="w-full h-[70vh]"
-                    title={typeof currentFile.original_name === 'string' ? currentFile.original_name : (typeof currentFile.filename === 'string' ? currentFile.filename : 'Archivo')}
-                  />
-                </div>
               ) : (
-                <div className="text-center py-12 text-gray-400">
-                  <FileText className="h-16 w-16 mx-auto mb-4 text-gray-500" />
-                  <p className="text-xl mb-2">Vista previa no disponible</p>
-                  <p className="mb-6">Tipo de archivo: {typeof currentFile.tipo === 'object' ? (currentFile.tipo as any).label || (currentFile.tipo as any).value || 'Desconocido' : currentFile.tipo}</p>
-                  <Button
-                    onClick={() => handleDownloadFile(currentFile)}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Descargar archivo
-                  </Button>
+                <div className="flex items-center justify-center h-64 bg-gray-900 rounded-lg">
+                  <div className="text-center">
+                    <FileText className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-400">Vista previa no disponible para este tipo de archivo</p>
+                    <p className="text-sm text-gray-500">Usa el botón de descarga para ver el contenido</p>
+                  </div>
                 </div>
               )}
             </div>
-            
-            {/* Footer con información del archivo */}
+
             <div className="p-4 border-t border-card bg-gray-900 rounded-b-xl">
               <div className="flex justify-between items-center text-sm text-gray-400">
                 <div className="flex gap-4">
@@ -433,11 +365,11 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                 </div>
                 <Button
                   onClick={() => handleDownloadFile(currentFile)}
-                  disabled={downloading === (typeof currentFile.filename === 'string' ? currentFile.filename : '')}
+                  disabled={downloading === getFilename(currentFile)}
                   className="bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  {downloading === (typeof currentFile.filename === 'string' ? currentFile.filename : '') ? "Descargando..." : "Descargar"}
+                  {downloading === getFilename(currentFile) ? "Descargando..." : "Descargar"}
                 </Button>
               </div>
             </div>
