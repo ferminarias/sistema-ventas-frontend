@@ -171,34 +171,14 @@ class ComprobantesService {
     const backendResponse = await response.json()
     console.log("📊 Total encontrado:", backendResponse.pagination?.total_results || 0)
 
-    // DEBUG: Mostrar respuesta completa del backend
-    console.log("🔍 RESPUESTA COMPLETA DEL BACKEND:")
-    console.log("- Estructura general:", Object.keys(backendResponse))
-    console.log("- Pagination:", backendResponse.pagination)
-    console.log("- Resultados array:", backendResponse.resultados)
-    console.log("- Cantidad resultados:", backendResponse.resultados?.length || 0)
-    
-    if (backendResponse.resultados && backendResponse.resultados.length > 0) {
-      console.log("\n🔍 PRIMER RESULTADO SIN PROCESAR:")
-      const primerResultado = backendResponse.resultados[0]
-      console.log("- Objeto completo:", JSON.stringify(primerResultado, null, 2))
-      console.log("- Archivos en resultado:", primerResultado.archivos)
-      console.log("- Archivos length:", primerResultado.archivos?.length)
-      
-      if (primerResultado.archivos && primerResultado.archivos.length > 0) {
-        console.log("\n📎 PRIMER ARCHIVO SIN PROCESAR:")
-        console.log(JSON.stringify(primerResultado.archivos[0], null, 2))
-      }
-    }
+    // DEBUG básico
+    console.log("📊 Comprobantes encontrados:", backendResponse.resultados?.length || 0)
 
     // Mapear la respuesta del backend PRESERVANDO la estructura de archivos
     const mappedResponse: ComprobanteSearchResponse = {
-      comprobantes: (backendResponse.resultados || []).map((comprobante: any, index: number) => {
-        console.log(`\n🔄 PROCESANDO COMPROBANTE ${index + 1} - ANTES:`);
-        console.log("- archivos ANTES del proceso:", comprobante.archivos);
-        
-        // Procesar solo campos que no sean archivos
-        const procesado = {
+      comprobantes: (backendResponse.resultados || []).map((comprobante: any) => {
+        // Procesar solo campos que no sean archivos, PRESERVAR ARCHIVOS INTACTOS
+        return {
           // Datos básicos sin procesar agresivamente
           venta_id: comprobante.venta_id,
           nombre: ensureRenderableValue(comprobante.nombre),
@@ -220,10 +200,6 @@ class ComprobantesService {
           archivo_adjunto: ensureRenderableValue(comprobante.archivo_adjunto),
           archivo_nombre: ensureRenderableValue(comprobante.archivo_nombre),
         }
-        
-        console.log("- archivos DESPUÉS del proceso conservador:", procesado.archivos);
-        
-        return procesado
       }),
       total: ensureRenderableValue(extractValue(backendResponse.pagination?.total_results)) || 0,
       page: ensureRenderableValue(extractValue(backendResponse.pagination?.current_page)) || 1,
@@ -275,7 +251,26 @@ class ComprobantesService {
     document.body.removeChild(a)
   }
 
-  // Obtener URL de preview para mostrar archivos directamente
+  // Obtener URL de preview inteligente basada en archivo completo
+  getPreviewUrlFromFile(archivo: any): string {
+    const token = localStorage.getItem("token")
+    
+    // 1. Si tiene file_url de Cloudinary, usar directamente
+    if (archivo.file_url && archivo.file_url.startsWith('https://res.cloudinary.com/')) {
+      return archivo.file_url
+    }
+    
+    // 2. Si es storage local y tiene preview_url del backend, usar esa
+    if (archivo.storage_type === 'local' && archivo.preview_url) {
+      return `${API_BASE_URL}${archivo.preview_url}${token ? `?token=${token}` : ''}`
+    }
+    
+    // 3. Fallback: generar URL usando filename
+    const filename = archivo.filename || archivo.original_name || ''
+    return `${API_BASE_URL}/api/comprobantes/preview/${filename}${token ? `?token=${token}` : ''}`
+  }
+
+  // Mantener método original para compatibilidad
   getPreviewUrl(filename: string): string {
     const token = localStorage.getItem("token")
     

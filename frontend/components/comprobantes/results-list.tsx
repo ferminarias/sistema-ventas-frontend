@@ -16,50 +16,32 @@ interface ResultsListProps {
 }
 
 export function ResultsList({ comprobantes, loading = false }: ResultsListProps) {
-  // Debug: Log de estructura de datos
+  // Debug: Log básico de estructura
   useEffect(() => {
     if (comprobantes.length > 0) {
-      console.log("🔍 ESTRUCTURA COMPLETA DE COMPROBANTES:")
-      console.log("📊 Total comprobantes:", comprobantes.length)
-      
-      comprobantes.forEach((comprobante, index) => {
-        console.log(`\n📄 COMPROBANTE ${index + 1}:`)
-        console.log("- ID venta:", comprobante.venta_id)
-        console.log("- Cliente:", comprobante.cliente_nombre)
-        console.log("- Archivos array:", comprobante.archivos)
-        console.log("- Cantidad archivos:", comprobante.archivos?.length || 0)
-        
-        if (comprobante.archivos && comprobante.archivos.length > 0) {
-          comprobante.archivos.forEach((archivo, i) => {
-            console.log(`\n  📎 ARCHIVO ${i + 1}:`)
-            console.log("  - Objeto completo:", JSON.stringify(archivo, null, 4))
-            console.log("  - filename:", archivo.filename)
-            console.log("  - original_name:", archivo.original_name)
-            console.log("  - file_url:", archivo.file_url)
-            console.log("  - tipo:", archivo.tipo)
-            console.log("  - size_mb:", archivo.size_mb)
-            console.log("  - field_id:", archivo.field_id)
-            console.log("  - uploaded_at:", archivo.uploaded_at)
-          })
-        } else {
-          console.log("  ❌ NO HAY ARCHIVOS o archivos es null/undefined")
-        }
-        
-        // Verificar propiedades legacy
-        console.log("- archivo_adjunto (legacy):", comprobante.archivo_adjunto)
-        console.log("- archivo_nombre (legacy):", comprobante.archivo_nombre)
-      })
+      console.log("📊 Comprobantes cargados:", comprobantes.length)
+      console.log("🗂️ Total archivos:", comprobantes.reduce((total, comp) => total + (comp.archivos?.length || 0), 0))
     }
   }, [comprobantes])
 
   // Estado para URLs de imagen cargadas con autenticación
   const [imageUrls, setImageUrls] = useState<Map<string, string>>(new Map())
 
-  // Función para cargar imagen con autenticación
-  const loadImageWithAuth = async (filename: string): Promise<string> => {
+  // Función para cargar imagen con autenticación usando objeto archivo completo
+  const loadImageWithAuth = async (archivo: any): Promise<string> => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(comprobantesService.getPreviewUrl(filename), {
+      
+      // Usar nuevo método inteligente
+      const previewUrl = comprobantesService.getPreviewUrlFromFile(archivo)
+      
+             // Si es URL de Cloudinary, no necesita fetch con auth
+       if (previewUrl.startsWith('https://res.cloudinary.com/')) {
+         return previewUrl
+       }
+      
+      // Para URLs locales o del backend, usar fetch con auth
+      const response = await fetch(previewUrl, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'image/*',
@@ -74,19 +56,21 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       
-      console.log("✅ Imagen cargada:", filename)
+      console.log("✅ Imagen cargada:", archivo.filename)
       return url
     } catch (error) {
-      console.error("❌ Error cargando imagen:", filename, error)
+      console.error("❌ Error cargando imagen:", archivo.filename, error)
       throw error
     }
   }
 
   // Componente de imagen con autenticación
-  const AuthenticatedImage = ({ filename, alt, className }: { filename: string, alt: string, className: string }) => {
+  const AuthenticatedImage = ({ archivo, alt, className }: { archivo: any, alt: string, className: string }) => {
     const [imageSrc, setImageSrc] = useState<string>('')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(false)
+
+    const cacheKey = archivo.filename || archivo.original_name || 'unknown'
 
     useEffect(() => {
       let isMounted = true
@@ -97,17 +81,17 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
           setError(false)
           
           // Verificar si ya tenemos la URL en cache
-          const cachedUrl = imageUrls.get(filename)
+          const cachedUrl = imageUrls.get(cacheKey)
           if (cachedUrl) {
             setImageSrc(cachedUrl)
             setLoading(false)
             return
           }
 
-          const url = await loadImageWithAuth(filename)
+          const url = await loadImageWithAuth(archivo)
           if (isMounted) {
             setImageSrc(url)
-            setImageUrls(prev => new Map(prev).set(filename, url))
+            setImageUrls(prev => new Map(prev).set(cacheKey, url))
             setLoading(false)
           }
         } catch (err) {
@@ -123,7 +107,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
       return () => {
         isMounted = false
       }
-    }, [filename])
+    }, [cacheKey])
 
     if (loading) {
       return (
@@ -455,24 +439,24 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                 </div>
               </div>
 
-              {isImageFile(getFilename(currentFile)) ? (
+              {isImageFile(getFilename(currentFile)) || currentFile.tipo === 'imagen' ? (
                 <div className="flex justify-center">
                   <div className="relative">
                     <AuthenticatedImage
-                      filename={getFilename(currentFile)}
+                      archivo={currentFile}
                       alt={getDisplayName(currentFile)}
                       className="max-w-full max-h-96 object-contain rounded-lg shadow-lg"
                     />
                   </div>
                 </div>
-              ) : isPdfFile(getFilename(currentFile)) ? (
+              ) : isPdfFile(getFilename(currentFile)) || currentFile.tipo === 'pdf' ? (
                 <div className="flex justify-center">
                   <iframe
-                    src={getPreviewUrl(getFilename(currentFile))}
+                    src={comprobantesService.getPreviewUrlFromFile(currentFile)}
                     className="w-full h-96 rounded-lg border border-gray-600"
                     title={getDisplayName(currentFile)}
                     onLoad={() => {
-                      console.log("✅ PDF cargado exitosamente:", getFilename(currentFile))
+                      console.log("✅ PDF cargado:", getFilename(currentFile))
                     }}
                   />
                 </div>
