@@ -18,15 +18,12 @@ export default function BusquedaComprobantesPage() {
   const router = useRouter()
   const { toast } = useToast()
   
-  // DEBUG: Log para entender el problema de auth
+  // DEBUG: Log básico de auth - SOLO CAMBIOS IMPORTANTES
   useEffect(() => {
-    console.log("🔐 Estado de autenticación en comprobantes:", {
-      authLoading,
-      user: user ? `${user.email} (${user.role})` : null,
-      hasToken: !!localStorage.getItem('token'),
-      timestamp: new Date().toISOString()
-    })
-  }, [authLoading, user])
+    if (!authLoading && user) {
+      console.log("🔐 Usuario autenticado:", `${user.email} (${user.role})`)
+    }
+  }, [authLoading, user?.email])
   
   const [currentFilters, setCurrentFilters] = useState<ComprobanteFilters>({
     page: 1,
@@ -55,7 +52,7 @@ export default function BusquedaComprobantesPage() {
     if (user && (user.role === 'admin' || user.role === 'supervisor')) {
       search(currentFilters)
     }
-  }, [user])
+  }, [user?.id, user?.role])
 
   const handleSearch = (filters: ComprobanteFilters) => {
     setCurrentFilters(filters)

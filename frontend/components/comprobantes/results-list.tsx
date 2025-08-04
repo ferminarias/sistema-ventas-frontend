@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, memo, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Eye, Download, FileText, Calendar, User, CreditCard, Settings, X } from "lucide-react"
@@ -15,14 +15,180 @@ interface ResultsListProps {
   loading?: boolean
 }
 
-export function ResultsList({ comprobantes, loading = false }: ResultsListProps) {
-  // Debug: Log básico de estructura
+const ComprobanteItem = memo(({ comprobante, onVerComprobante, onDownloadFile, downloading }: {
+  comprobante: Comprobante,
+  onVerComprobante: (archivo: any, venta: Comprobante) => void,
+  onDownloadFile: (archivo: any) => Promise<void>,
+  downloading: string | null
+}) => {
+  // Obtener nombre amigable para mostrar - ASEGURAR STRING
+  const getDisplayName = (archivo: ArchivoComprobante) => {
+    // Forzar conversión a string para evitar React Error #130
+    if (archivo.original_name) {
+      return String(archivo.original_name)
+    }
+    if (archivo.filename) {
+      return String(archivo.filename)
+    }
+    return 'Archivo sin nombre'
+  }
+
+  // Helper para obtener filename de manera consistente - ASEGURAR STRING
+  const getFilename = (archivo: ArchivoComprobante) => {
+    const filename = archivo.filename || archivo.file_url || archivo.original_name || ''
+    return String(filename)
+  }
+
+  // Obtener tipo de archivo de forma segura - ASEGURAR STRING
+  const getTipoArchivo = (archivo: ArchivoComprobante) => {
+    if (typeof archivo.tipo === 'object' && archivo.tipo) {
+      const tipo = (archivo.tipo as any).label || (archivo.tipo as any).value || 'Desconocido'
+      return String(tipo)
+    }
+    if (archivo.tipo) {
+      return String(archivo.tipo)
+    }
+    return 'Desconocido'
+  }
+
+  // Función segura para verificar si se puede previsualizar
+  const canPreview = (filename: any) => {
+    const actualFilename = typeof filename === 'string' ? filename : ''
+    
+    // Si es una imagen o PDF, permitir preview
+    if (actualFilename && (comprobantesService.isImageFile(actualFilename) || comprobantesService.isPdfFile(actualFilename))) {
+      return true
+    }
+    
+    // Para otros tipos, no mostrar preview (solo descarga)
+    return false
+  }
+
+  // Función segura para verificar si es imagen
+  const isImageFile = (filename: any) => {
+    if (typeof filename !== 'string') return false
+    return comprobantesService.isImageFile(filename)
+  }
+
+  // Función segura para verificar si es PDF
+  const isPdfFile = (filename: any) => {
+    if (typeof filename !== 'string') return false
+    return comprobantesService.isPdfFile(filename)
+  }
+
+  return (
+    <div
+      key={comprobante.venta_id || comprobante.id}
+      className="bg-card border border-card rounded-lg p-4 hover:bg-gray-600 transition-colors"
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 mb-2">
+            <h3 className="text-lg font-semibold text-white truncate">
+              {String(comprobante.nombre || 'Sin nombre')} {String(comprobante.apellido || '')}
+            </h3>
+            <Badge variant="secondary" className="bg-blue-600 text-white">
+              Venta #{String(comprobante.venta_id || 'N/A')}
+            </Badge>
+          </div>
+
+          {/* Información de la venta */}
+          <div className="flex items-center gap-6 text-sm text-gray-400">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              {formatDate(comprobante.fecha_venta)}
+            </div>
+            <div className="flex items-center gap-1">
+              <User className="h-4 w-4" />
+              {String(comprobante.cliente_nombre || 'Cliente sin nombre')}
+            </div>
+            <div className="flex items-center gap-1">
+              <Settings className="h-4 w-4" />
+              {String(comprobante.asesor || 'Asesor no especificado')}
+            </div>
+          </div>
+
+          {/* Información del cliente */}
+          <div className="flex items-center gap-6 text-sm text-gray-500 mt-1">
+            <div className="flex items-center gap-1">
+              <CreditCard className="h-4 w-4" />
+              {String(comprobante.email || 'Email no disponible')}
+            </div>
+            {comprobante.telefono && (
+              <div>
+                Tel: {String(comprobante.telefono || 'No disponible')}
+              </div>
+            )}
+          </div>
+
+          {/* Archivos adjuntos */}
+          {comprobante.archivos && comprobante.archivos.length > 0 && (
+            <div className="mt-3">
+              <h4 className="text-sm font-medium text-gray-300 mb-2">Archivos adjuntos:</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {comprobante.archivos.map((archivo, index) => (
+                  <div key={index} className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">
+                          {getDisplayName(archivo)}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {getTipoArchivo(archivo)} • {typeof archivo.size_mb === 'number' ? archivo.size_mb.toFixed(1) : '0.0'} MB
+                        </p>
+                        
+                        {/* Botones de acción */}
+                        <div className="flex gap-1 mt-2">
+                          {canPreview(getFilename(archivo)) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onVerComprobante(archivo, comprobante)}
+                              className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs px-2 py-1"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              Ver
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => onDownloadFile(archivo)}
+                            disabled={downloading === getFilename(archivo)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1"
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            {downloading === getFilename(archivo) ? "..." : "Descargar"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Fallback para estructura antigua */}
+          {(!comprobante.archivos || comprobante.archivos.length === 0) && comprobante.archivo_nombre && (
+            <div className="text-xs text-gray-500">
+              Archivo: {String(comprobante.archivo_nombre || 'Archivo sin nombre')}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+})
+
+ComprobanteItem.displayName = 'ComprobanteItem'
+
+export const ResultsList = memo(function ResultsList({ comprobantes, loading = false }: ResultsListProps) {
+  // Debug: Log básico de estructura - SOLO UNA VEZ
   useEffect(() => {
     if (comprobantes.length > 0) {
       console.log("📊 Comprobantes cargados:", comprobantes.length)
-      console.log("🗂️ Total archivos:", comprobantes.reduce((total, comp) => total + (comp.archivos?.length || 0), 0))
     }
-  }, [comprobantes])
+  }, [comprobantes.length])
 
   // Estado para URLs de imagen cargadas con autenticación
   const [imageUrls, setImageUrls] = useState<Map<string, string>>(new Map())
@@ -56,10 +222,9 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       
-      console.log("✅ Imagen cargada:", archivo.filename)
       return url
     } catch (error) {
-      console.error("❌ Error cargando imagen:", archivo.filename, error)
+      console.error("❌ Error cargando imagen:", archivo.filename)
       throw error
     }
   }
@@ -70,7 +235,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(false)
 
-    const cacheKey = archivo.filename || archivo.original_name || 'unknown'
+    const cacheKey = String(archivo.filename || archivo.original_name || 'unknown')
 
     useEffect(() => {
       let isMounted = true
@@ -102,7 +267,9 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
         }
       }
 
-      loadImage()
+      if (cacheKey && cacheKey !== 'unknown') {
+        loadImage()
+      }
 
       return () => {
         isMounted = false
@@ -159,16 +326,10 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
     }
   }
 
-  const handleDownloadFile = async (archivo: import("@/types/comprobante").ArchivoComprobante) => {
+  const handleDownloadFile = useCallback(async (archivo: import("@/types/comprobante").ArchivoComprobante) => {
     // Obtener filename de manera consistente
     const filename = getFilename(archivo)
     const originalName = archivo.original_name || archivo.filename || 'archivo_descarga'
-    
-    console.log("🔽 Iniciando descarga:", {
-      filename,
-      originalName,
-      archivo_completo: archivo
-    })
     
     if (!filename) {
       console.error("❌ No se encontró filename para descargar")
@@ -178,91 +339,62 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
     setDownloading(filename)
     try {
       await comprobantesService.downloadFile(filename, originalName)
-      console.log("✅ Descarga exitosa")
     } catch (error) {
       console.error("❌ Error al descargar archivo:", error)
     } finally {
       setDownloading(null)
     }
-  }
+  }, [])
 
   // Función para abrir el modal de vista previa
-  const handleVerComprobante = (archivo: ArchivoComprobante, venta: Comprobante) => {
-    console.log("🔍 Abriendo vista previa:", getFilename(archivo))
-    
+  const handleVerComprobante = useCallback((archivo: ArchivoComprobante, venta: Comprobante) => {
     setCurrentFile(archivo)
     setCurrentVenta(venta)
     setShowModal(true)
-  }
+  }, [])
 
   // Función para cerrar el modal
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setShowModal(false)
     setCurrentFile(null)
     setCurrentVenta(null)
-  }
+  }, [])
 
-  // Obtener URL de preview con autenticación
-  const getPreviewUrl = (filename: string) => {
-    return comprobantesService.getPreviewUrl(filename)
-  }
-
-  // Obtener URL de descarga con autenticación
-  const getDownloadUrl = (filename: string) => {
-    return comprobantesService.getDownloadUrl(filename)
-  }
-
-  // Obtener nombre amigable para mostrar
+  // Helper básicos para el modal
   const getDisplayName = (archivo: ArchivoComprobante) => {
-    // Usar original_name si está disponible, sino filename
-    if (typeof archivo.original_name === 'string') {
-      return archivo.original_name
+    if (archivo.original_name) {
+      return String(archivo.original_name)
     }
-    if (typeof archivo.filename === 'string') {
-      return archivo.filename
+    if (archivo.filename) {
+      return String(archivo.filename)
     }
     return 'Archivo sin nombre'
   }
 
-  // Helper para obtener filename de manera consistente
   const getFilename = (archivo: ArchivoComprobante) => {
-    return archivo.filename || archivo.file_url || archivo.original_name || ''
+    const filename = archivo.filename || archivo.file_url || archivo.original_name || ''
+    return String(filename)
   }
 
-  // Obtener tipo de archivo de forma segura
   const getTipoArchivo = (archivo: ArchivoComprobante) => {
-    if (typeof archivo.tipo === 'object') {
-      return (archivo.tipo as any).label || (archivo.tipo as any).value || 'Desconocido'
+    if (typeof archivo.tipo === 'object' && archivo.tipo) {
+      const tipo = (archivo.tipo as any).label || (archivo.tipo as any).value || 'Desconocido'
+      return String(tipo)
     }
-    if (typeof archivo.tipo === 'string') {
-      return archivo.tipo
+    if (archivo.tipo) {
+      return String(archivo.tipo)
     }
     return 'Desconocido'
   }
 
-  // Función segura para verificar si es imagen
   const isImageFile = (filename: any) => {
     if (typeof filename !== 'string') return false
     return comprobantesService.isImageFile(filename)
   }
 
-  // Función segura para verificar si es PDF
   const isPdfFile = (filename: any) => {
     if (typeof filename !== 'string') return false
     return comprobantesService.isPdfFile(filename)
-  }
-
-  // Función segura para verificar si se puede previsualizar
-  const canPreview = (filename: any) => {
-    const actualFilename = typeof filename === 'string' ? filename : ''
-    
-    // Si es una imagen o PDF, permitir preview
-    if (actualFilename && (comprobantesService.isImageFile(actualFilename) || comprobantesService.isPdfFile(actualFilename))) {
-      return true
-    }
-    
-    // Para otros tipos, no mostrar preview (solo descarga)
-    return false
   }
 
   if (loading) {
@@ -294,106 +426,13 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
     <>
       <div className="space-y-3">
         {comprobantes.map((comprobante) => (
-          <div
+          <ComprobanteItem
             key={comprobante.venta_id || comprobante.id}
-            className="bg-card border border-card rounded-lg p-4 hover:bg-gray-600 transition-colors"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-lg font-semibold text-white truncate">
-                    {typeof comprobante.nombre === 'string' ? comprobante.nombre : 'Sin nombre'} {typeof comprobante.apellido === 'string' ? comprobante.apellido : ''}
-                  </h3>
-                  <Badge variant="secondary" className="bg-blue-600 text-white">
-                    Venta #{comprobante.venta_id}
-                  </Badge>
-                </div>
-
-                {/* Información de la venta */}
-                <div className="flex items-center gap-6 text-sm text-gray-400">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {formatDate(comprobante.fecha_venta)}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    {typeof comprobante.cliente_nombre === 'string' ? comprobante.cliente_nombre : 'Cliente sin nombre'}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Settings className="h-4 w-4" />
-                    {typeof comprobante.asesor === 'string' ? comprobante.asesor : 'Asesor no especificado'}
-                  </div>
-                </div>
-
-                {/* Información del cliente */}
-                <div className="flex items-center gap-6 text-sm text-gray-500 mt-1">
-                  <div className="flex items-center gap-1">
-                    <CreditCard className="h-4 w-4" />
-                    {typeof comprobante.email === 'string' ? comprobante.email : 'Email no disponible'}
-                  </div>
-                  {comprobante.telefono && (
-                    <div>
-                      Tel: {typeof comprobante.telefono === 'string' ? comprobante.telefono : 'No disponible'}
-                    </div>
-                  )}
-                </div>
-
-                {/* Archivos adjuntos */}
-                {comprobante.archivos && comprobante.archivos.length > 0 && (
-                  <div className="mt-3">
-                    <h4 className="text-sm font-medium text-gray-300 mb-2">Archivos adjuntos:</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {comprobante.archivos.map((archivo, index) => (
-                        <div key={index} className="bg-gray-800 rounded-lg p-3 border border-gray-700">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-white truncate">
-                                {getDisplayName(archivo)}
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {getTipoArchivo(archivo)} • {typeof archivo.size_mb === 'number' ? archivo.size_mb.toFixed(1) : '0.0'} MB
-                              </p>
-                              
-                              {/* Botones de acción */}
-                              <div className="flex gap-1 mt-2">
-                                {canPreview(getFilename(archivo)) && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleVerComprobante(archivo, comprobante)}
-                                    className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs px-2 py-1"
-                                  >
-                                    <Eye className="h-3 w-3 mr-1" />
-                                    Ver
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleDownloadFile(archivo)}
-                                  disabled={downloading === getFilename(archivo)}
-                                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1"
-                                >
-                                  <Download className="h-3 w-3 mr-1" />
-                                  {downloading === getFilename(archivo) ? "..." : "Descargar"}
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Fallback para estructura antigua */}
-                {(!comprobante.archivos || comprobante.archivos.length === 0) && comprobante.archivo_nombre && (
-                  <div className="text-xs text-gray-500">
-                    Archivo: {typeof comprobante.archivo_nombre === 'string' ? comprobante.archivo_nombre : 'Archivo sin nombre'}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+            comprobante={comprobante}
+            onVerComprobante={handleVerComprobante}
+            onDownloadFile={handleDownloadFile}
+            downloading={downloading}
+          />
         ))}
       </div>
 
@@ -423,15 +462,15 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-400">Venta ID:</span>
-                  <span className="text-white">#{currentVenta.venta_id}</span>
+                  <span className="text-white">#{String(currentVenta.venta_id || 'N/A')}</span>
                 </div>
                 <div>
                   <span className="text-gray-400">Cliente:</span>
-                  <span className="text-white">{typeof currentVenta.cliente_nombre === 'string' ? currentVenta.cliente_nombre : 'Cliente sin nombre'}</span>
+                  <span className="text-white">{String(currentVenta.cliente_nombre || 'Cliente sin nombre')}</span>
                 </div>
                 <div>
                   <span className="text-gray-400">Archivo:</span>
-                  <span className="text-white">{typeof currentFile.original_name === 'string' ? currentFile.original_name : (typeof currentFile.filename === 'string' ? currentFile.filename : 'Archivo sin nombre')}</span>
+                  <span className="text-white">{getDisplayName(currentFile)}</span>
                 </div>
                 <div>
                   <span className="text-gray-400">Tamaño:</span>
@@ -456,7 +495,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                     className="w-full h-96 rounded-lg border border-gray-600"
                     title={getDisplayName(currentFile)}
                     onLoad={() => {
-                      console.log("✅ PDF cargado:", getFilename(currentFile))
+                      // PDF cargado exitosamente
                     }}
                   />
                 </div>
@@ -474,7 +513,7 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
             <div className="p-4 border-t border-card bg-gray-900 rounded-b-xl">
               <div className="flex justify-between items-center text-sm text-gray-400">
                 <div className="flex gap-4">
-                  <span>Tipo: {typeof currentFile.tipo === 'object' ? (currentFile.tipo as any).label || (currentFile.tipo as any).value || 'Desconocido' : currentFile.tipo}</span>
+                  <span>Tipo: {getTipoArchivo(currentFile)}</span>
                   <span>Tamaño: {typeof currentFile.size_mb === 'number' ? currentFile.size_mb.toFixed(1) : '0.0'} MB</span>
                   <span>Subido: {formatDate(currentFile.uploaded_at)}</span>
                 </div>
@@ -493,4 +532,6 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
       )}
     </>
   )
-} 
+})
+
+ResultsList.displayName = 'ResultsList' 
