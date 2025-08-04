@@ -204,22 +204,76 @@ class ComprobantesService {
     return result
   }
 
-  // Descargar archivo usando el nuevo endpoint
-  async downloadFile(filename: string, originalName?: string): Promise<void> {
+  // Descargar archivo usando la estructura correcta del backend
+  async downloadFile(filename: string | any, originalName?: string): Promise<void> {
     const token = localStorage.getItem("token")
-    const downloadUrl = `${API_BASE_URL}/api/comprobantes/descargar/${filename}${token ? `?token=${token}` : ''}`
     
-    // Usar window.open para evitar problemas de CORS con fetch
-    const link = document.createElement("a")
-    link.href = downloadUrl
-    link.download = originalName || filename
-    link.target = "_blank"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    // Si filename es un objeto archivo completo, usar download_url
+    if (typeof filename === 'object' && filename.download_url) {
+      const downloadUrl = `${API_BASE_URL}${filename.download_url}`
+      console.log("✅ Descargando usando download_url:", downloadUrl)
+      
+      // Usar fetch con autenticación para descarga
+      try {
+        const response = await fetch(downloadUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include'
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.href = url
+        link.download = originalName || filename.original_name || filename.filename || 'archivo'
+        document.body.appendChild(link)
+        link.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(link)
+      } catch (error) {
+        console.error("❌ Error al descargar archivo:", error)
+        throw error
+      }
+      return
+    }
+    
+    // Fallback: usar filename como string
+    const downloadUrl = `${API_BASE_URL}/api/comprobantes/descargar/${filename}`
+    console.log("✅ Descargando usando filename:", downloadUrl)
+    
+    try {
+      const response = await fetch(downloadUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = originalName || filename
+      document.body.appendChild(link)
+      link.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(link)
+    } catch (error) {
+      console.error("❌ Error al descargar archivo:", error)
+      throw error
+    }
   }
 
-  // Obtener URL de preview inteligente basada en archivo completo
+  // Obtener URL de preview usando la estructura correcta del backend
   getPreviewUrlFromFile(archivo: any): string {
     const token = localStorage.getItem("token")
     
@@ -231,30 +285,31 @@ class ComprobantesService {
       storage_type: archivo.storage_type
     })
     
-    // 1. Si tiene file_url de Cloudinary, usar directamente
-    if (archivo.file_url && archivo.file_url.startsWith('https://res.cloudinary.com/')) {
-      console.log("✅ Usando URL de Cloudinary:", archivo.file_url)
+    // OPCIÓN 1: Usar URL directa de Cloudinary (más rápida) - NO necesita auth
+    if (archivo.storage_type === 'cloudinary' && archivo.file_url && archivo.file_url.startsWith('https://res.cloudinary.com/')) {
+      console.log("✅ Usando URL directa de Cloudinary:", archivo.file_url)
       return archivo.file_url
     }
     
-    // 2. Si es storage local y tiene file_url que empieza con /static/, usar directamente
+    // OPCIÓN 2: Usar preview_url del backend (recomendado) - SÍ necesita auth
+    if (archivo.preview_url) {
+      // Para URLs del backend, NO agregar token en URL, usar headers en fetch
+      const url = `${API_BASE_URL}${archivo.preview_url}`
+      console.log("✅ Usando preview_url del backend (necesita auth en headers):", url)
+      return url
+    }
+    
+    // OPCIÓN 3: Fallback para archivos locales antiguos
     if (archivo.storage_type === 'local' && archivo.file_url && archivo.file_url.startsWith('/static/')) {
-      const url = `${API_BASE_URL}${archivo.file_url}${token ? `?token=${token}` : ''}`
-      console.log("✅ Usando URL local /static/:", url)
+      const url = `${API_BASE_URL}${archivo.file_url}`
+      console.log("✅ Usando URL local /static/ (necesita auth en headers):", url)
       return url
     }
     
-    // 3. Si es storage local y tiene preview_url del backend, usar esa
-    if (archivo.storage_type === 'local' && archivo.preview_url) {
-      const url = `${API_BASE_URL}${archivo.preview_url}${token ? `?token=${token}` : ''}`
-      console.log("✅ Usando preview_url del backend:", url)
-      return url
-    }
-    
-    // 4. Fallback: generar URL usando filename
+    // OPCIÓN 4: Fallback final usando filename
     const filename = archivo.filename || archivo.original_name || ''
-    const url = `${API_BASE_URL}/api/comprobantes/preview/${filename}${token ? `?token=${token}` : ''}`
-    console.log("✅ Usando URL fallback:", url)
+    const url = `${API_BASE_URL}/api/comprobantes/preview/${filename}`
+    console.log("✅ Usando URL fallback (necesita auth en headers):", url)
     return url
   }
 

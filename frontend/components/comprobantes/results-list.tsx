@@ -193,40 +193,10 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
   // Estado para URLs de imagen cargadas con autenticación
   const [imageUrls, setImageUrls] = useState<Map<string, string>>(new Map())
 
-  // Función para cargar imagen con autenticación usando objeto archivo completo
+    // Función para cargar imagen con autenticación usando objeto archivo completo
   const loadImageWithAuth = async (archivo: any): Promise<string> => {
-    try {
-      const token = localStorage.getItem("token")
-      
-      // Usar nuevo método inteligente
-      const previewUrl = comprobantesService.getPreviewUrlFromFile(archivo)
-      
-             // Si es URL de Cloudinary, no necesita fetch con auth
-       if (previewUrl.startsWith('https://res.cloudinary.com/')) {
-         return previewUrl
-       }
-      
-      // Para URLs locales o del backend, usar fetch con auth
-      const response = await fetch(previewUrl, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'image/*',
-        },
-        credentials: 'include'
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      
-      return url
-    } catch (error) {
-      console.error("❌ Error cargando imagen:", archivo.filename)
-      throw error
-    }
+    // Esta función ya no se usa, pero la mantenemos por compatibilidad
+    return comprobantesService.getPreviewUrlFromFile(archivo)
   }
 
   // Componente de imagen con autenticación
@@ -253,10 +223,10 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
             return
           }
 
-          // Obtener URL directamente sin fetch para evitar CORS
+          // Obtener URL usando la estructura correcta del backend
           const previewUrl = comprobantesService.getPreviewUrlFromFile(archivo)
           
-          // Si es URL de Cloudinary, usar directamente
+          // Si es URL de Cloudinary, usar directamente (no necesita auth)
           if (previewUrl.startsWith('https://res.cloudinary.com/')) {
             setImageSrc(previewUrl)
             setImageUrls(prev => new Map(prev).set(cacheKey, previewUrl))
@@ -264,14 +234,30 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
             return
           }
           
-          // Para URLs locales, intentar con fetch
-          const url = await loadImageWithAuth(archivo)
+          // Para URLs del backend, usar fetch con autenticación
+          const token = localStorage.getItem("token")
+          const response = await fetch(previewUrl, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'image/*',
+            },
+            credentials: 'include'
+          })
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+          }
+
+          const blob = await response.blob()
+          const url = URL.createObjectURL(blob)
+          
           if (isMounted) {
             setImageSrc(url)
             setImageUrls(prev => new Map(prev).set(cacheKey, url))
             setLoading(false)
           }
         } catch (err) {
+          console.error("❌ Error cargando imagen:", archivo.filename, err)
           if (isMounted) {
             setError(true)
             setLoading(false)
@@ -342,18 +328,13 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
   }
 
   const handleDownloadFile = useCallback(async (archivo: import("@/types/comprobante").ArchivoComprobante) => {
-    // Obtener filename de manera consistente
-    const filename = getFilename(archivo)
+    // Usar el objeto archivo completo para descarga
     const originalName = archivo.original_name || archivo.filename || 'archivo_descarga'
     
-    if (!filename) {
-      console.error("❌ No se encontró filename para descargar")
-      return
-    }
-    
-    setDownloading(filename)
+    setDownloading(getFilename(archivo))
     try {
-      await comprobantesService.downloadFile(filename, originalName)
+      // Pasar el objeto archivo completo para usar download_url
+      await comprobantesService.downloadFile(archivo, originalName)
     } catch (error) {
       console.error("❌ Error al descargar archivo:", error)
     } finally {
@@ -506,7 +487,7 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
               ) : isPdfFile(getFilename(currentFile)) || currentFile.tipo === 'pdf' ? (
                 <div className="flex justify-center">
                   <iframe
-                    src={comprobantesService.getPreviewUrlFromFile(currentFile)}
+                    src={`${comprobantesService.getPreviewUrlFromFile(currentFile)}?token=${localStorage.getItem("token")}`}
                     className="w-full h-96 rounded-lg border border-gray-600"
                     title={getDisplayName(currentFile)}
                     onLoad={() => {

@@ -19,7 +19,12 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
   const handleDownload = async () => {
     setDownloading(true)
     try {
-      await comprobantesService.downloadFile(comprobante.archivo_adjunto || '', comprobante.archivo_nombre)
+      // Crear un objeto archivo temporal para usar download_url
+      const archivoTemp = {
+        download_url: `/api/comprobantes/descargar/${comprobante.archivo_adjunto || ''}`,
+        original_name: comprobante.archivo_nombre || 'archivo'
+      }
+      await comprobantesService.downloadFile(archivoTemp, comprobante.archivo_nombre)
     } catch (error) {
       console.error("Error al descargar:", error)
     } finally {
