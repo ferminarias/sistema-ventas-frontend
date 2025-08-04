@@ -282,7 +282,10 @@ class ComprobantesService {
       original_name: archivo.original_name,
       file_url: archivo.file_url,
       preview_url: archivo.preview_url,
-      storage_type: archivo.storage_type
+      storage_type: archivo.storage_type,
+      tipo: archivo.tipo,
+      size_mb: archivo.size_mb,
+      field_id: archivo.field_id
     })
     
     // OPCIÓN 1: Usar URL directa de Cloudinary (más rápida) - NO necesita auth
@@ -309,11 +312,11 @@ class ComprobantesService {
     // OPCIÓN 4: Detectar archivos locales por nombre de archivo
     const filename = archivo.filename || archivo.original_name || ''
     
-    // Detectar archivos locales por patrón de nombre
-    if (filename.includes('imagen_comprobante_') && (filename.includes('.jpeg') || filename.includes('.jpg') || filename.includes('.png'))) {
-      // Es un archivo local antiguo, usar /static/uploads/
+    // Detectar archivos locales por patrón de nombre (MÁS AGRESIVO)
+    if (filename.includes('imagen_comprobante_') || filename.includes('comprobante_')) {
+      // Es un archivo local, usar /static/uploads/
       const url = `${API_BASE_URL}/static/uploads/${filename}`
-      console.log("✅ Detectado archivo local antiguo, usando /static/uploads/:", url)
+      console.log("✅ Detectado archivo local por patrón, usando /static/uploads/:", url)
       return url
     }
     
@@ -321,6 +324,14 @@ class ComprobantesService {
     if (archivo.file_url && archivo.file_url.startsWith('/static/uploads/')) {
       const url = `${API_BASE_URL}${archivo.file_url}`
       console.log("✅ Usando file_url con ruta completa /static/uploads/:", url)
+      return url
+    }
+    
+    // OPCIÓN 4.6: Detectar por extensión de imagen sin storage_type
+    if (filename && (filename.includes('.jpeg') || filename.includes('.jpg') || filename.includes('.png') || filename.includes('.gif'))) {
+      // Si no tiene storage_type definido, asumir que es local
+      const url = `${API_BASE_URL}/static/uploads/${filename}`
+      console.log("✅ Archivo sin storage_type, asumiendo local /static/uploads/:", url)
       return url
     }
     
