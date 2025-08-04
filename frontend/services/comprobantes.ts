@@ -299,17 +299,34 @@ class ComprobantesService {
       return url
     }
     
-    // OPCIÓN 3: Fallback para archivos locales antiguos
+    // OPCIÓN 3: Fallback para archivos locales antiguos - CORREGIDO
     if (archivo.storage_type === 'local' && archivo.file_url && archivo.file_url.startsWith('/static/')) {
       const url = `${API_BASE_URL}${archivo.file_url}`
       console.log("✅ Usando URL local /static/ (necesita auth en headers):", url)
       return url
     }
     
-    // OPCIÓN 4: Fallback final usando filename
+    // OPCIÓN 4: Detectar archivos locales por nombre de archivo
     const filename = archivo.filename || archivo.original_name || ''
+    
+    // Detectar archivos locales por patrón de nombre
+    if (filename.includes('imagen_comprobante_') && (filename.includes('.jpeg') || filename.includes('.jpg') || filename.includes('.png'))) {
+      // Es un archivo local antiguo, usar /static/uploads/
+      const url = `${API_BASE_URL}/static/uploads/${filename}`
+      console.log("✅ Detectado archivo local antiguo, usando /static/uploads/:", url)
+      return url
+    }
+    
+    // OPCIÓN 4.5: Si el archivo tiene una ruta completa en file_url
+    if (archivo.file_url && archivo.file_url.startsWith('/static/uploads/')) {
+      const url = `${API_BASE_URL}${archivo.file_url}`
+      console.log("✅ Usando file_url con ruta completa /static/uploads/:", url)
+      return url
+    }
+    
+    // OPCIÓN 5: Fallback final usando endpoint de preview
     const url = `${API_BASE_URL}/api/comprobantes/preview/${filename}`
-    console.log("✅ Usando URL fallback (necesita auth en headers):", url)
+    console.log("✅ Usando URL fallback endpoint preview:", url)
     return url
   }
 
