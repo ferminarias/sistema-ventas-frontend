@@ -171,13 +171,59 @@ class ComprobantesService {
     const backendResponse = await response.json()
     console.log("📊 Total encontrado:", backendResponse.pagination?.total_results || 0)
 
-    // Mapear la respuesta del backend con limpieza agresiva
+    // DEBUG: Mostrar respuesta completa del backend
+    console.log("🔍 RESPUESTA COMPLETA DEL BACKEND:")
+    console.log("- Estructura general:", Object.keys(backendResponse))
+    console.log("- Pagination:", backendResponse.pagination)
+    console.log("- Resultados array:", backendResponse.resultados)
+    console.log("- Cantidad resultados:", backendResponse.resultados?.length || 0)
+    
+    if (backendResponse.resultados && backendResponse.resultados.length > 0) {
+      console.log("\n🔍 PRIMER RESULTADO SIN PROCESAR:")
+      const primerResultado = backendResponse.resultados[0]
+      console.log("- Objeto completo:", JSON.stringify(primerResultado, null, 2))
+      console.log("- Archivos en resultado:", primerResultado.archivos)
+      console.log("- Archivos length:", primerResultado.archivos?.length)
+      
+      if (primerResultado.archivos && primerResultado.archivos.length > 0) {
+        console.log("\n📎 PRIMER ARCHIVO SIN PROCESAR:")
+        console.log(JSON.stringify(primerResultado.archivos[0], null, 2))
+      }
+    }
+
+    // Mapear la respuesta del backend PRESERVANDO la estructura de archivos
     const mappedResponse: ComprobanteSearchResponse = {
-      comprobantes: (backendResponse.resultados || []).map((comprobante: any) => {
-        const cleaned = cleanObject(comprobante)
-        // Asegurar que todos los valores sean renderizables
-        const renderable = this.ensureAllValuesRenderable(cleaned)
-        return renderable
+      comprobantes: (backendResponse.resultados || []).map((comprobante: any, index: number) => {
+        console.log(`\n🔄 PROCESANDO COMPROBANTE ${index + 1} - ANTES:`);
+        console.log("- archivos ANTES del proceso:", comprobante.archivos);
+        
+        // Procesar solo campos que no sean archivos
+        const procesado = {
+          // Datos básicos sin procesar agresivamente
+          venta_id: comprobante.venta_id,
+          nombre: ensureRenderableValue(comprobante.nombre),
+          apellido: ensureRenderableValue(comprobante.apellido),
+          email: ensureRenderableValue(comprobante.email),
+          telefono: ensureRenderableValue(comprobante.telefono),
+          fecha_venta: ensureRenderableValue(comprobante.fecha_venta),
+          cliente_id: comprobante.cliente_id,
+          cliente_nombre: ensureRenderableValue(comprobante.cliente_nombre),
+          asesor: ensureRenderableValue(comprobante.asesor),
+          
+          // PRESERVAR ARCHIVOS COMPLETAMENTE SIN PROCESAR
+          archivos: comprobante.archivos || [],
+          
+          // Campos legacy para compatibilidad (procesados)
+          id: ensureRenderableValue(comprobante.id),
+          numero_comprobante: ensureRenderableValue(comprobante.numero_comprobante),
+          tipo_comprobante: ensureRenderableValue(comprobante.tipo_comprobante),
+          archivo_adjunto: ensureRenderableValue(comprobante.archivo_adjunto),
+          archivo_nombre: ensureRenderableValue(comprobante.archivo_nombre),
+        }
+        
+        console.log("- archivos DESPUÉS del proceso conservador:", procesado.archivos);
+        
+        return procesado
       }),
       total: ensureRenderableValue(extractValue(backendResponse.pagination?.total_results)) || 0,
       page: ensureRenderableValue(extractValue(backendResponse.pagination?.current_page)) || 1,

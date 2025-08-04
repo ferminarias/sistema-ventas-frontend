@@ -19,17 +19,35 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
   // Debug: Log de estructura de datos
   useEffect(() => {
     if (comprobantes.length > 0) {
-      console.log("🔍 Estructura de comprobantes:", {
-        total: comprobantes.length,
-        muestra_comprobante: JSON.stringify(comprobantes[0], null, 2),
-        archivos_primer_comprobante: comprobantes[0].archivos?.map(archivo => ({
-          filename: archivo.filename,
-          original_name: archivo.original_name,
-          tipo: archivo.tipo,
-          tipo_tipo: typeof archivo.tipo,
-          size_mb: archivo.size_mb,
-          file_url: archivo.file_url
-        }))
+      console.log("🔍 ESTRUCTURA COMPLETA DE COMPROBANTES:")
+      console.log("📊 Total comprobantes:", comprobantes.length)
+      
+      comprobantes.forEach((comprobante, index) => {
+        console.log(`\n📄 COMPROBANTE ${index + 1}:`)
+        console.log("- ID venta:", comprobante.venta_id)
+        console.log("- Cliente:", comprobante.cliente_nombre)
+        console.log("- Archivos array:", comprobante.archivos)
+        console.log("- Cantidad archivos:", comprobante.archivos?.length || 0)
+        
+        if (comprobante.archivos && comprobante.archivos.length > 0) {
+          comprobante.archivos.forEach((archivo, i) => {
+            console.log(`\n  📎 ARCHIVO ${i + 1}:`)
+            console.log("  - Objeto completo:", JSON.stringify(archivo, null, 4))
+            console.log("  - filename:", archivo.filename)
+            console.log("  - original_name:", archivo.original_name)
+            console.log("  - file_url:", archivo.file_url)
+            console.log("  - tipo:", archivo.tipo)
+            console.log("  - size_mb:", archivo.size_mb)
+            console.log("  - field_id:", archivo.field_id)
+            console.log("  - uploaded_at:", archivo.uploaded_at)
+          })
+        } else {
+          console.log("  ❌ NO HAY ARCHIVOS o archivos es null/undefined")
+        }
+        
+        // Verificar propiedades legacy
+        console.log("- archivo_adjunto (legacy):", comprobante.archivo_adjunto)
+        console.log("- archivo_nombre (legacy):", comprobante.archivo_nombre)
       })
     }
   }, [comprobantes])
