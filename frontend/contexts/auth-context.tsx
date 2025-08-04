@@ -43,14 +43,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Si quieres redirigir al login cuando no hay usuario y no está cargando
+  // Redirigir al login solo cuando no hay usuario y no está cargando - EVITAR LOOPS
   useEffect(() => {
-    if (!user && !loading) {
-      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-        window.location.href = "/login";
+    if (!user && !loading && typeof window !== "undefined") {
+      const currentPath = window.location.pathname
+      if (currentPath !== "/login" && currentPath !== "/") {
+        console.log("🔄 Redirigiendo a login desde:", currentPath)
+        window.location.href = "/login"
       }
     }
-  }, [user, loading]);
+  }, [user, loading])
 
   // Refrescar usuario desde el backend si es necesario
   const refreshUser = async () => {

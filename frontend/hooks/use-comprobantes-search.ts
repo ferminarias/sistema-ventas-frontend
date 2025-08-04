@@ -36,10 +36,6 @@ export function useComprobantesSearch() {
     
     try {
       const token = localStorage.getItem('token')
-      console.log("🔐 Token para búsqueda:", {
-        existe: !!token,
-        longitud: token?.length || 0
-      })
       
       const response = await comprobantesService.searchComprobantes(filters)
       

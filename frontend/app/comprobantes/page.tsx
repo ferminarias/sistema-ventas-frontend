@@ -48,11 +48,18 @@ export default function BusquedaComprobantesPage() {
     }
   }, [user, authLoading, router, toast])
 
+  // Búsqueda automática solo cuando cambia el usuario - EVITAR LOOPS
   useEffect(() => {
     if (user && (user.role === 'admin' || user.role === 'supervisor')) {
+      console.log("🔄 Ejecutando búsqueda automática:", { 
+        user: user.email, 
+        userId: user.id,
+        userRole: user.role,
+        filters: currentFilters 
+      })
       search(currentFilters)
     }
-  }, [user?.id, user?.role])
+  }, [user?.id, user?.role]) // Removido currentFilters y search para evitar loops
 
   const handleSearch = (filters: ComprobanteFilters) => {
     setCurrentFilters(filters)

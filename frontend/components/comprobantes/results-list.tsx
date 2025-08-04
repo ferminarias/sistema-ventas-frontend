@@ -483,7 +483,7 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
                   <div className="relative">
                     <AuthenticatedImage
                       archivo={currentFile}
-                      alt={getDisplayName(currentFile)}
+                    alt={getDisplayName(currentFile)}
                       className="max-w-full max-h-96 object-contain rounded-lg shadow-lg"
                     />
                   </div>
