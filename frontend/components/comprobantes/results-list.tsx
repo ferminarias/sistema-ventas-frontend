@@ -253,6 +253,18 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
             return
           }
 
+          // Obtener URL directamente sin fetch para evitar CORS
+          const previewUrl = comprobantesService.getPreviewUrlFromFile(archivo)
+          
+          // Si es URL de Cloudinary, usar directamente
+          if (previewUrl.startsWith('https://res.cloudinary.com/')) {
+            setImageSrc(previewUrl)
+            setImageUrls(prev => new Map(prev).set(cacheKey, previewUrl))
+            setLoading(false)
+            return
+          }
+          
+          // Para URLs locales, intentar con fetch
           const url = await loadImageWithAuth(archivo)
           if (isMounted) {
             setImageSrc(url)
@@ -287,12 +299,15 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
     if (error || !imageSrc) {
       return (
         <div className={`${className} flex items-center justify-center bg-gray-800`}>
-          <img src="/placeholder.jpg" alt="Error cargando imagen" className={className} />
+          <div className="text-center">
+            <div className="text-gray-400 mb-2">Error cargando imagen</div>
+            <div className="text-xs text-gray-500">Archivo: {String(archivo.filename || archivo.original_name || 'Desconocido')}</div>
+          </div>
         </div>
       )
     }
 
-    return <img src={imageSrc} alt={alt} className={className} />
+    return <img src={imageSrc} alt={alt} className={className} onError={() => setError(true)} />
   }
 
   const [previewFile, setPreviewFile] = useState<Comprobante | null>(null)

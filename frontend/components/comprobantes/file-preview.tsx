@@ -34,7 +34,7 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2 text-white">
               <FileText className="h-5 w-5" />
-              Vista Previa - {comprobante.numero_comprobante}
+              Vista Previa - {String(comprobante.numero_comprobante || 'Sin número')}
             </DialogTitle>
             <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-400 hover:text-white">
               <X className="h-4 w-4" />
@@ -47,15 +47,15 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
           <div className="bg-gray-700 rounded-lg p-4 space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Tipo:</span>
-              <span className="text-white">{typeof comprobante.tipo_comprobante === 'string' ? comprobante.tipo_comprobante : 'Tipo no especificado'}</span>
+              <span className="text-white">{String(comprobante.tipo_comprobante || 'Tipo no especificado')}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Número:</span>
-              <span className="text-white">{typeof comprobante.numero_comprobante === 'string' ? comprobante.numero_comprobante : 'Número no especificado'}</span>
+              <span className="text-white">{String(comprobante.numero_comprobante || 'Número no especificado')}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Fecha:</span>
-              <span className="text-white">{new Date(comprobante.fecha_venta).toLocaleDateString('es-ES')}</span>
+              <span className="text-white">{comprobante.fecha_venta ? new Date(comprobante.fecha_venta).toLocaleDateString('es-ES') : 'Fecha no especificada'}</span>
             </div>
           </div>
 
@@ -76,7 +76,7 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Email:</span>
-              <span className="text-white">{comprobante.email}</span>
+              <span className="text-white">{String(comprobante.email || 'Email no disponible')}</span>
             </div>
           </div>
 
@@ -85,11 +85,11 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
             <h3 className="font-medium text-white mb-2">Información de la Venta</h3>
             <div className="flex justify-between">
               <span className="text-gray-400">Estado:</span>
-              <span className="text-white">{typeof comprobante.venta?.estado === 'string' ? comprobante.venta.estado : 'Estado no especificado'}</span>
+              <span className="text-white">{String(comprobante.venta?.estado || 'Estado no especificado')}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Asesor:</span>
-              <span className="text-white">{typeof comprobante.asesor === 'string' ? comprobante.asesor : 'Asesor no especificado'}</span>
+              <span className="text-white">{String(comprobante.asesor || 'Asesor no especificado')}</span>
             </div>
           </div>
 
@@ -97,7 +97,7 @@ export function FilePreview({ comprobante, open, onClose }: FilePreviewProps) {
           <div className="bg-gray-700 rounded-lg p-4 text-sm">
             <h3 className="font-medium text-white mb-2">Archivo Adjunto</h3>
             <div className="flex justify-between items-center">
-              <span className="font-medium text-white">{typeof comprobante.archivo_nombre === 'string' ? comprobante.archivo_nombre : 'Archivo sin nombre'}</span>
+              <span className="font-medium text-white">{String(comprobante.archivo_nombre || 'Archivo sin nombre')}</span>
               <Button
                 onClick={handleDownload}
                 disabled={downloading}
