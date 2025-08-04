@@ -34,6 +34,98 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
     }
   }, [comprobantes])
 
+  // Estado para URLs de imagen cargadas con autenticación
+  const [imageUrls, setImageUrls] = useState<Map<string, string>>(new Map())
+
+  // Función para cargar imagen con autenticación
+  const loadImageWithAuth = async (filename: string): Promise<string> => {
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(comprobantesService.getPreviewUrl(filename), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'image/*',
+        },
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      
+      console.log("✅ Imagen cargada:", filename)
+      return url
+    } catch (error) {
+      console.error("❌ Error cargando imagen:", filename, error)
+      throw error
+    }
+  }
+
+  // Componente de imagen con autenticación
+  const AuthenticatedImage = ({ filename, alt, className }: { filename: string, alt: string, className: string }) => {
+    const [imageSrc, setImageSrc] = useState<string>('')
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(false)
+
+    useEffect(() => {
+      let isMounted = true
+
+      const loadImage = async () => {
+        try {
+          setLoading(true)
+          setError(false)
+          
+          // Verificar si ya tenemos la URL en cache
+          const cachedUrl = imageUrls.get(filename)
+          if (cachedUrl) {
+            setImageSrc(cachedUrl)
+            setLoading(false)
+            return
+          }
+
+          const url = await loadImageWithAuth(filename)
+          if (isMounted) {
+            setImageSrc(url)
+            setImageUrls(prev => new Map(prev).set(filename, url))
+            setLoading(false)
+          }
+        } catch (err) {
+          if (isMounted) {
+            setError(true)
+            setLoading(false)
+          }
+        }
+      }
+
+      loadImage()
+
+      return () => {
+        isMounted = false
+      }
+    }, [filename])
+
+    if (loading) {
+      return (
+        <div className={`${className} flex items-center justify-center bg-gray-800`}>
+          <div className="text-gray-400">Cargando imagen...</div>
+        </div>
+      )
+    }
+
+    if (error || !imageSrc) {
+      return (
+        <div className={`${className} flex items-center justify-center bg-gray-800`}>
+          <img src="/placeholder.jpg" alt="Error cargando imagen" className={className} />
+        </div>
+      )
+    }
+
+    return <img src={imageSrc} alt={alt} className={className} />
+  }
+
   const [previewFile, setPreviewFile] = useState<Comprobante | null>(null)
   const [downloading, setDownloading] = useState<string | null>(null)
   
@@ -41,6 +133,17 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
   const [showModal, setShowModal] = useState(false)
   const [currentFile, setCurrentFile] = useState<ArchivoComprobante | null>(null)
   const [currentVenta, setCurrentVenta] = useState<Comprobante | null>(null)
+
+  // Limpiar URLs de blob al desmontar el componente
+  useEffect(() => {
+    return () => {
+      imageUrls.forEach((url) => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url)
+        }
+      })
+    }
+  }, [])
 
   const handleDownload = async (comprobante: Comprobante) => {
     const fileId = comprobante.id || comprobante.venta_id?.toString() || ''
@@ -83,6 +186,8 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
   // Función para abrir el modal de vista previa
   const handleVerComprobante = (archivo: ArchivoComprobante, venta: Comprobante) => {
+    console.log("🔍 Abriendo vista previa:", getFilename(archivo))
+    
     setCurrentFile(archivo)
     setCurrentVenta(venta)
     setShowModal(true)
@@ -147,16 +252,15 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
 
   // Función segura para verificar si se puede previsualizar
   const canPreview = (filename: any) => {
-    // Siempre permitir preview para debugging, pero hacer más inteligente
     const actualFilename = typeof filename === 'string' ? filename : ''
     
-    // Si es una imagen o PDF, siempre permitir
+    // Si es una imagen o PDF, permitir preview
     if (actualFilename && (comprobantesService.isImageFile(actualFilename) || comprobantesService.isPdfFile(actualFilename))) {
       return true
     }
     
-    // Para debugging: mostrar botón Ver para todos los archivos
-    return true
+    // Para otros tipos, no mostrar preview (solo descarga)
+    return false
   }
 
   if (loading) {
@@ -333,15 +437,24 @@ export function ResultsList({ comprobantes, loading = false }: ResultsListProps)
                 </div>
               </div>
 
-              {currentFile.tipo === 'imagen' ? (
+              {isImageFile(getFilename(currentFile)) ? (
                 <div className="flex justify-center">
-                  <img
+                  <div className="relative">
+                    <AuthenticatedImage
+                      filename={getFilename(currentFile)}
+                      alt={getDisplayName(currentFile)}
+                      className="max-w-full max-h-96 object-contain rounded-lg shadow-lg"
+                    />
+                  </div>
+                </div>
+              ) : isPdfFile(getFilename(currentFile)) ? (
+                <div className="flex justify-center">
+                  <iframe
                     src={getPreviewUrl(getFilename(currentFile))}
-                    alt={getDisplayName(currentFile)}
-                    className="max-w-full max-h-96 object-contain rounded-lg"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = '/placeholder.jpg'
+                    className="w-full h-96 rounded-lg border border-gray-600"
+                    title={getDisplayName(currentFile)}
+                    onLoad={() => {
+                      console.log("✅ PDF cargado exitosamente:", getFilename(currentFile))
                     }}
                   />
                 </div>
