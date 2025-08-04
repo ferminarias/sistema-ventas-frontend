@@ -47,9 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user && !loading && typeof window !== "undefined") {
       const currentPath = window.location.pathname
-      if (currentPath !== "/login" && currentPath !== "/") {
+      // Solo redirigir si estamos en una página protegida
+      if (currentPath !== "/login" && currentPath !== "/" && !currentPath.includes("/login")) {
         console.log("🔄 Redirigiendo a login desde:", currentPath)
-        window.location.href = "/login"
+        // Usar router.push en lugar de window.location para evitar recargas
+        if (typeof window !== "undefined") {
+          window.location.href = "/login"
+        }
       }
     }
   }, [user, loading])

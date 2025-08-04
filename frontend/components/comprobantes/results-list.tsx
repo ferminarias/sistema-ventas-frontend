@@ -186,7 +186,7 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
   // Debug: Log básico de estructura - SOLO UNA VEZ
   useEffect(() => {
     if (comprobantes.length > 0) {
-      console.log("📊 Comprobantes cargados:", comprobantes.length)
+      // Comprobantes cargados correctamente
     }
   }, [comprobantes.length])
 

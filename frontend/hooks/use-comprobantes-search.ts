@@ -29,8 +29,6 @@ export function useComprobantesSearch() {
   }, [])
 
   const searchComprobantes = useCallback(async (filters: ComprobanteFilters) => {
-    console.log("🔍 Iniciando búsqueda de comprobantes con filtros:", filters)
-    
     setLoading(true)
     setError(null)
     
@@ -38,13 +36,6 @@ export function useComprobantesSearch() {
       const token = localStorage.getItem('token')
       
       const response = await comprobantesService.searchComprobantes(filters)
-      
-      console.log("✅ Búsqueda exitosa:", {
-        total: response.total,
-        comprobantes: response.comprobantes?.length || 0,
-        pagina: response.pagina,
-        total_paginas: response.total_paginas
-      })
       
       setData(response)
     } catch (err) {

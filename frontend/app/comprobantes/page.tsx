@@ -21,7 +21,7 @@ export default function BusquedaComprobantesPage() {
   // DEBUG: Log básico de auth - SOLO CAMBIOS IMPORTANTES
   useEffect(() => {
     if (!authLoading && user) {
-      console.log("🔐 Usuario autenticado:", `${user.email} (${user.role})`)
+      // Usuario autenticado correctamente
     }
   }, [authLoading, user?.email])
   
@@ -51,12 +51,6 @@ export default function BusquedaComprobantesPage() {
   // Búsqueda automática solo cuando cambia el usuario - EVITAR LOOPS
   useEffect(() => {
     if (user && (user.role === 'admin' || user.role === 'supervisor')) {
-      console.log("🔄 Ejecutando búsqueda automática:", { 
-        user: user.email, 
-        userId: user.id,
-        userRole: user.role,
-        filters: currentFilters 
-      })
       search(currentFilters)
     }
   }, [user?.id, user?.role]) // Removido currentFilters y search para evitar loops
@@ -72,25 +66,12 @@ export default function BusquedaComprobantesPage() {
 
   // Mostrar loading mientras se verifica autenticación
   if (authLoading) {
-    // Timeout de emergencia - si pasan 10 segundos, mostrar error
-    setTimeout(() => {
-      if (authLoading) {
-        console.error("⚠️ Timeout de autenticación - forzando recarga")
-        window.location.reload()
-      }
-    }, 10000)
-    
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <div className="text-center">
           <RailwayLoader size="lg" text="Verificando permisos..." />
           <p className="text-gray-400 text-sm mt-4">
-            Si esta pantalla persiste, <button 
-              onClick={() => window.location.reload()} 
-              className="text-purple-500 underline hover:text-purple-400"
-            >
-              refresca la página
-            </button>
+            Cargando sistema de autenticación...
           </p>
         </div>
       </div>

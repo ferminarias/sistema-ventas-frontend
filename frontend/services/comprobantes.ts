@@ -110,24 +110,11 @@ const ensureRenderableValue = (value: any): any => {
 class ComprobantesService {
   // Obtener filtros disponibles
   async getFiltrosDisponibles(): Promise<FiltrosDisponibles> {
-    console.log("🔍 Iniciando getFiltrosDisponibles...")
-    
     const token = localStorage.getItem("token")
-    console.log("🔐 Token para filtros:", {
-      existe: !!token,
-      longitud: token?.length || 0
-    })
     
     const response = await fetch(`${API_BASE_URL}/api/comprobantes/filtros`, {
       headers: getAuthHeaders(),
       credentials: "include"
-    })
-    
-    console.log("📡 Response de filtros:", {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-      url: response.url
     })
     
     if (!response.ok) {
@@ -137,19 +124,12 @@ class ComprobantesService {
     }
     
     const data = await response.json()
-    console.log("✅ Filtros obtenidos:", {
-      clientes: data.clientes?.length || 0,
-      tipos_archivo: data.tipos_archivo?.length || 0,
-      rango_fechas: data.rango_fechas
-    })
     
     return this.ensureAllValuesRenderable(data)
   }
 
   // Realizar búsqueda de comprobantes
   async searchComprobantes(filters: ComprobanteFilters): Promise<ComprobanteSearchResponse> {
-    console.log("🔍 searchComprobantes llamado con filtros:", filters)
-    
     const params = new URLSearchParams()
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -169,10 +149,6 @@ class ComprobantesService {
     }
 
     const backendResponse = await response.json()
-    console.log("📊 Total encontrado:", backendResponse.pagination?.total_results || 0)
-
-    // DEBUG básico
-    console.log("📊 Comprobantes encontrados:", backendResponse.resultados?.length || 0)
 
     // Mapear la respuesta del backend PRESERVANDO la estructura de archivos
     const mappedResponse: ComprobanteSearchResponse = {
@@ -207,7 +183,6 @@ class ComprobantesService {
       total_pages: ensureRenderableValue(extractValue(backendResponse.pagination?.total_pages)) || 1
     }
 
-    console.log("🎯 Comprobantes procesados:", mappedResponse.comprobantes?.length || 0)
     return mappedResponse
   }
 

@@ -15,26 +15,11 @@ interface SearchFiltersProps {
 }
 
 export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }: SearchFiltersProps) {
-  // Debug: Log de filtrosDisponibles para ver la estructura
+  // Debug: Log básico de filtros
   useEffect(() => {
-    if (filtrosDisponibles) {
-      console.log("🔍 Filtros disponibles:", {
-        clientes: filtrosDisponibles.clientes?.length || 0,
-        tipos_archivo: filtrosDisponibles.tipos_archivo?.length || 0,
-        muestra_clientes: filtrosDisponibles.clientes?.slice(0, 2),
-        muestra_tipos: filtrosDisponibles.tipos_archivo?.slice(0, 2)
-      })
-    } else {
-      console.log("⚠️ filtrosDisponibles es null/undefined")
+    if (!filtrosDisponibles) {
+      console.warn("⚠️ filtrosDisponibles es null/undefined")
     }
-    
-    // Debug: Verificar token de autenticación
-    const token = localStorage.getItem('token')
-    console.log("🔐 Token de autenticación:", {
-      existe: !!token,
-      longitud: token?.length || 0,
-      preview: token ? `${token.substring(0, 20)}...` : 'No hay token'
-    })
   }, [filtrosDisponibles])
 
   const [filters, setFilters] = useState<ComprobanteFilters>({
