@@ -38,7 +38,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-
 // Registrar componentes de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler)
 
-// 1. Clases base optimizadas para mejor rendimiento
+// 1. Clases base optimizadas para mejor rendimientoimage.png
 const cardBase = `
   transition-all duration-300 ease-out
   border border-gray-700/50 shadow-xl rounded-2xl 

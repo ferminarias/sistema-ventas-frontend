@@ -272,21 +272,35 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     setShowFilters(false)
   }
 
-  // Paleta pastel/profesional
-  const pastelColors = [
-    "#a5b4fc", // azul lavanda
-    "#6ee7b7", // verde menta
-    "#fcd34d", // amarillo suave
-    "#fca5a5", // rojo coral suave
-    "#f9a8d4", // rosa pastel
-    "#fbcfe8", // rosa claro
-    "#c7d2fe", // azul claro
-    "#fde68a", // amarillo pastel
-    "#bbf7d0", // verde agua
-    "#fef9c3", // crema
-    "#ddd6fe", // violeta claro
-    "#bae6fd", // celeste
-    "#d1fae5", // verde muy claro
+  // Paleta MODERNA 2025 - Colores vibrantes con cohesión dark theme
+  const modernColors = [
+    "#8b5cf6", // Violeta vibrante (principal)
+    "#06b6d4", // Cyan brillante 
+    "#10b981", // Esmeralda moderno
+    "#f59e0b", // Ámbar dorado
+    "#ef4444", // Rojo coral dinámico
+    "#f97316", // Naranja energético
+    "#84cc16", // Lima fresco
+    "#3b82f6", // Azul tech
+    "#ec4899", // Rosa magenta
+    "#6366f1", // Índigo profundo
+    "#8b5a2b", // Bronce elegante
+    "#06b6d4", // Turquesa premium
+    "#d946ef", // Fucsia moderno
+  ]
+  
+  // Gradientes para depth y modernidad
+  const gradientColors = [
+    "linear-gradient(135deg, #8b5cf6, #a78bfa)", // Violeta
+    "linear-gradient(135deg, #06b6d4, #67e8f9)", // Cyan
+    "linear-gradient(135deg, #10b981, #6ee7b7)", // Esmeralda
+    "linear-gradient(135deg, #f59e0b, #fbbf24)", // Ámbar
+    "linear-gradient(135deg, #ef4444, #f87171)", // Rojo
+    "linear-gradient(135deg, #f97316, #fb923c)", // Naranja
+    "linear-gradient(135deg, #84cc16, #a3e635)", // Lima
+    "linear-gradient(135deg, #3b82f6, #60a5fa)", // Azul
+    "linear-gradient(135deg, #ec4899, #f472b6)", // Rosa
+    "linear-gradient(135deg, #6366f1, #818cf8)", // Índigo
   ]
 
   useEffect(() => {
@@ -412,46 +426,85 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       pieCtx.moveTo(cx, cy)
       pieCtx.arc(cx, cy, r, startAngle, startAngle + sliceAngle)
       pieCtx.closePath()
-      pieCtx.fillStyle = pastelColors[index % pastelColors.length]
+      pieCtx.fillStyle = modernColors[index % modernColors.length]
       pieCtx.fill()
-      // Borde
-      pieCtx.strokeStyle = isHovered ? "#6366f1" : "#1f2937"
-      pieCtx.lineWidth = isHovered ? 4 : 2
+      // Borde mejorado con glow effect
+      pieCtx.strokeStyle = isHovered ? "#8b5cf6" : "#374151"
+      pieCtx.lineWidth = isHovered ? 3 : 2
       pieCtx.stroke()
+      
+      // Efecto glow para sector hover
+      if (isHovered) {
+        pieCtx.save()
+        pieCtx.shadowColor = modernColors[index % modernColors.length]
+        pieCtx.shadowBlur = 20
+        pieCtx.strokeStyle = modernColors[index % modernColors.length]
+        pieCtx.lineWidth = 1
+        pieCtx.stroke()
+        pieCtx.restore()
+      }
+      
       if (isHovered) pieCtx.restore()
       startAngle += sliceAngle
     })
-    // Leyenda - mejor posicionada con el nuevo centrado
+    // Leyenda MODERNIZADA - mejor posicionada con el nuevo centrado
     const legendStartX = 15
     const legendStartY = 25
-    const legendItemHeight = 22
+    const legendItemHeight = 24  // Más espacio para mejor legibilidad
     const maxLegendItems = Math.min(asesoresNombres.length, 9)
           asesoresNombres.slice(0, maxLegendItems).forEach((legend, index) => {
         const y = legendStartY + index * legendItemHeight
+        
+        // Círculo con borde moderno
         pieCtx.beginPath()
-        pieCtx.arc(legendStartX + 5, y, 5, 0, 2 * Math.PI)  // Círculo ligeramente más pequeño
-        pieCtx.fillStyle = pastelColors[index % pastelColors.length]
+        pieCtx.arc(legendStartX + 6, y, 6, 0, 2 * Math.PI)  // Círculo más grande
+        pieCtx.fillStyle = modernColors[index % modernColors.length]
         pieCtx.fill()
-        pieCtx.strokeStyle = "#374151"
-        pieCtx.lineWidth = 1.5
+        
+        // Borde con glow sutil
+        pieCtx.strokeStyle = "#1f2937"
+        pieCtx.lineWidth = 2
         pieCtx.stroke()
-        pieCtx.fillStyle = "#1e293b"
-        pieCtx.font = "bold 11px Inter, sans-serif"
+        
+        // Shadow sutil para depth
+        pieCtx.save()
+        pieCtx.shadowColor = modernColors[index % modernColors.length]
+        pieCtx.shadowBlur = 8
+        pieCtx.shadowOffsetX = 1
+        pieCtx.shadowOffsetY = 1
+        pieCtx.stroke()
+        pieCtx.restore()
+        
+        // Texto del nombre - más legible y moderno
+        pieCtx.fillStyle = "#f8fafc"  // Blanco más suave
+        pieCtx.font = "bold 12px Inter, sans-serif"
         pieCtx.textAlign = "left"
-        const maxNameLength = 15  // Un carácter más para mejor lectura
+        const maxNameLength = 16  // Más caracteres para mejor lectura
         const displayName = legend.length > maxNameLength 
           ? legend.substring(0, maxNameLength) + "..." 
           : legend
-        pieCtx.fillText(displayName, legendStartX + 16, y + 2)
-        pieCtx.fillStyle = "#64748b"
-        pieCtx.font = "10px Inter, sans-serif"
-        pieCtx.fillText(`${asesoresValores[index]} ventas`, legendStartX + 16, y + 13)
+        pieCtx.fillText(displayName, legendStartX + 18, y + 2)
+        
+        // Subtexto con mejor contraste
+        pieCtx.fillStyle = "#94a3b8"  // Gris más claro para dark theme
+        pieCtx.font = "11px Inter, sans-serif"
+        pieCtx.fillText(`${asesoresValores[index]} ventas`, legendStartX + 18, y + 15)
       })
           if (asesoresNombres.length > maxLegendItems) {
         const y = legendStartY + maxLegendItems * legendItemHeight
-        pieCtx.fillStyle = "#9ca3af"
-        pieCtx.font = "italic 10px Inter, sans-serif"
-        pieCtx.fillText(`+${asesoresNombres.length - maxLegendItems} más...`, legendStartX + 16, y + 2)
+        
+        // Indicador moderno para más asesores
+        pieCtx.beginPath()
+        pieCtx.arc(legendStartX + 6, y, 4, 0, 2 * Math.PI)
+        pieCtx.fillStyle = "#6b7280"
+        pieCtx.fill()
+        pieCtx.strokeStyle = "#374151"
+        pieCtx.lineWidth = 1
+        pieCtx.stroke()
+        
+        pieCtx.fillStyle = "#e2e8f0"  // Más visible en dark theme
+        pieCtx.font = "italic 11px Inter, sans-serif"
+        pieCtx.fillText(`+${asesoresNombres.length - maxLegendItems} más asesores`, legendStartX + 18, y + 4)
       }
   }, [activeTab, selectedYear, semanaInicio, semanaFin, ventas, datos, labels, asesoresProcesados, hoveredPieIndex])
 
@@ -760,9 +813,21 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               <div className="relative w-full h-[320px]" ref={containerRef}>
                 <canvas ref={pieChartRef} className="w-full h-full rounded-lg cursor-pointer" />
                 {tooltip && (
-                  <div style={{position: 'fixed', left: tooltip.x + 12, top: tooltip.y + 12, zIndex: 50, pointerEvents: 'none'}} className="bg-popover/95 text-popover-foreground text-xs px-3 py-2 rounded-lg shadow-lg border border-border backdrop-blur-sm">
-                    <div className="font-bold">{tooltip.label}</div>
-                    <div>{tooltip.value} ventas</div>
+                  <div 
+                    style={{
+                      position: 'fixed', 
+                      left: tooltip.x + 15, 
+                      top: tooltip.y + 15, 
+                      zIndex: 50, 
+                      pointerEvents: 'none'
+                    }} 
+                    className="bg-gradient-to-br from-slate-900/95 to-slate-800/95 text-white px-4 py-3 rounded-xl shadow-2xl border border-purple-500/30 backdrop-blur-md animate-fade-in"
+                  >
+                    <div className="font-bold text-purple-300 text-sm">{tooltip.label}</div>
+                    <div className="text-cyan-100 text-xs mt-1">
+                      {tooltip.value} ventas realizadas
+                    </div>
+                    <div className="w-full h-px bg-gradient-to-r from-purple-500 to-cyan-500 mt-2 opacity-50"></div>
                   </div>
                 )}
               </div>
