@@ -192,15 +192,41 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
     setLoading(true)
     try {
       
+      console.log("🚀 EditVentaModal - Preparando envío:", {
+        ventaId: venta.id,
+        archivosAEliminar: archivosAEliminar,
+        archivosAEliminarCount: archivosAEliminar.length,
+        archivosNuevos: Object.keys(archivosNuevos),
+        archivosNuevosCount: Object.keys(archivosNuevos).length
+      })
+      
       const payload = {
         ...formData,
         ...(archivosAEliminar.length > 0 && { archivos_eliminar: archivosAEliminar }),
         ...(Object.keys(archivosNuevos).length > 0 && { archivos_nuevos: archivosNuevos })
       }
       
+      console.log("📦 Payload final enviado desde modal:", {
+        tieneArchivosEliminar: !!payload.archivos_eliminar,
+        archivosEliminarArray: payload.archivos_eliminar,
+        payloadKeys: Object.keys(payload)
+      })
+      
       await onSave(payload)
+      
+      // Limpiar estados después del éxito
+      setArchivosAEliminar([])
+      setArchivosNuevos({})
+      console.log("✅ Estados de archivos limpiados después del éxito")
+      
     } catch (error) {
-      console.error("📎 Error en handleSubmit:", error)
+      console.error("❌ Error en handleSubmit:", error)
+      
+      toast({
+        title: "Error",
+        description: "No se pudieron guardar los cambios. Verifica la consola para más detalles.",
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }
