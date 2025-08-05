@@ -292,6 +292,14 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
         payloadKeys: Object.keys(payload)
       })
       
+      // 🔍 DEBUGGING ESPECÍFICO según guía del backend
+      console.log("🔍 DEBUG ELIMINACIÓN (según guía backend):");
+      console.log("📁 Total archivos que DEBERÍAN eliminarse:", (payload.archivos_eliminar || []).length);
+      console.log("📋 Lista exacta de field_ids a eliminar:", payload.archivos_eliminar || []);
+      console.log("❓ ¿Eliminando TODOS los archivos actuales?", 
+        (payload.archivos_eliminar?.length || 0) > 0 && archivosActuales.length === 0);
+      console.log("📡 Payload completo que se enviará al backend:", JSON.stringify(payload, null, 2));
+      
       await onSave(payload)
       
       // Limpiar estados después del éxito
@@ -301,8 +309,28 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
       
       // RECARGAR archivos para verificar que se aplicaron los cambios
       console.log("🔄 Recargando archivos para verificar cambios...")
-      setTimeout(() => {
-        cargarArchivos(true) // true = forzar recarga
+      const archivosEliminadosParaVerificar = [...archivosAEliminar]
+      const seEliminaronTodos = archivosActuales.length === 0
+      
+      setTimeout(async () => {
+        console.log("🔍 VERIFICACIÓN POST-ELIMINACIÓN:");
+        console.log("📋 Archivos que se enviaron para eliminar:", archivosEliminadosParaVerificar);
+        console.log("❓ Se suponía que se eliminaran TODOS:", seEliminaronTodos);
+        
+        await cargarArchivos(true) // true = forzar recarga
+        
+        // Verificar resultado después de la recarga
+        setTimeout(() => {
+          console.log("📊 RESULTADO DESPUÉS DE RECARGA:");
+          console.log("📁 Archivos encontrados ahora:", archivosActuales.length);
+          console.log("❓ ¿Quedó algún archivo cuando no debería?", 
+            seEliminaronTodos && archivosActuales.length > 0);
+          
+          if (seEliminaronTodos && archivosActuales.length > 0) {
+            console.error("🚨 PROBLEMA DETECTADO: Se eliminaron todos pero aparecieron archivos después de recargar!");
+            console.error("📋 Archivos que aparecieron:", archivosActuales.map(a => a.field_id));
+          }
+        }, 500);
       }, 1000) // Esperar 1 segundo para que el backend procese
       
     } catch (error) {
@@ -476,26 +504,61 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                         </Label>
                         <div className="flex items-center gap-2">
                           {archivosActuales.length > 0 && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                // Marcar TODOS los archivos para eliminación
-                                const todosLosFieldIds = archivosActuales.map(a => a.field_id)
-                                setArchivosAEliminar(todosLosFieldIds)
-                                setArchivosActuales([])
-                                console.log('🗑️ TODOS los archivos marcados para eliminación:', todosLosFieldIds)
-                                toast({
-                                  title: "🗑️ TODOS los archivos marcados",
-                                  description: `${todosLosFieldIds.length} archivos se eliminarán al guardar`,
-                                  variant: "destructive"
-                                })
-                              }}
-                              className="border-red-600 text-red-300 hover:bg-red-700"
-                            >
-                              🗑️ Eliminar TODOS
-                            </Button>
+                            <>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Marcar TODOS los archivos para eliminación
+                                  const todosLosFieldIds = archivosActuales.map(a => a.field_id)
+                                  setArchivosAEliminar(todosLosFieldIds)
+                                  setArchivosActuales([])
+                                  console.log('🗑️ TODOS los archivos marcados para eliminación:', todosLosFieldIds)
+                                  toast({
+                                    title: "🗑️ TODOS los archivos marcados",
+                                    description: `${todosLosFieldIds.length} archivos se eliminarán al guardar`,
+                                    variant: "destructive"
+                                  })
+                                }}
+                                className="border-red-600 text-red-300 hover:bg-red-700"
+                              >
+                                🗑️ Eliminar TODOS
+                              </Button>
+                              
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={async () => {
+                                  // TEST ESPECÍFICO según guía del backend
+                                  const todosLosFieldIds = archivosActuales.map(a => a.field_id)
+                                  
+                                  console.log("🧪 TEST ELIMINACIÓN TOTAL - INICIO");
+                                  console.log("📁 Archivos antes del test:", todosLosFieldIds);
+                                  console.log("📊 Total archivos:", todosLosFieldIds.length);
+                                  
+                                  // Preparar payload exactamente como dice la guía
+                                  const payloadTest = {
+                                    ...formData,
+                                    archivos_eliminar: todosLosFieldIds // ✅ TODOS
+                                  };
+                                  
+                                  console.log("📡 Payload de test:", JSON.stringify(payloadTest, null, 2));
+                                  
+                                  // Ejecutar test
+                                  try {
+                                    await onSave(payloadTest);
+                                    console.log("✅ Test completado - verificando resultado...");
+                                  } catch (error) {
+                                    console.error("❌ Test falló:", error);
+                                  }
+                                }}
+                                className="border-yellow-600 text-yellow-300 hover:bg-yellow-700"
+                              >
+                                🧪 Test Backend
+                              </Button>
+                            </>
                           )}
                           {archivosAEliminar.length > 0 && (
                             <span className="bg-red-600 text-white px-2 py-1 rounded text-xs">
