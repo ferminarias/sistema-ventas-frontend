@@ -173,6 +173,12 @@ export function DynamicNuevaVentaForm() {
       }
     })
 
+    // Campos obligatorios fijos
+    schemaObj.nombre = z.string().min(1, "El nombre es requerido")
+    schemaObj.apellido = z.string().min(1, "El apellido es requerido")
+    schemaObj.email = z.string().email("Email inválido").min(1, "El email es requerido")
+    schemaObj.telefono = z.string().min(1, "El teléfono es requerido")
+    
     // Campos obligatorios adicionales
     schemaObj.asesor = z.string().min(1, "Debe seleccionar un asesor")
     schemaObj.fecha_venta = z.string().min(1, "Debe seleccionar una fecha")
@@ -186,6 +192,12 @@ export function DynamicNuevaVentaForm() {
     return acc
   }, {} as Record<string, any>)
 
+  // Valores por defecto para campos obligatorios fijos
+  defaultValues.nombre = ''
+  defaultValues.apellido = ''
+  defaultValues.email = ''
+  defaultValues.telefono = ''
+  
   defaultValues.asesor = ''
   defaultValues.fecha_venta = new Date().toISOString().split('T')[0]
 
@@ -202,6 +214,12 @@ export function DynamicNuevaVentaForm() {
         return acc
       }, {} as Record<string, any>)
 
+      // Valores por defecto para campos obligatorios fijos
+      newDefaultValues.nombre = ''
+      newDefaultValues.apellido = ''
+      newDefaultValues.email = ''
+      newDefaultValues.telefono = ''
+      
       newDefaultValues.asesor = ''
       newDefaultValues.fecha_venta = new Date().toISOString().split('T')[0]
 
@@ -356,6 +374,67 @@ export function DynamicNuevaVentaForm() {
             })() ? (
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Campos obligatorios fijos */}
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <DynamicField
+                      field={{
+                        id: 'nombre',
+                        label: 'Nombre',
+                        type: 'text',
+                        required: true,
+                        default: false,
+                        order: 1,
+                        placeholder: 'Ingrese el nombre'
+                      }}
+                      control={form.control}
+                      disabled={isSubmitting}
+                    />
+
+                    <DynamicField
+                      field={{
+                        id: 'apellido',
+                        label: 'Apellido',
+                        type: 'text',
+                        required: true,
+                        default: false,
+                        order: 2,
+                        placeholder: 'Ingrese el apellido'
+                      }}
+                      control={form.control}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <DynamicField
+                      field={{
+                        id: 'email',
+                        label: 'Email',
+                        type: 'email',
+                        required: true,
+                        default: false,
+                        order: 3,
+                        placeholder: 'Ingrese el email'
+                      }}
+                      control={form.control}
+                      disabled={isSubmitting}
+                    />
+
+                    <DynamicField
+                      field={{
+                        id: 'telefono',
+                        label: 'Teléfono',
+                        type: 'tel',
+                        required: true,
+                        default: false,
+                        order: 4,
+                        placeholder: 'Ingrese el teléfono'
+                      }}
+                      control={form.control}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
                   {/* Campos dinámicos del cliente */}
                   {renderFields()}
 

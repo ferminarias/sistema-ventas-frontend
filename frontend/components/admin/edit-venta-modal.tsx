@@ -265,11 +265,6 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
           )}
           
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* DEBUG: Verificar que el formulario se renderiza */}
-            <div className="bg-red-500 text-white p-2 rounded">
-              DEBUG: Formulario cargado - Campos: {Object.keys(formData).join(', ')}
-            </div>
-            
             {/* Campos básicos */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
