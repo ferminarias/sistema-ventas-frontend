@@ -470,22 +470,25 @@ export default function ReportesPage() {
                   <div className="space-y-4">
                     {topAdvisorsGeneral.length > 0 ? (
                       topAdvisorsGeneral.map((advisor, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
-                              {advisor.name
-                                .split(" ")
-                                .map((n: string) => n[0])
-                                .join("")}
+                        <div key={index} className="flex items-center justify-between p-4 bg-slate-700/30 hover:bg-slate-600/40 rounded-xl border border-slate-600/20 transition-all duration-200 hover:scale-[1.02]">
+                          <div className="flex items-center gap-4">
+                            <div className="relative">
+                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                                {advisor.name
+                                  .split(" ")
+                                  .map((n: string) => n[0])
+                                  .join("")}
+                              </div>
+                              {index === 0 && <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center text-xs">🏆</div>}
                             </div>
-                            <div>
-                              <h4 className="text-white font-medium">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
-                              <div className="text-slate-400 text-sm">Asesor Senior</div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-white font-semibold text-sm leading-tight truncate max-w-[200px]">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
+                              <div className="text-slate-400 text-xs mt-0.5">Asesor Senior</div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-white font-bold">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)} ventas</div>
-                            <div className="text-slate-400 text-sm">{typeof advisor.percentage === 'string' || typeof advisor.percentage === 'number' ? advisor.percentage : JSON.stringify(advisor.percentage)}% del total</div>
+                          <div className="text-right flex-shrink-0">
+                            <div className="text-white font-bold text-lg">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)}</div>
+                            <div className="text-slate-400 text-xs">{typeof advisor.percentage === 'string' || typeof advisor.percentage === 'number' ? advisor.percentage : JSON.stringify(advisor.percentage)}% del total</div>
                           </div>
                         </div>
                       ))
@@ -510,19 +513,22 @@ export default function ReportesPage() {
                   <div className="space-y-4">
                     {topAdvisorsByClient.length > 0 ? (
                       topAdvisorsByClient.map((advisor, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
-                              {advisor.name.split(" ").map((n: string) => n[0]).join("")}
+                        <div key={index} className="flex items-center justify-between p-4 bg-slate-700/30 hover:bg-slate-600/40 rounded-xl border border-slate-600/20 transition-all duration-200 hover:scale-[1.02]">
+                          <div className="flex items-center gap-4">
+                            <div className="relative">
+                              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                                {advisor.name.split(" ").map((n: string) => n[0]).join("")}
+                              </div>
+                              {index === 0 && <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full flex items-center justify-center text-xs">👑</div>}
                             </div>
-                            <div>
-                              <h4 className="text-white font-medium">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
-                              <div className="text-slate-400 text-sm">Especialista {typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-white font-semibold text-sm leading-tight truncate max-w-[200px]">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
+                              <div className="text-slate-400 text-xs mt-0.5">Especialista {typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-white font-bold">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)} ventas</div>
-                            <div className="text-slate-400 text-sm">{typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
+                          <div className="text-right flex-shrink-0">
+                            <div className="text-white font-bold text-lg">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)}</div>
+                            <div className="text-slate-400 text-xs">{typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
                           </div>
                         </div>
                       ))
