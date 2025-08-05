@@ -52,14 +52,42 @@ const ComprobanteItem = memo(({ comprobante, onVerComprobante, onDownloadFile, d
   }
 
   // Función segura para verificar si se puede previsualizar
-  const canPreview = (filename: any) => {
-    const actualFilename = typeof filename === 'string' ? filename : ''
+  const canPreview = (archivo: any) => {
+    const actualFilename = typeof archivo === 'string' ? archivo : (archivo?.filename || archivo?.original_name || '')
     
-    console.log("🔍 Verificando preview para:", actualFilename)
+    console.log("🔍 Verificando preview para archivo:", {
+      filename: archivo?.filename,
+      original_name: archivo?.original_name,
+      file_url: archivo?.file_url,
+      tipo: archivo?.tipo,
+      storage_type: archivo?.storage_type
+    })
     
-    // Si es una imagen o PDF, permitir preview
+    // OPCIÓN 1: Si tiene extensión, verificar por filename
     if (actualFilename && (comprobantesService.isImageFile(actualFilename) || comprobantesService.isPdfFile(actualFilename))) {
-      console.log("✅ Preview permitido para:", actualFilename)
+      console.log("✅ Preview permitido por extensión:", actualFilename)
+      return true
+    }
+    
+    // OPCIÓN 2: Si es de Cloudinary y file_url contiene imagen
+    if (archivo?.storage_type === 'cloudinary' && archivo?.file_url) {
+      const isCloudinaryImage = archivo.file_url.includes('/image/upload/') || 
+                               archivo.file_url.match(/\.(jpg|jpeg|png|gif|webp)($|\?)/i)
+      if (isCloudinaryImage) {
+        console.log("✅ Preview permitido para Cloudinary imagen:", archivo.file_url)
+        return true
+      }
+      
+      const isCloudinaryPdf = archivo.file_url.includes('.pdf')
+      if (isCloudinaryPdf) {
+        console.log("✅ Preview permitido para Cloudinary PDF:", archivo.file_url)
+        return true
+      }
+    }
+    
+    // OPCIÓN 3: Si filename contiene "imagen_comprobante" (es imagen)
+    if (actualFilename && actualFilename.includes('imagen_comprobante')) {
+      console.log("✅ Preview permitido por patrón imagen_comprobante:", actualFilename)
       return true
     }
     
@@ -144,9 +172,8 @@ const ComprobanteItem = memo(({ comprobante, onVerComprobante, onDownloadFile, d
                         {/* Botones de acción */}
                         <div className="flex gap-1 mt-2">
                           {(() => {
-                            const filename = getFilename(archivo)
-                            const canPreviewFile = canPreview(filename)
-                            console.log("🔍 Archivo:", getDisplayName(archivo), "Filename:", filename, "CanPreview:", canPreviewFile)
+                            const canPreviewFile = canPreview(archivo)
+                            console.log("🔍 Archivo:", getDisplayName(archivo), "CanPreview:", canPreviewFile)
                             return canPreviewFile ? (
                               <Button
                                 size="sm"
