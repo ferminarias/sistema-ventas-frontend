@@ -193,13 +193,32 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
   }, [venta.id, toast])
 
   const handleEliminarArchivo = (fieldId: string) => {
-    setArchivosAEliminar(prev => [...prev, fieldId])
-    setArchivosActuales(prev => prev.filter(archivo => archivo.field_id !== fieldId))
+    const nuevosArchivosAEliminar = [...archivosAEliminar, fieldId]
+    const nuevosArchivosActuales = archivosActuales.filter(archivo => archivo.field_id !== fieldId)
     
-    toast({
-      title: "Archivo marcado para eliminación",
-      description: "El archivo se eliminará al guardar los cambios"
+    setArchivosAEliminar(nuevosArchivosAEliminar)
+    setArchivosActuales(nuevosArchivosActuales)
+    
+    console.log('🗑️ Archivo marcado para eliminación:', {
+      fieldId,
+      totalArchivosOriginales: archivosActuales.length,
+      archivosAEliminar: nuevosArchivosAEliminar,
+      totalAEliminar: nuevosArchivosAEliminar.length,
+      archivosRestantes: nuevosArchivosActuales.length,
+      eliminandoTodos: nuevosArchivosActuales.length === 0
     })
+    
+    if (nuevosArchivosActuales.length === 0) {
+      toast({
+        title: "⚠️ Eliminando TODOS los archivos",
+        description: "Se eliminarán todos los comprobantes de esta venta al guardar"
+      })
+    } else {
+      toast({
+        title: "Archivo marcado para eliminación",
+        description: "El archivo se eliminará al guardar los cambios"
+      })
+    }
   }
 
   const handleAgregarArchivo = (fieldId: string, base64: string) => {
@@ -248,8 +267,18 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
         archivosAEliminar: archivosAEliminar,
         archivosAEliminarCount: archivosAEliminar.length,
         archivosNuevos: Object.keys(archivosNuevos),
-        archivosNuevosCount: Object.keys(archivosNuevos).length
+        archivosNuevosCount: Object.keys(archivosNuevos).length,
+        eliminandoTodos: archivosAEliminar.length > 0 && archivosActuales.length === 0
       })
+      
+      // VERIFICACIÓN CRÍTICA: ¿Estamos enviando TODOS los archivos para eliminar?
+      if (archivosAEliminar.length > 0 && archivosActuales.length === 0) {
+        console.log("🚨 ELIMINACIÓN TOTAL DETECTADA - Enviando al backend:", {
+          totalArchivosAEliminar: archivosAEliminar.length,
+          listaCompleta: archivosAEliminar,
+          deberiaQuedarCero: true
+        })
+      }
       
       const payload = {
         ...formData,
@@ -445,11 +474,35 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                         <Label className="text-white text-sm">
                           📁 Archivos Existentes ({archivosActuales.length} encontrados)
                         </Label>
-                        {archivosAEliminar.length > 0 && (
-                          <span className="bg-red-600 text-white px-2 py-1 rounded text-xs">
-                            {archivosAEliminar.length} marcados para eliminación
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {archivosActuales.length > 0 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Marcar TODOS los archivos para eliminación
+                                const todosLosFieldIds = archivosActuales.map(a => a.field_id)
+                                setArchivosAEliminar(todosLosFieldIds)
+                                setArchivosActuales([])
+                                console.log('🗑️ TODOS los archivos marcados para eliminación:', todosLosFieldIds)
+                                toast({
+                                  title: "🗑️ TODOS los archivos marcados",
+                                  description: `${todosLosFieldIds.length} archivos se eliminarán al guardar`,
+                                  variant: "destructive"
+                                })
+                              }}
+                              className="border-red-600 text-red-300 hover:bg-red-700"
+                            >
+                              🗑️ Eliminar TODOS
+                            </Button>
+                          )}
+                          {archivosAEliminar.length > 0 && (
+                            <span className="bg-red-600 text-white px-2 py-1 rounded text-xs">
+                              {archivosAEliminar.length} marcados para eliminación
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="grid grid-cols-1 gap-2 mt-2">
                         {archivosActuales.map((archivo, index) => {
