@@ -67,22 +67,43 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
       try {
         console.log('🔍 EditVentaModal - Cargando archivos para venta ID:', venta.id);
         
-        // NUEVO: Usar el servicio de comprobantes para obtener TODOS los archivos
-        const searchParams = {
-          venta_id: venta.id.toString()
+        // NUEVO: Llamada directa al endpoint para obtener archivos por venta_id
+        const token = localStorage.getItem("token");
+        const headers: HeadersInit = {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
         };
         
-        console.log('📋 Parámetros de búsqueda:', searchParams);
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
         
-        const response = await comprobantesService.searchComprobantes(searchParams);
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
+        const url = `${API_BASE_URL}/api/comprobantes/search?venta_id=${venta.id}`;
         
-        console.log('📊 Respuesta del servicio:', response);
-        console.log('📁 Total comprobantes encontrados:', response.resultados?.length || 0);
+        console.log('🔗 URL de búsqueda:', url);
         
-        if (response.resultados && response.resultados.length > 0) {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers,
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('📊 Respuesta del backend:', data);
+        
+        // El backend puede devolver diferentes estructuras, adaptarse
+        const comprobantes = data.resultados || data.comprobantes || data || [];
+        console.log('📁 Total comprobantes encontrados:', comprobantes.length);
+        
+        if (comprobantes.length > 0) {
           const todosLosArchivos: ArchivoAdjunto[] = [];
           
-          response.resultados.forEach((comprobante: any) => {
+          comprobantes.forEach((comprobante: any) => {
             if (comprobante.archivos && Array.isArray(comprobante.archivos)) {
               comprobante.archivos.forEach((archivo: any) => {
                 todosLosArchivos.push({
@@ -325,27 +346,40 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                     </div>
                   ) : archivosActuales.length > 0 ? (
                     <div>
-                      <Label className="text-white text-sm">Archivos Existentes</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-                        {archivosActuales.map((archivo) => (
-                          <div key={archivo.field_id} className="bg-gray-700 p-3 rounded border border-gray-600">
+                      <Label className="text-white text-sm">
+                        📁 Archivos Existentes ({archivosActuales.length} encontrados)
+                      </Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2">
+                        {archivosActuales.map((archivo, index) => (
+                          <div key={`${archivo.field_id}_${index}`} className="bg-gray-700 p-3 rounded border border-gray-600 hover:border-gray-500 transition-colors">
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <Image className="h-4 w-4 text-blue-400 flex-shrink-0" />
-                                <div className="min-w-0">
-                                  <p className="text-white text-sm font-medium truncate">{archivo.field_id}</p>
-                                  <p className="text-gray-400 text-xs truncate">
-                                    {archivo.original_name || archivo.filename}
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div className="bg-blue-600 rounded p-1 flex-shrink-0">
+                                  <Image className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-white text-sm font-medium truncate">
+                                    {archivo.original_name || archivo.filename || 'Archivo sin nombre'}
                                   </p>
+                                  <p className="text-gray-400 text-xs truncate">
+                                    Campo: {archivo.field_id}
+                                  </p>
+                                  {archivo.file_url && (
+                                    <p className="text-blue-400 text-xs truncate">
+                                      {archivo.file_url.includes('cloudinary') ? '☁️ Cloudinary' : 
+                                       archivo.file_url.includes('/static/') ? '💾 Local' : '🔗 Remoto'}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
-                              <div className="flex gap-1">
+                              <div className="flex gap-1 flex-shrink-0">
                                 <Button
                                   type="button"
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleVerArchivo(archivo)}
-                                  className="h-8 w-8 p-0 text-gray-400 hover:text-white"
+                                  className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300"
+                                  title="Ver archivo"
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
@@ -355,6 +389,7 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                                   size="sm"
                                   onClick={() => handleEliminarArchivo(archivo.field_id)}
                                   className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+                                  title="Eliminar archivo"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -365,7 +400,11 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                       </div>
                     </div>
                   ) : (
-                    <p className="text-gray-400 text-sm">No hay archivos adjuntos</p>
+                    <div className="text-center py-6 border-2 border-dashed border-gray-600 rounded-lg">
+                      <Image className="h-8 w-8 text-gray-500 mx-auto mb-2" />
+                      <p className="text-gray-400 text-sm">No se encontraron archivos para esta venta</p>
+                      <p className="text-gray-500 text-xs mt-1">Venta ID: {venta.id}</p>
+                    </div>
                   )}
 
                   {/* Archivos marcados para eliminación */}
