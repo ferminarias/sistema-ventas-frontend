@@ -60,51 +60,65 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
   const [mostrandoArchivos, setMostrandoArchivos] = useState(false)
   const [cargandoArchivos, setCargandoArchivos] = useState(false)
 
-  // Cargar archivos adjuntos existentes
+  // Cargar archivos adjuntos existentes USANDO EL SERVICIO DE COMPROBANTES
   useEffect(() => {
-    if (!venta.tiene_archivos) {
-      return
-    }
-    
     const cargarArchivos = async () => {
       setCargandoArchivos(true)
       try {
-        // Intentar extraer archivos desde campos_adicionales o usar endpoint específico
-        if (venta.campos_adicionales && typeof venta.campos_adicionales === 'object') {
-          const archivos: ArchivoAdjunto[] = []
+        console.log('🔍 EditVentaModal - Cargando archivos para venta ID:', venta.id);
+        
+        // NUEVO: Usar el servicio de comprobantes para obtener TODOS los archivos
+        const searchParams = {
+          venta_id: venta.id.toString()
+        };
+        
+        console.log('📋 Parámetros de búsqueda:', searchParams);
+        
+        const response = await comprobantesService.searchComprobantes(searchParams);
+        
+        console.log('📊 Respuesta del servicio:', response);
+        console.log('📁 Total comprobantes encontrados:', response.resultados?.length || 0);
+        
+        if (response.resultados && response.resultados.length > 0) {
+          const todosLosArchivos: ArchivoAdjunto[] = [];
           
-          Object.entries(venta.campos_adicionales).forEach(([fieldId, value]) => {
-            // Si el valor parece ser una URL de archivo
-            if (typeof value === 'string' && (
-              value.startsWith('https://res.cloudinary.com/') || 
-              value.startsWith('local_') ||
-              value.includes('/api/comprobantes/') ||
-              value.startsWith('/static/uploads/') // ✅ Agregar detección para archivos locales
-            )) {
-              archivos.push({
-                field_id: fieldId,
-                filename: value.split('/').pop() || value,
-                original_name: `${fieldId}.jpg`,
-                file_url: value
-              })
+          response.resultados.forEach((comprobante: any) => {
+            if (comprobante.archivos && Array.isArray(comprobante.archivos)) {
+              comprobante.archivos.forEach((archivo: any) => {
+                todosLosArchivos.push({
+                  field_id: archivo.field_id || archivo.filename || `archivo_${Date.now()}`,
+                  filename: archivo.filename || archivo.original_name || 'archivo_sin_nombre',
+                  original_name: archivo.original_name || archivo.filename || 'archivo_sin_nombre',
+                  file_url: archivo.file_url || archivo.preview_url || archivo.download_url || ''
+                });
+              });
             }
-          })
+          });
           
-          setArchivosActuales(archivos)
+          console.log('✅ Archivos procesados para mostrar:', todosLosArchivos.length);
+          console.log('📎 Lista de archivos:', todosLosArchivos.map(a => a.original_name));
+          
+          setArchivosActuales(todosLosArchivos);
+        } else {
+          console.log('⚠️ No se encontraron archivos para esta venta');
+          setArchivosActuales([]);
         }
+        
       } catch (error) {
+        console.error('❌ Error cargando archivos:', error);
         toast({
-          title: "Advertencia",
-          description: "No se pudieron cargar algunos archivos adjuntos",
+          title: "Error",
+          description: "No se pudieron cargar los archivos adjuntos",
           variant: "destructive"
-        })
+        });
+        setArchivosActuales([]);
       } finally {
         setCargandoArchivos(false)
       }
     }
 
     cargarArchivos()
-  }, [venta, toast])
+  }, [venta.id, toast])
 
   const handleEliminarArchivo = (fieldId: string) => {
     setArchivosAEliminar(prev => [...prev, fieldId])
