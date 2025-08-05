@@ -213,13 +213,26 @@ class ComprobantesService {
       const downloadUrl = `${API_BASE_URL}${filename.download_url}`
       console.log("✅ Descargando usando download_url:", downloadUrl)
       
-      // Usar fetch con autenticación para descarga
+      // Verificar si es Cloudinary (no necesita auth)
+      if (filename.storage_type === 'cloudinary' && filename.file_url && filename.file_url.startsWith('https://res.cloudinary.com/')) {
+        console.log("✅ Descarga directa de Cloudinary:", filename.file_url)
+        const link = document.createElement("a")
+        link.href = filename.file_url
+        link.download = originalName || filename.original_name || filename.filename || 'archivo'
+        link.target = "_blank"
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        return
+      }
+      
+      // Para archivos del backend, usar fetch con autenticación
       try {
         const response = await fetch(downloadUrl, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
+          // NO usar credentials: 'include' para evitar CORS
         })
 
         if (!response.ok) {
@@ -251,7 +264,7 @@ class ComprobantesService {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include'
+        // NO usar credentials: 'include' para evitar CORS
       })
 
       if (!response.ok) {

@@ -241,7 +241,7 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
               'Authorization': `Bearer ${token}`,
               'Accept': 'image/*',
             },
-            credentials: 'include'
+            // NO usar credentials: 'include' para evitar CORS
           })
 
           if (!response.ok) {
