@@ -19,6 +19,7 @@ export default function BusquedaComprobantesPage() {
   const { toast } = useToast()
   
   // DEBUG: Log básico de auth - SOLO CAMBIOS IMPORTANTES
+  // FIX: Corregido useComprobantesSearch() - agregados paréntesis faltantes
   useEffect(() => {
     if (!authLoading && user) {
       // Usuario autenticado correctamente
