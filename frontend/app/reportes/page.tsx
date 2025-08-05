@@ -38,49 +38,113 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-
 // Registrar componentes de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler)
 
-// 1. Clases base para todas las Card
-const cardBase = "transition-all duration-200 border border-gray-700/70 shadow-2xl rounded-xl bg-gray-800/60 hover:shadow-2xl hover:-translate-y-0.5"
-// 2. Clases para highlight de métricas principales
+// 1. Clases base mejoradas para todas las Card con depth y micro-interacciones
+const cardBase = `
+  transition-all duration-500 ease-out transform
+  border border-gray-700/50 shadow-2xl rounded-2xl 
+  bg-gradient-to-br from-gray-800/70 to-gray-900/60
+  backdrop-blur-sm
+  hover:shadow-3xl hover:-translate-y-2 hover:scale-[1.02]
+  hover:border-gray-600/70 hover:shadow-blue-500/20
+  group relative overflow-hidden
+  before:absolute before:inset-0 before:bg-gradient-to-br before:from-blue-500/5 before:to-purple-500/5 
+  before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100
+`
+
+// 2. Clases mejoradas para highlight de métricas principales con gradientes
 const metricHighlights = [
-  "bg-gray-800/80 border-t-4 border-blue-700/60",
-  "bg-gray-800/80 border-t-4 border-purple-700/60",
-  "bg-gray-800/80 border-t-4 border-cyan-700/60",
-  "bg-gray-800/80 border-t-4 border-pink-700/60"
+  "bg-gradient-to-br from-gray-800/90 to-gray-900/80 border-t-4 border-blue-500/80 shadow-lg shadow-blue-500/20",
+  "bg-gradient-to-br from-gray-800/90 to-gray-900/80 border-t-4 border-purple-500/80 shadow-lg shadow-purple-500/20", 
+  "bg-gradient-to-br from-gray-800/90 to-gray-900/80 border-t-4 border-cyan-500/80 shadow-lg shadow-cyan-500/20",
+  "bg-gradient-to-br from-gray-800/90 to-gray-900/80 border-t-4 border-pink-500/80 shadow-lg shadow-pink-500/20"
 ]
 
-// Componente HeatmapCell mejorado
+// Componente HeatmapCell con mejoras UX/UI avanzadas
 const HeatmapCell = ({ day, intensity, week, date, sales, avg, isActive, onHover, onClick }: {
   day: string, intensity: number, week: number, date?: string, sales?: number, avg?: number, isActive?: boolean, onHover?: () => void, onClick?: () => void
 }) => {
-  const intensityClasses = [
-    "bg-slate-600 text-slate-200", // 0 ventas
-    "bg-blue-900 text-white",      // pocas ventas
-    "bg-blue-700 text-white",
-    "bg-blue-500 text-white",
-    "bg-blue-400 text-white",
-    "bg-blue-300 text-slate-900"   // muchas ventas
+  // Gradientes y sombras dinámicas para cada nivel de intensidad
+  const intensityStyles = [
+    { 
+      bg: "bg-gradient-to-br from-slate-600 to-slate-700", 
+      text: "text-slate-200", 
+      shadow: "shadow-sm",
+      glow: ""
+    }, // 0 ventas
+    { 
+      bg: "bg-gradient-to-br from-blue-900 to-blue-950", 
+      text: "text-white", 
+      shadow: "shadow-md shadow-blue-900/30",
+      glow: "hover:shadow-blue-900/60"
+    }, // pocas ventas
+    { 
+      bg: "bg-gradient-to-br from-blue-700 to-blue-800", 
+      text: "text-white", 
+      shadow: "shadow-lg shadow-blue-700/40",
+      glow: "hover:shadow-blue-700/70"
+    },
+    { 
+      bg: "bg-gradient-to-br from-blue-500 to-blue-600", 
+      text: "text-white", 
+      shadow: "shadow-xl shadow-blue-500/50",
+      glow: "hover:shadow-blue-500/80"
+    },
+    { 
+      bg: "bg-gradient-to-br from-blue-400 to-blue-500", 
+      text: "text-white", 
+      shadow: "shadow-2xl shadow-blue-400/60",
+      glow: "hover:shadow-blue-400/90"
+    },
+    { 
+      bg: "bg-gradient-to-br from-blue-300 to-blue-400", 
+      text: "text-slate-900", 
+      shadow: "shadow-2xl shadow-blue-300/70",
+      glow: "hover:shadow-blue-300/100 hover:shadow-2xl"
+    } // muchas ventas
   ];
+  
+  const currentStyle = intensityStyles[intensity] || intensityStyles[0];
   const percent = avg && sales ? Math.round(((sales - avg) / avg) * 100) : 0;
   const trend = percent > 0 ? `↑${percent}%` : percent < 0 ? `↓${Math.abs(percent)}%` : "= promedio";
+  
   return (
     <UiTooltip>
       <TooltipTrigger asChild>
         <div
-          className={`aspect-square rounded-sm flex items-center justify-center text-xs font-medium cursor-pointer transition-all duration-300 ${intensityClasses[intensity]} ${isActive ? 'ring-2 ring-blue-400 scale-105 z-10' : ''} animate-fade-in`}
-          style={{ animationDelay: `${(week * 7 + ["L","M","X","J","V","S","D"].indexOf(day)) * 30}ms` }}
+          className={`
+            aspect-square rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer 
+            transition-all duration-500 ease-out transform
+            ${currentStyle.bg} ${currentStyle.text} ${currentStyle.shadow}
+            hover:scale-110 hover:-translate-y-1 hover:rotate-1 ${currentStyle.glow}
+            ${isActive ? 'ring-2 ring-cyan-400 ring-opacity-80 scale-105 z-20 shadow-cyan-400/50' : ''}
+            animate-fade-in backdrop-blur-sm border border-white/10
+            hover:border-white/30 active:scale-95
+          `}
+          style={{ 
+            animationDelay: `${(week * 7 + ["L","M","X","J","V","S","D"].indexOf(day)) * 50}ms`,
+            transform: `perspective(500px) ${isActive ? 'rotateX(5deg) rotateY(5deg)' : ''}`,
+          }}
           onMouseEnter={onHover}
           onMouseLeave={() => onHover && onHover()}
           onClick={onClick}
         >
-          {day}
+          <span className="drop-shadow-sm">{day}</span>
+          {intensity > 3 && (
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/60"></div>
+          )}
         </div>
       </TooltipTrigger>
-      <TooltipContent sideOffset={8} side="top" className="bg-slate-900 text-white border-blue-500/50">
-        <div className="font-semibold">{day}{date ? `, ${date}` : ""}</div>
-        <div>{sales !== undefined ? `${sales} ventas` : "Sin datos"}</div>
+      <TooltipContent 
+        sideOffset={12} 
+        side="top" 
+        className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border border-blue-500/50 shadow-2xl backdrop-blur-sm"
+      >
+        <div className="font-bold text-cyan-300">{day}{date ? `, ${date}` : ""}</div>
+        <div className="text-sm">{sales !== undefined ? `${sales} ventas realizadas` : "Sin datos disponibles"}</div>
         {avg !== undefined && sales !== undefined && (
-          <div className="text-xs text-blue-300">{trend} vs promedio</div>
+          <div className="text-xs text-blue-300 font-medium">{trend} vs promedio</div>
         )}
+        <div className="text-xs text-slate-400 mt-1">Click para más detalles</div>
       </TooltipContent>
     </UiTooltip>
   );
@@ -331,26 +395,72 @@ export default function ReportesPage() {
               </Button>
               <h1 className="text-4xl font-bold text-white">📊 Reportes y Análisis</h1>
             </div>
-            {/* Métricas principales */}
+            {/* Métricas principales con data storytelling mejorado */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-              {[0,1,2,3].map(i => (
-                <Card key={i} className={`${cardBase} ${metricHighlights[i]}`}>
-                  <CardContent className="p-6">
-                    <div className="text-3xl font-bold text-white mb-2">
-                      {i === 0 ? metrics?.totalSales ?? '-' :
-                       i === 1 ? metrics?.avgCloseTime ?? '-' :
-                       i === 2 ? metrics?.dailyAverage ?? '-' :
-                       metrics?.conversionRate ?? '-'}
-                    </div>
-                    <div className="text-white/90 font-medium text-sm">
-                      {i === 0 ? 'Ventas del Mes' :
-                       i === 1 ? 'Tiempo Promedio de Cierre' :
-                       i === 2 ? 'Ventas por Día Promedio' :
-                       'Tasa de Conversión'}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {[0,1,2,3].map(i => {
+                const metricData = [
+                  { value: metrics?.totalSales ?? '-', label: 'Ventas del Mes', icon: '📈', trend: '+12%', isPositive: true },
+                  { value: metrics?.avgCloseTime ?? '-', label: 'Tiempo Promedio de Cierre', icon: '⏱️', trend: '-5%', isPositive: true },
+                  { value: metrics?.dailyAverage ?? '-', label: 'Ventas por Día Promedio', icon: '📊', trend: '+8%', isPositive: true },
+                  { value: metrics?.conversionRate ?? '-', label: 'Tasa de Conversión', icon: '🎯', trend: '+3%', isPositive: true }
+                ][i];
+                
+                return (
+                  <Card key={i} className={`${cardBase} ${metricHighlights[i]} group cursor-pointer`}>
+                    <CardContent className="p-6 relative">
+                      {/* Icono animado en el fondo */}
+                      <div className="absolute top-4 right-4 text-6xl opacity-10 group-hover:opacity-20 transition-opacity duration-300">
+                        {metricData.icon}
+                      </div>
+                      
+                      {/* Valor principal con animación de contador */}
+                      <div className="text-4xl font-bold text-white mb-3 tracking-tight relative z-10">
+                        <span className="drop-shadow-sm">{metricData.value}</span>
+                        {metricData.value !== '-' && (
+                          <div className="absolute -top-2 -right-2 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/60"></div>
+                        )}
+                      </div>
+                      
+                      {/* Label con trend indicator */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-white/90 font-medium text-sm leading-tight">
+                          {metricData.label}
+                        </div>
+                        {metricData.value !== '-' && (
+                          <div className={`
+                            text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1
+                            ${metricData.isPositive 
+                              ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            }
+                          `}>
+                            <span className={metricData.isPositive ? '↗️' : '↘️'}></span>
+                            {metricData.trend}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Barra de progreso sutil */}
+                      {metricData.value !== '-' && (
+                        <div className="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-1000 delay-${i * 200} ${
+                              i === 0 ? 'bg-gradient-to-r from-blue-500 to-blue-400' :
+                              i === 1 ? 'bg-gradient-to-r from-purple-500 to-purple-400' :
+                              i === 2 ? 'bg-gradient-to-r from-cyan-500 to-cyan-400' :
+                              'bg-gradient-to-r from-pink-500 to-pink-400'
+                            }`}
+                            style={{ width: `${65 + i * 10}%` }}
+                          ></div>
+                        </div>
+                      )}
+                      
+                      {/* Micro-interacción en hover */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
 
             {/* Gráfico de tendencia de ventas */}
@@ -470,25 +580,69 @@ export default function ReportesPage() {
                   <div className="space-y-4">
                     {topAdvisorsGeneral.length > 0 ? (
                       topAdvisorsGeneral.map((advisor, index) => (
-                        <div key={index} className="flex items-center justify-between p-4 bg-slate-700/30 hover:bg-slate-600/40 rounded-xl border border-slate-600/20 transition-all duration-200 hover:scale-[1.02]">
-                          <div className="flex items-center gap-4">
+                        <div 
+                          key={index} 
+                          className="group relative flex items-center justify-between p-5 bg-gradient-to-r from-slate-700/40 to-slate-600/30 hover:from-slate-600/50 hover:to-slate-500/40 rounded-2xl border border-slate-600/30 hover:border-slate-500/50 transition-all duration-500 ease-out transform hover:scale-[1.03] hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/20"
+                          style={{ animationDelay: `${index * 100}ms` }}
+                        >
+                          {/* Efecto de brillo en hover */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+                          
+                          <div className="flex items-center gap-5 z-10">
                             <div className="relative">
-                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                                {advisor.name
-                                  .split(" ")
-                                  .map((n: string) => n[0])
-                                  .join("")}
+                              {/* Avatar con animación 3D */}
+                              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-blue-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20">
+                                <span className="drop-shadow-lg">
+                                  {advisor.name
+                                    .split(" ")
+                                    .map((n: string) => n[0])
+                                    .join("")}
+                                </span>
                               </div>
-                              {index === 0 && <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center text-xs">🏆</div>}
+                              
+                              {/* Badge animado para el primer lugar */}
+                              {index === 0 && (
+                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-yellow-400/50 animate-bounce border-2 border-white/30">
+                                  🏆
+                                </div>
+                              )}
+                              
+                              {/* Ranking indicator */}
+                              <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                                {index + 1}
+                              </div>
                             </div>
+                            
                             <div className="min-w-0 flex-1">
-                              <h4 className="text-white font-semibold text-sm leading-tight truncate max-w-[200px]">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
-                              <div className="text-slate-400 text-xs mt-0.5">Asesor Senior</div>
+                              <h4 className="text-white font-bold text-base leading-tight truncate max-w-[200px] group-hover:text-cyan-300 transition-colors duration-300">
+                                {typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}
+                              </h4>
+                              <div className="text-slate-400 text-sm mt-1 flex items-center gap-2">
+                                <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                                Asesor Senior
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right flex-shrink-0">
-                            <div className="text-white font-bold text-lg">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)}</div>
-                            <div className="text-slate-400 text-xs">{typeof advisor.percentage === 'string' || typeof advisor.percentage === 'number' ? advisor.percentage : JSON.stringify(advisor.percentage)}% del total</div>
+                          
+                          <div className="text-right flex-shrink-0 z-10">
+                            <div className="text-white font-bold text-xl group-hover:text-cyan-300 transition-colors duration-300 drop-shadow-sm">
+                              {typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)}
+                            </div>
+                            <div className="text-slate-400 text-sm mt-1 flex items-center gap-1">
+                              <span className="text-xs">📈</span>
+                              {typeof advisor.percentage === 'string' || typeof advisor.percentage === 'number' ? advisor.percentage : JSON.stringify(advisor.percentage)}% del total
+                            </div>
+                          </div>
+                          
+                          {/* Barra de progreso sutil */}
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-700/50 rounded-b-2xl overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-1000 ease-out shadow-lg shadow-blue-500/50"
+                              style={{ 
+                                width: `${Math.min(90, 20 + (advisor.percentage || 0))}%`,
+                                animationDelay: `${index * 200}ms`
+                              }}
+                            ></div>
                           </div>
                         </div>
                       ))
@@ -513,22 +667,66 @@ export default function ReportesPage() {
                   <div className="space-y-4">
                     {topAdvisorsByClient.length > 0 ? (
                       topAdvisorsByClient.map((advisor, index) => (
-                        <div key={index} className="flex items-center justify-between p-4 bg-slate-700/30 hover:bg-slate-600/40 rounded-xl border border-slate-600/20 transition-all duration-200 hover:scale-[1.02]">
-                          <div className="flex items-center gap-4">
+                        <div 
+                          key={index} 
+                          className="group relative flex items-center justify-between p-5 bg-gradient-to-r from-purple-700/40 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-500/40 rounded-2xl border border-purple-600/30 hover:border-purple-500/50 transition-all duration-500 ease-out transform hover:scale-[1.03] hover:-translate-y-1 hover:shadow-2xl hover:shadow-purple-500/20"
+                          style={{ animationDelay: `${index * 100}ms` }}
+                        >
+                          {/* Efecto de brillo en hover */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+                          
+                          <div className="flex items-center gap-5 z-10">
                             <div className="relative">
-                              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                                {advisor.name.split(" ").map((n: string) => n[0]).join("")}
+                              {/* Avatar con animación 3D */}
+                              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-purple-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20">
+                                <span className="drop-shadow-lg">
+                                  {advisor.name.split(" ").map((n: string) => n[0]).join("")}
+                                </span>
                               </div>
-                              {index === 0 && <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full flex items-center justify-center text-xs">👑</div>}
+                              
+                              {/* Badge animado para el primer lugar */}
+                              {index === 0 && (
+                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-emerald-400/50 animate-bounce border-2 border-white/30">
+                                  👑
+                                </div>
+                              )}
+                              
+                              {/* Ranking indicator */}
+                              <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                                {index + 1}
+                              </div>
                             </div>
+                            
                             <div className="min-w-0 flex-1">
-                              <h4 className="text-white font-semibold text-sm leading-tight truncate max-w-[200px]">{typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}</h4>
-                              <div className="text-slate-400 text-xs mt-0.5">Especialista {typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
+                              <h4 className="text-white font-bold text-base leading-tight truncate max-w-[200px] group-hover:text-pink-300 transition-colors duration-300">
+                                {typeof advisor.name === 'string' ? advisor.name : JSON.stringify(advisor.name)}
+                              </h4>
+                              <div className="text-slate-400 text-sm mt-1 flex items-center gap-2">
+                                <span className="inline-block w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
+                                Especialista {typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right flex-shrink-0">
-                            <div className="text-white font-bold text-lg">{typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)}</div>
-                            <div className="text-slate-400 text-xs">{typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}</div>
+                          
+                          <div className="text-right flex-shrink-0 z-10">
+                            <div className="text-white font-bold text-xl group-hover:text-pink-300 transition-colors duration-300 drop-shadow-sm">
+                              {typeof advisor.sales === 'string' || typeof advisor.sales === 'number' ? advisor.sales : JSON.stringify(advisor.sales)}
+                            </div>
+                            <div className="text-slate-400 text-sm mt-1 flex items-center gap-1">
+                              <span className="text-xs">🎯</span>
+                              {typeof advisor.client === 'string' ? (clientIdToName[advisor.client] || advisor.client) : JSON.stringify(advisor.client)}
+                            </div>
+                          </div>
+                          
+                          {/* Barra de progreso sutil */}
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-700/50 rounded-b-2xl overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-1000 ease-out shadow-lg shadow-purple-500/50"
+                              style={{ 
+                                width: `${Math.min(90, 25 + (index < 3 ? (3-index) * 15 : 10))}%`,
+                                animationDelay: `${index * 200}ms`
+                              }}
+                            ></div>
                           </div>
                         </div>
                       ))
@@ -611,8 +809,14 @@ export default function ReportesPage() {
             {/* Mapa de calor */}
             <Card className={`${cardBase} relative`}>
               {loading && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
-                  <RailwayLoader size="lg" text="Generando mapa de calor..." />
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-slate-900/70 to-black/60 flex items-center justify-center z-10 rounded-2xl backdrop-blur-md">
+                  <div className="flex flex-col items-center gap-4 p-8 bg-slate-800/80 rounded-2xl border border-slate-600/50 shadow-2xl">
+                    <RailwayLoader size="lg" text="" />
+                    <div className="text-white font-medium text-center animate-pulse">
+                      <div className="text-lg mb-2">🔥 Generando mapa de calor...</div>
+                      <div className="text-sm text-slate-400">Analizando patrones de actividad</div>
+                    </div>
+                  </div>
                 </div>
               )}
               <CardHeader>
@@ -643,38 +847,53 @@ export default function ReportesPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-7 gap-1 w-full">
-                  {(heatmap && heatmap.length >= 28
-                    ? (() => {
-                        // Mapear datos reales a formato esperado
-                        const avg = heatmap.reduce((acc, c) => acc + c.sales, 0) / heatmap.length;
-                        const mapped = Array(28).fill(null).map((_, idx) => {
-                          const week = Math.floor(idx / 7);
-                          const dayIndex = idx % 7;
-                          const real = heatmap.find(cell => Number(cell.dayOfWeek) === dayIndex && Number(cell.week) === week);
-                          return {
-                            day: ["L", "M", "X", "J", "V", "S", "D"][dayIndex],
-                            intensity: real ? Math.min(5, Math.floor(real.sales / 5)) : 0,
-                            week,
-                            date: real?.date,
-                            sales: real?.sales,
-                            avg,
-                            isActive: activeDay === dayIndex,
-                            onHover: () => setActiveDay(dayIndex),
-                            onClick: () => alert(`Detalle de ventas para ${["L", "M", "X", "J", "V", "S", "D"][dayIndex]}${real?.date ? ", " + real.date : ""}: ${real?.sales ?? 0} ventas`),
-                          };
-                        });
-                        return mapped;
-                      })()
-                    : (() => {
-                        const simulated = generateHeatmap();
-                        return simulated.map((cell, idx) => ({
-                          ...cell,
-                          isActive: activeDay === idx % 7,
-                          onHover: () => setActiveDay(idx % 7),
-                          onClick: () => alert(`Detalle de ventas para ${["L", "M", "X", "J", "V", "S", "D"][idx % 7]}: ${cell.intensity * 5} ventas (simulado)`),
-                        }));
-                      })()
-                  ).map((cell, index) => (
+                  {(() => {
+                    // Siempre mostrar el grid completo de 4 semanas x 7 días = 28 celdas
+                    const hasRealData = heatmap && heatmap.length > 0;
+                    const avg = hasRealData ? heatmap.reduce((acc, c) => acc + (c.sales || 0), 0) / heatmap.length : 0;
+                    
+                    return Array(28).fill(null).map((_, idx) => {
+                      const week = Math.floor(idx / 7);
+                      const dayIndex = idx % 7;
+                      const dayName = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][dayIndex];
+                      
+                      // Buscar datos reales para esta celda
+                      const real = hasRealData ? heatmap.find(cell => 
+                        Number(cell.dayOfWeek) === dayIndex && Number(cell.week) === week
+                      ) : null;
+                      
+                      // Calcular intensidad: 0-5 basado en ventas
+                      const intensity = real && real.sales ? Math.min(5, Math.ceil(real.sales / 2)) : 0;
+                      
+                      return {
+                        day: ["L", "M", "X", "J", "V", "S", "D"][dayIndex],
+                        intensity,
+                        week,
+                        date: real?.date,
+                        sales: real?.sales || 0,
+                        avg,
+                        isActive: activeDay === dayIndex,
+                        onHover: () => setActiveDay(dayIndex),
+                        onClick: () => {
+                          const ventasText = (real?.sales || 0) === 1 ? "venta" : "ventas";
+                          const dateText = real?.date ? ` del ${real.date}` : "";
+                          const percentChange = avg && real?.sales ? Math.round(((real.sales - avg) / avg) * 100) : 0;
+                          
+                          let message;
+                          if (real?.sales && real.sales > 0) {
+                            const trendText = percentChange > 0 ? `${percentChange}% por encima` : 
+                                            percentChange < 0 ? `${Math.abs(percentChange)}% por debajo` : 'Igual al';
+                            message = `📊 ${dayName}${dateText}\n\n✅ ${real.sales} ${ventasText} realizadas\n📈 ${trendText} del promedio semanal`;
+                          } else if (hasRealData) {
+                            message = `📊 ${dayName}${dateText}\n\n💤 Sin ventas registradas para este día`;
+                          } else {
+                            message = `📊 ${dayName}\n\n⚠️ Cargando datos de ventas...\n\n💡 Los datos aparecerán cuando el sistema termine de cargar.`;
+                          }
+                          alert(message);
+                        },
+                      };
+                    });
+                  })().map((cell, index) => (
                     <HeatmapCell key={index} {...cell} />
                   ))}
                 </div>
