@@ -79,6 +79,7 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
       }
       
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
+      
       const url = `${API_BASE_URL}/api/comprobantes/search?venta_id=${venta.id}${timestamp}`;
       
       console.log('🎯 CRÍTICO - Buscando archivos para venta específica:', {
@@ -156,7 +157,12 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
         });
         
         console.log('✅ Archivos procesados para mostrar:', todosLosArchivos.length);
-        console.log('📎 Lista de archivos:', todosLosArchivos.map(a => a.original_name));
+        console.log('📎 Lista detallada de archivos:', todosLosArchivos.map(a => ({
+          fieldId: a.field_id,
+          filename: a.filename,
+          originalName: a.original_name,
+          fileUrl: a.file_url.substring(0, 50) + '...'
+        })));
         
         setArchivosActuales(todosLosArchivos);
       } else {
