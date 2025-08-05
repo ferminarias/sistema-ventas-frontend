@@ -404,22 +404,38 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                         )}
                       </div>
                       <div className="grid grid-cols-1 gap-2 mt-2">
-                        {archivosActuales.map((archivo, index) => (
-                          <div key={`${archivo.field_id}_${index}`} className="bg-gray-700 p-3 rounded border border-gray-600 hover:border-gray-500 transition-colors">
+                        {archivosActuales.map((archivo, index) => {
+                          const estaEliminado = archivosAEliminar.includes(archivo.field_id)
+                          return (
+                          <div 
+                            key={`${archivo.field_id}_${index}`} 
+                            className={`p-3 rounded border transition-colors ${
+                              estaEliminado 
+                                ? 'bg-red-900/50 border-red-600 opacity-60' 
+                                : 'bg-gray-700 border-gray-600 hover:border-gray-500'
+                            }`}
+                          >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3 min-w-0 flex-1">
                                 <div className="bg-blue-600 rounded p-1 flex-shrink-0">
                                   <Image className="h-4 w-4 text-white" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-white text-sm font-medium truncate">
-                                    {archivo.original_name || archivo.filename || 'Archivo sin nombre'}
-                                  </p>
-                                  <p className="text-gray-400 text-xs truncate">
+                                  <div className="flex items-center gap-2">
+                                    <p className={`text-sm font-medium truncate ${estaEliminado ? 'text-red-300 line-through' : 'text-white'}`}>
+                                      {archivo.original_name || archivo.filename || 'Archivo sin nombre'}
+                                    </p>
+                                    {estaEliminado && (
+                                      <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-xs font-bold">
+                                        ELIMINARÁ
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className={`text-xs truncate ${estaEliminado ? 'text-red-400' : 'text-gray-400'}`}>
                                     Campo: {archivo.field_id}
                                   </p>
                                   {archivo.file_url && (
-                                    <p className="text-blue-400 text-xs truncate">
+                                    <p className={`text-xs truncate ${estaEliminado ? 'text-red-400' : 'text-blue-400'}`}>
                                       {archivo.file_url.includes('cloudinary') ? '☁️ Cloudinary' : 
                                        archivo.file_url.includes('/static/') ? '💾 Local' : '🔗 Remoto'}
                                     </p>
@@ -450,7 +466,8 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                               </div>
                             </div>
                           </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </div>
                   ) : (
