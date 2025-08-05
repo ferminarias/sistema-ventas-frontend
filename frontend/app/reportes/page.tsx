@@ -38,68 +38,58 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-
 // Registrar componentes de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler)
 
-// 1. Clases base mejoradas para todas las Card con depth y micro-interacciones
+// 1. Clases base optimizadas para mejor rendimiento
 const cardBase = `
-  transition-all duration-500 ease-out transform
-  border border-gray-700/50 shadow-2xl rounded-2xl 
-  bg-gradient-to-br from-gray-800/70 to-gray-900/60
-  backdrop-blur-sm
-  hover:shadow-3xl hover:-translate-y-2 hover:scale-[1.02]
-  hover:border-gray-600/70 hover:shadow-blue-500/20
-  group relative overflow-hidden
-  before:absolute before:inset-0 before:bg-gradient-to-br before:from-blue-500/5 before:to-purple-500/5 
-  before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100
+  transition-all duration-300 ease-out
+  border border-gray-700/50 shadow-xl rounded-2xl 
+  bg-gray-800/70
+  hover:shadow-2xl hover:border-gray-600/70
+  group relative
 `
 
-// 2. Clases mejoradas para highlight de métricas principales con gradientes
+// 2. Clases optimizadas para métricas principales
 const metricHighlights = [
-  "bg-gradient-to-br from-gray-800/90 to-gray-900/80 border-t-4 border-blue-500/80 shadow-lg shadow-blue-500/20",
-  "bg-gradient-to-br from-gray-800/90 to-gray-900/80 border-t-4 border-purple-500/80 shadow-lg shadow-purple-500/20", 
-  "bg-gradient-to-br from-gray-800/90 to-gray-900/80 border-t-4 border-cyan-500/80 shadow-lg shadow-cyan-500/20",
-  "bg-gradient-to-br from-gray-800/90 to-gray-900/80 border-t-4 border-pink-500/80 shadow-lg shadow-pink-500/20"
+  "bg-gray-800/90 border-t-4 border-blue-500/80 shadow-lg",
+  "bg-gray-800/90 border-t-4 border-purple-500/80 shadow-lg", 
+  "bg-gray-800/90 border-t-4 border-cyan-500/80 shadow-lg",
+  "bg-gray-800/90 border-t-4 border-pink-500/80 shadow-lg"
 ]
 
 // Componente HeatmapCell con mejoras UX/UI avanzadas
 const HeatmapCell = ({ day, intensity, week, date, sales, avg, isActive, onHover, onClick }: {
   day: string, intensity: number, week: number, date?: string, sales?: number, avg?: number, isActive?: boolean, onHover?: () => void, onClick?: () => void
 }) => {
-  // Gradientes y sombras dinámicas para cada nivel de intensidad
+  // Colores optimizados para mejor rendimiento
   const intensityStyles = [
     { 
-      bg: "bg-gradient-to-br from-slate-600 to-slate-700", 
+      bg: "bg-slate-600", 
       text: "text-slate-200", 
-      shadow: "shadow-sm",
-      glow: ""
+      shadow: "shadow-sm"
     }, // 0 ventas
     { 
-      bg: "bg-gradient-to-br from-blue-900 to-blue-950", 
+      bg: "bg-blue-900", 
       text: "text-white", 
-      shadow: "shadow-md shadow-blue-900/30",
-      glow: "hover:shadow-blue-900/60"
+      shadow: "shadow-md"
     }, // pocas ventas
     { 
-      bg: "bg-gradient-to-br from-blue-700 to-blue-800", 
+      bg: "bg-blue-700", 
       text: "text-white", 
-      shadow: "shadow-lg shadow-blue-700/40",
-      glow: "hover:shadow-blue-700/70"
+      shadow: "shadow-lg"
     },
     { 
-      bg: "bg-gradient-to-br from-blue-500 to-blue-600", 
+      bg: "bg-blue-500", 
       text: "text-white", 
-      shadow: "shadow-xl shadow-blue-500/50",
-      glow: "hover:shadow-blue-500/80"
+      shadow: "shadow-xl"
     },
     { 
-      bg: "bg-gradient-to-br from-blue-400 to-blue-500", 
+      bg: "bg-blue-400", 
       text: "text-white", 
-      shadow: "shadow-2xl shadow-blue-400/60",
-      glow: "hover:shadow-blue-400/90"
+      shadow: "shadow-2xl"
     },
     { 
-      bg: "bg-gradient-to-br from-blue-300 to-blue-400", 
+      bg: "bg-blue-300", 
       text: "text-slate-900", 
-      shadow: "shadow-2xl shadow-blue-300/70",
-      glow: "hover:shadow-blue-300/100 hover:shadow-2xl"
+      shadow: "shadow-2xl"
     } // muchas ventas
   ];
   
@@ -113,38 +103,32 @@ const HeatmapCell = ({ day, intensity, week, date, sales, avg, isActive, onHover
         <div
           className={`
             aspect-square rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer 
-            transition-all duration-500 ease-out transform
+            transition-all duration-200 ease-out
             ${currentStyle.bg} ${currentStyle.text} ${currentStyle.shadow}
-            hover:scale-110 hover:-translate-y-1 hover:rotate-1 ${currentStyle.glow}
-            ${isActive ? 'ring-2 ring-cyan-400 ring-opacity-80 scale-105 z-20 shadow-cyan-400/50' : ''}
-            animate-fade-in backdrop-blur-sm border border-white/10
-            hover:border-white/30 active:scale-95
+            hover:scale-105 hover:brightness-110
+            ${isActive ? 'ring-2 ring-cyan-400 scale-105 z-10' : ''}
+            border border-white/10 hover:border-white/30
           `}
-          style={{ 
-            animationDelay: `${(week * 7 + ["L","M","X","J","V","S","D"].indexOf(day)) * 50}ms`,
-            transform: `perspective(500px) ${isActive ? 'rotateX(5deg) rotateY(5deg)' : ''}`,
-          }}
           onMouseEnter={onHover}
           onMouseLeave={() => onHover && onHover()}
           onClick={onClick}
         >
-          <span className="drop-shadow-sm">{day}</span>
+          <span>{day}</span>
           {intensity > 3 && (
-            <div className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/60"></div>
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-400 rounded-full"></div>
           )}
         </div>
       </TooltipTrigger>
       <TooltipContent 
-        sideOffset={12} 
+        sideOffset={8} 
         side="top" 
-        className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border border-blue-500/50 shadow-2xl backdrop-blur-sm"
+        className="bg-slate-900 text-white border border-blue-500/50 shadow-xl"
       >
-        <div className="font-bold text-cyan-300">{day}{date ? `, ${date}` : ""}</div>
-        <div className="text-sm">{sales !== undefined ? `${sales} ventas realizadas` : "Sin datos disponibles"}</div>
+        <div className="font-semibold text-cyan-300">{day}{date ? `, ${date}` : ""}</div>
+        <div className="text-sm">{sales !== undefined ? `${sales} ventas` : "Sin datos"}</div>
         {avg !== undefined && sales !== undefined && (
-          <div className="text-xs text-blue-300 font-medium">{trend} vs promedio</div>
+          <div className="text-xs text-blue-300">{trend} vs promedio</div>
         )}
-        <div className="text-xs text-slate-400 mt-1">Click para más detalles</div>
       </TooltipContent>
     </UiTooltip>
   );
@@ -440,23 +424,23 @@ export default function ReportesPage() {
                         )}
                       </div>
                       
-                      {/* Barra de progreso sutil */}
-                      {metricData.value !== '-' && (
-                        <div className="w-full bg-white/10 rounded-full h-1 overflow-hidden">
-                          <div 
-                            className={`h-full transition-all duration-1000 delay-${i * 200} ${
-                              i === 0 ? 'bg-gradient-to-r from-blue-500 to-blue-400' :
-                              i === 1 ? 'bg-gradient-to-r from-purple-500 to-purple-400' :
-                              i === 2 ? 'bg-gradient-to-r from-cyan-500 to-cyan-400' :
-                              'bg-gradient-to-r from-pink-500 to-pink-400'
-                            }`}
-                            style={{ width: `${65 + i * 10}%` }}
-                          ></div>
-                        </div>
-                      )}
+                                             {/* Barra de progreso sutil */}
+                       {metricData.value !== '-' && (
+                         <div className="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+                           <div 
+                             className={`h-full transition-all duration-500 ${
+                               i === 0 ? 'bg-blue-500' :
+                               i === 1 ? 'bg-purple-500' :
+                               i === 2 ? 'bg-cyan-500' :
+                               'bg-pink-500'
+                             }`}
+                             style={{ width: `${65 + i * 10}%` }}
+                           ></div>
+                         </div>
+                       )}
                       
                       {/* Micro-interacción en hover */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"></div>
                     </CardContent>
                   </Card>
                 );
@@ -476,14 +460,14 @@ export default function ReportesPage() {
                     <CardTitle className="text-white">Evolución de Ventas</CardTitle>
                     <div className="text-slate-400">Cantidad de ventas por período</div>
                   </div>
-                  <div className="flex gap-1 bg-slate-700/50 p-1 rounded-lg">
+                  <div className="flex gap-1 bg-slate-700/50 p-1 rounded-lg relative z-20">
                     {['7d', '30d', '90d', '1y'].map((period) => (
                       <Button
                         key={period}
                         variant={selectedPeriod === period ? 'default' : 'ghost'}
                         size="sm"
                         onClick={() => setSelectedPeriod(period)}
-                        className={selectedPeriod === period ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}
+                        className={`relative z-30 ${selectedPeriod === period ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
                       >
                         {period.toUpperCase()}
                       </Button>
@@ -493,6 +477,7 @@ export default function ReportesPage() {
                       size="icon"
                       title="Descargar gráfico como imagen"
                       onClick={() => downloadChartImage(lineChartRef, 'evolucion_ventas.png')}
+                      className="relative z-30"
                     >
                       📷
                     </Button>
@@ -530,6 +515,7 @@ export default function ReportesPage() {
                     size="icon"
                     title="Descargar gráfico como imagen"
                     onClick={() => downloadChartImage(barChartRef, 'distribucion_horaria.png')}
+                    className="relative z-30"
                   >
                     📷
                   </Button>
@@ -582,11 +568,11 @@ export default function ReportesPage() {
                       topAdvisorsGeneral.map((advisor, index) => (
                         <div 
                           key={index} 
-                          className="group relative flex items-center justify-between p-5 bg-gradient-to-r from-slate-700/40 to-slate-600/30 hover:from-slate-600/50 hover:to-slate-500/40 rounded-2xl border border-slate-600/30 hover:border-slate-500/50 transition-all duration-500 ease-out transform hover:scale-[1.03] hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/20"
+                          className="group relative flex items-center justify-between p-5 bg-gradient-to-r from-slate-700/40 to-slate-600/30 hover:from-slate-600/50 hover:to-slate-500/40 rounded-2xl border border-slate-600/30 hover:border-slate-500/50 transition-all duration-300 ease-out transform hover:scale-[1.01] hover:shadow-xl hover:shadow-blue-500/10 relative z-10"
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
                           {/* Efecto de brillo en hover */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"></div>
                           
                           <div className="flex items-center gap-5 z-10">
                             <div className="relative">
@@ -637,11 +623,8 @@ export default function ReportesPage() {
                           {/* Barra de progreso sutil */}
                           <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-700/50 rounded-b-2xl overflow-hidden">
                             <div 
-                              className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-1000 ease-out shadow-lg shadow-blue-500/50"
-                              style={{ 
-                                width: `${Math.min(90, 20 + (advisor.percentage || 0))}%`,
-                                animationDelay: `${index * 200}ms`
-                              }}
+                              className="h-full bg-blue-500 transition-all duration-300"
+                              style={{ width: `${Math.min(90, 20 + (advisor.percentage || 0))}%` }}
                             ></div>
                           </div>
                         </div>
@@ -669,11 +652,11 @@ export default function ReportesPage() {
                       topAdvisorsByClient.map((advisor, index) => (
                         <div 
                           key={index} 
-                          className="group relative flex items-center justify-between p-5 bg-gradient-to-r from-purple-700/40 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-500/40 rounded-2xl border border-purple-600/30 hover:border-purple-500/50 transition-all duration-500 ease-out transform hover:scale-[1.03] hover:-translate-y-1 hover:shadow-2xl hover:shadow-purple-500/20"
+                          className="group relative flex items-center justify-between p-5 bg-gradient-to-r from-purple-700/40 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-500/40 rounded-2xl border border-purple-600/30 hover:border-purple-500/50 transition-all duration-300 ease-out transform hover:scale-[1.01] hover:shadow-xl hover:shadow-purple-500/10 relative z-10"
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
                           {/* Efecto de brillo en hover */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+                          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"></div>
                           
                           <div className="flex items-center gap-5 z-10">
                             <div className="relative">
@@ -721,11 +704,8 @@ export default function ReportesPage() {
                           {/* Barra de progreso sutil */}
                           <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-700/50 rounded-b-2xl overflow-hidden">
                             <div 
-                              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-1000 ease-out shadow-lg shadow-purple-500/50"
-                              style={{ 
-                                width: `${Math.min(90, 25 + (index < 3 ? (3-index) * 15 : 10))}%`,
-                                animationDelay: `${index * 200}ms`
-                              }}
+                              className="h-full bg-purple-500 transition-all duration-300"
+                              style={{ width: `${Math.min(90, 25 + (index < 3 ? (3-index) * 15 : 10))}%` }}
                             ></div>
                           </div>
                         </div>
@@ -922,18 +902,18 @@ export default function ReportesPage() {
                 <div className="text-slate-400">Filtra y descarga reportes específicos</div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-slate-700/30 rounded-lg">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-slate-700/30 rounded-lg relative z-20">
+                  <div className="relative z-30">
                     <label className="block text-sm font-medium text-white mb-2">Cliente</label>
                     <Select
                       value={selectedClient}
                       onValueChange={(value) => setSelectedClient(String(value))}
                       disabled={Object.keys(clientIdToName).length === 0}
                     >
-                      <SelectTrigger className="bg-gray-900 border-gray-700 text-white focus:border-blue-500">
+                      <SelectTrigger className="bg-gray-900 border-gray-700 text-white focus:border-blue-500 relative z-40">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border-gray-700">
+                      <SelectContent className="bg-gray-800 border-gray-700 z-50">
                         <SelectItem value="all" className="text-white hover:bg-gray-700">Todos los clientes</SelectItem>
                         {allClients.map((client) => (
                           <SelectItem key={String(client.id)} value={String(client.id)} className="text-white hover:bg-gray-700">
@@ -943,27 +923,27 @@ export default function ReportesPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
+                  <div className="relative z-30">
                     <label className="block text-sm font-medium text-white mb-2">Fecha Inicio</label>
                     <Input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="bg-gray-900 border-gray-700 text-white focus:border-blue-500 placeholder:text-gray-400"
+                      className="bg-gray-900 border-gray-700 text-white focus:border-blue-500 placeholder:text-gray-400 relative z-40"
                     />
                   </div>
-                  <div>
+                  <div className="relative z-30">
                     <label className="block text-sm font-medium text-white mb-2">Fecha Fin</label>
                     <Input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="bg-gray-900 border-gray-700 text-white focus:border-blue-500 placeholder:text-gray-400"
+                      className="bg-gray-900 border-gray-700 text-white focus:border-blue-500 placeholder:text-gray-400 relative z-40"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-20">
                   {[
                     { format: "excel", icon: "📊", title: "Excel Completo", desc: "Todas las métricas filtradas", color: "from-green-600 to-green-500" },
                     { format: "pdf", icon: "📄", title: "Reporte PDF", desc: "Resumen ejecutivo filtrado", color: "from-red-600 to-red-500" },
@@ -997,7 +977,7 @@ export default function ReportesPage() {
                           alert("Error al exportar: " + (err.message || err));
                         }
                       }}
-                      className="h-auto p-4 bg-gray-800/60 hover:bg-gray-700 border-2 border-gray-700 hover:border-blue-500 transition-all rounded-xl text-white"
+                      className="h-auto p-4 bg-gray-800/60 hover:bg-gray-700 border-2 border-gray-700 hover:border-blue-500 transition-all rounded-xl text-white relative z-30"
                     >
                       <div className="flex items-center gap-3">
                         <div

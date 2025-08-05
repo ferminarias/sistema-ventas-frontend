@@ -68,6 +68,16 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   }
 
   const { ventas } = useVentas(cliente.toLowerCase())
+  
+  // Debug: Log para verificar que se están cargando todas las ventas para "general"
+  useEffect(() => {
+    console.log(`📊 ClienteVentasCharts - Cliente: "${cliente}"`);
+    console.log(`📊 Total ventas cargadas: ${ventas?.length || 0}`);
+    if (cliente.toLowerCase() === 'general') {
+      console.log('🌍 Modo GENERAL activado - deberían mostrarse TODAS las ventas');
+      console.log('📋 Primeras 3 ventas:', ventas?.slice(0, 3));
+    }
+  }, [cliente, ventas?.length])
 
   // Función para obtener la semana ISO del año según estándar ISO 8601
   const getSemanaISO = (fecha: Date) => {

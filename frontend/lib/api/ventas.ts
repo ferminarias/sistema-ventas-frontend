@@ -29,8 +29,11 @@ export const ventasApi = {
     // Obtener todas las ventas o filtrar por cliente
     async getVentas(cliente?: string): Promise<Venta[]> {
         try {
-            const url = cliente ? `${API_BASE}/api/ventas?cliente=${cliente}` : `${API_BASE}/api/ventas`;
+            // Si cliente es "general", no enviar parámetro para obtener datos de todos los clientes
+            const shouldFilterByClient = cliente && cliente !== 'general' && cliente !== 'all';
+            const url = shouldFilterByClient ? `${API_BASE}/api/ventas?cliente=${cliente}` : `${API_BASE}/api/ventas`;
             console.log('Haciendo petición GET a:', url);
+            console.log('Filtrar por cliente:', shouldFilterByClient ? cliente : 'NO (datos de todos los clientes)');
             
             const token = getToken();
             console.log('Token disponible:', !!token);
@@ -112,8 +115,11 @@ export const ventasApi = {
     // Exportar a Excel usando el endpoint original con descarga mejorada
     async exportarExcel(cliente?: string): Promise<void> {
         try {
-            const url = cliente ? `${API_BASE}/api/ventas/exportar?cliente=${cliente}` : `${API_BASE}/api/ventas/exportar`;
+            // Si cliente es "general", no enviar parámetro para exportar datos de todos los clientes
+            const shouldFilterByClient = cliente && cliente !== 'general' && cliente !== 'all';
+            const url = shouldFilterByClient ? `${API_BASE}/api/ventas/exportar?cliente=${cliente}` : `${API_BASE}/api/ventas/exportar`;
             console.log('Iniciando exportación a Excel desde:', url);
+            console.log('Exportar por cliente:', shouldFilterByClient ? cliente : 'NO (datos de todos los clientes)');
             
             const token = getToken();
             const headers: HeadersInit = {

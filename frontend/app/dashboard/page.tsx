@@ -20,6 +20,9 @@ export default function Dashboard() {
       if (!currentUser) {
         router.replace("/")
       } else {
+        console.log('🔐 Dashboard General - Usuario autenticado:', currentUser);
+        console.log('👤 Rol del usuario:', currentUser.role);
+        console.log('🌍 Acceso a datos globales:', currentUser.role === 'admin' ? 'SÍ' : 'NO');
         setUser(currentUser)
         setLoading(false)
       }
