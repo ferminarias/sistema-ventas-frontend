@@ -148,25 +148,41 @@ export function FileUpload({
         {!preview && (
           <div
             className={cn(
-              "w-full h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors",
+              "w-full h-32 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative overflow-hidden group",
               disabled
-                ? "border-gray-200 bg-gray-50 cursor-not-allowed"
-                : "border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100",
-              error && "border-red-300 bg-red-50"
+                ? "border-gray-600 bg-gray-800/50 cursor-not-allowed"
+                : "border-purple-400/50 bg-gradient-to-br from-gray-800/80 to-gray-900/80 hover:border-purple-400 hover:from-purple-900/20 hover:to-purple-800/20 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/20",
+              error && "border-red-400/50 bg-red-900/20 hover:border-red-400"
             )}
             onClick={handleClick}
           >
+            {/* Efecto de brillo en hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+            
             {isUploading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              <div className="flex flex-col items-center">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-400 mb-2" />
+                <p className="text-sm text-gray-300">Subiendo archivo...</p>
+              </div>
             ) : (
               <>
-                <Image className="h-6 w-6 text-gray-400 mb-2" />
-                <p className="text-sm text-gray-600 text-center">
+                <div className="relative mb-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:shadow-purple-500/50 transition-all duration-300 group-hover:scale-110">
+                    <Image className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-full flex items-center justify-center">
+                    <Upload className="h-2.5 w-2.5 text-white" />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-200 text-center font-medium mb-1">
                   {placeholder}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-400">
                   Máximo {maxSize}MB
                 </p>
+                <div className="mt-2 px-3 py-1 bg-purple-500/20 rounded-full border border-purple-400/30">
+                  <p className="text-xs text-purple-300">Haz clic para seleccionar</p>
+                </div>
               </>
             )}
           </div>
@@ -189,7 +205,7 @@ export function FileUpload({
             variant="outline"
             onClick={handleClick}
             disabled={disabled || isUploading}
-            className="w-full"
+            className="w-full bg-gradient-to-r from-purple-600/20 to-purple-700/20 border-purple-400/50 text-purple-200 hover:from-purple-600/30 hover:to-purple-700/30 hover:border-purple-400 hover:text-purple-100 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/20"
           >
             <Upload className="mr-2 h-4 w-4" />
             {isUploading ? "Subiendo..." : "Seleccionar Logo"}
@@ -202,14 +218,22 @@ export function FileUpload({
         )}
 
         {/* Información adicional */}
-        <p className="text-xs text-gray-500">
-          Formatos soportados: JPG, PNG, GIF. Tamaño máximo: {maxSize}MB
+        <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-3">
+          <p className="text-xs text-gray-300 mb-2">
+            <span className="font-medium text-purple-300">Formatos soportados:</span> JPG, PNG, GIF
+          </p>
+          <p className="text-xs text-gray-300 mb-2">
+            <span className="font-medium text-purple-300">Tamaño máximo:</span> {maxSize}MB
+          </p>
           {maxSize <= 2 && (
-            <span className="block mt-1">
-              💡 Si tu imagen es muy grande, comprímela usando TinyPNG o similar
-            </span>
+            <div className="flex items-start gap-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded">
+              <span className="text-amber-400 text-sm">💡</span>
+              <p className="text-xs text-amber-200">
+                Si tu imagen es muy grande, comprímela usando <span className="font-medium">TinyPNG</span> o similar
+              </p>
+            </div>
           )}
-        </p>
+        </div>
       </div>
     </div>
   )
