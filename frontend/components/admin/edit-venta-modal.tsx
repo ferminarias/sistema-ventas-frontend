@@ -60,84 +60,87 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
   const [mostrandoArchivos, setMostrandoArchivos] = useState(false)
   const [cargandoArchivos, setCargandoArchivos] = useState(false)
 
+  // Función reutilizable para cargar archivos
+  const cargarArchivos = async (forzarRecarga = false) => {
+    setCargandoArchivos(true)
+    try {
+      const timestamp = forzarRecarga ? `&_t=${Date.now()}` : '';
+      console.log(forzarRecarga ? '🔄 FORZANDO recarga de archivos' : '🔍 EditVentaModal - Cargando archivos para venta ID:', venta.id);
+      
+      // NUEVO: Llamada directa al endpoint para obtener archivos por venta_id
+      const token = localStorage.getItem("token");
+      const headers: HeadersInit = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
+      const url = `${API_BASE_URL}/api/comprobantes/search?venta_id=${venta.id}${timestamp}`;
+      
+      console.log('🔗 URL de búsqueda:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+        credentials: 'include',
+        cache: forzarRecarga ? 'no-cache' : 'default'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('📊 Respuesta del backend:', data);
+      
+      // El backend puede devolver diferentes estructuras, adaptarse
+      const comprobantes = data.resultados || data.comprobantes || data || [];
+      console.log('📁 Total comprobantes encontrados:', comprobantes.length);
+      
+      if (comprobantes.length > 0) {
+        const todosLosArchivos: ArchivoAdjunto[] = [];
+        
+        comprobantes.forEach((comprobante: any) => {
+          if (comprobante.archivos && Array.isArray(comprobante.archivos)) {
+            comprobante.archivos.forEach((archivo: any) => {
+              todosLosArchivos.push({
+                field_id: archivo.field_id || archivo.filename || `archivo_${Date.now()}`,
+                filename: archivo.filename || archivo.original_name || 'archivo_sin_nombre',
+                original_name: archivo.original_name || archivo.filename || 'archivo_sin_nombre',
+                file_url: archivo.file_url || archivo.preview_url || archivo.download_url || ''
+              });
+            });
+          }
+        });
+        
+        console.log('✅ Archivos procesados para mostrar:', todosLosArchivos.length);
+        console.log('📎 Lista de archivos:', todosLosArchivos.map(a => a.original_name));
+        
+        setArchivosActuales(todosLosArchivos);
+      } else {
+        console.log('⚠️ No se encontraron archivos para esta venta');
+        setArchivosActuales([]);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error cargando archivos:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los archivos adjuntos",
+        variant: "destructive"
+      });
+      setArchivosActuales([]);
+    } finally {
+      setCargandoArchivos(false)
+    }
+  }
+
   // Cargar archivos adjuntos existentes USANDO EL SERVICIO DE COMPROBANTES
   useEffect(() => {
-    const cargarArchivos = async () => {
-      setCargandoArchivos(true)
-      try {
-        console.log('🔍 EditVentaModal - Cargando archivos para venta ID:', venta.id);
-        
-        // NUEVO: Llamada directa al endpoint para obtener archivos por venta_id
-        const token = localStorage.getItem("token");
-        const headers: HeadersInit = {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        };
-        
-        if (token) {
-          headers.Authorization = `Bearer ${token}`;
-        }
-        
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
-        const url = `${API_BASE_URL}/api/comprobantes/search?venta_id=${venta.id}`;
-        
-        console.log('🔗 URL de búsqueda:', url);
-        
-        const response = await fetch(url, {
-          method: 'GET',
-          headers,
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log('📊 Respuesta del backend:', data);
-        
-        // El backend puede devolver diferentes estructuras, adaptarse
-        const comprobantes = data.resultados || data.comprobantes || data || [];
-        console.log('📁 Total comprobantes encontrados:', comprobantes.length);
-        
-        if (comprobantes.length > 0) {
-          const todosLosArchivos: ArchivoAdjunto[] = [];
-          
-          comprobantes.forEach((comprobante: any) => {
-            if (comprobante.archivos && Array.isArray(comprobante.archivos)) {
-              comprobante.archivos.forEach((archivo: any) => {
-                todosLosArchivos.push({
-                  field_id: archivo.field_id || archivo.filename || `archivo_${Date.now()}`,
-                  filename: archivo.filename || archivo.original_name || 'archivo_sin_nombre',
-                  original_name: archivo.original_name || archivo.filename || 'archivo_sin_nombre',
-                  file_url: archivo.file_url || archivo.preview_url || archivo.download_url || ''
-                });
-              });
-            }
-          });
-          
-          console.log('✅ Archivos procesados para mostrar:', todosLosArchivos.length);
-          console.log('📎 Lista de archivos:', todosLosArchivos.map(a => a.original_name));
-          
-          setArchivosActuales(todosLosArchivos);
-        } else {
-          console.log('⚠️ No se encontraron archivos para esta venta');
-          setArchivosActuales([]);
-        }
-        
-      } catch (error) {
-        console.error('❌ Error cargando archivos:', error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los archivos adjuntos",
-          variant: "destructive"
-        });
-        setArchivosActuales([]);
-      } finally {
-        setCargandoArchivos(false)
-      }
-    }
-
     cargarArchivos()
   }, [venta.id, toast])
 
@@ -218,6 +221,12 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
       setArchivosAEliminar([])
       setArchivosNuevos({})
       console.log("✅ Estados de archivos limpiados después del éxito")
+      
+      // RECARGAR archivos para verificar que se aplicaron los cambios
+      console.log("🔄 Recargando archivos para verificar cambios...")
+      setTimeout(() => {
+        cargarArchivos(true) // true = forzar recarga
+      }, 1000) // Esperar 1 segundo para que el backend procese
       
     } catch (error) {
       console.error("❌ Error en handleSubmit:", error)
@@ -352,15 +361,27 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
             <div className="border-t border-gray-700 pt-4">
               <div className="flex items-center justify-between mb-4">
                 <Label className="text-white text-lg">📎 Comprobantes</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMostrandoArchivos(!mostrandoArchivos)}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                >
-                  {mostrandoArchivos ? 'Ocultar' : 'Mostrar'} Archivos
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => cargarArchivos(true)}
+                    disabled={cargandoArchivos}
+                    className="border-green-600 text-green-300 hover:bg-green-700"
+                  >
+                    🔄 Refrescar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMostrandoArchivos(!mostrandoArchivos)}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    {mostrandoArchivos ? 'Ocultar' : 'Mostrar'} Archivos
+                  </Button>
+                </div>
               </div>
 
               {mostrandoArchivos && (
