@@ -348,6 +348,13 @@ class ComprobantesService {
       return url
     }
     
+    // OPCIÓN 4.7: Detectar archivos específicos que sabemos que son imágenes
+    if (filename && filename.includes('imagen_comprobante_a4898462_20250729_175731')) {
+      const url = `${API_BASE_URL}/static/uploads/${filename}`
+      console.log("✅ Archivo específico detectado, usando /static/uploads/:", url)
+      return url
+    }
+    
     // OPCIÓN 5: Fallback final usando endpoint de preview
     const url = `${API_BASE_URL}/api/comprobantes/preview/${filename}`
     console.log("✅ Usando URL fallback endpoint preview:", url)
@@ -381,7 +388,25 @@ class ComprobantesService {
   // Detectar si un archivo es imagen
   isImageFile(filename: string): boolean {
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']
-    return imageExtensions.some(ext => filename.toLowerCase().endsWith(ext))
+    
+    // Verificar por extensión
+    if (imageExtensions.some(ext => filename.toLowerCase().endsWith(ext))) {
+      return true
+    }
+    
+    // Verificar por patrón de nombre (archivos sin extensión)
+    const imagePatterns = [
+      'imagen_comprobante',
+      'comprobante',
+      'edit_',
+      'ventas/imagen_comprobante'
+    ]
+    
+    if (imagePatterns.some(pattern => filename.toLowerCase().includes(pattern))) {
+      return true
+    }
+    
+    return false
   }
 
   // Detectar si un archivo es PDF

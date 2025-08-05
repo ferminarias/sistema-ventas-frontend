@@ -71,7 +71,20 @@ const ComprobanteItem = memo(({ comprobante, onVerComprobante, onDownloadFile, d
   // Función segura para verificar si es imagen
   const isImageFile = (filename: any) => {
     if (typeof filename !== 'string') return false
-    return comprobantesService.isImageFile(filename)
+    
+    // Usar el servicio
+    const serviceResult = comprobantesService.isImageFile(filename)
+    
+    // Logging para debugging
+    console.log("🔍 isImageFile check:", {
+      filename,
+      serviceResult,
+      hasImagenComprobante: filename.toLowerCase().includes('imagen_comprobante'),
+      hasComprobante: filename.toLowerCase().includes('comprobante'),
+      hasEdit: filename.toLowerCase().includes('edit_')
+    })
+    
+    return serviceResult
   }
 
   // Función segura para verificar si es PDF
