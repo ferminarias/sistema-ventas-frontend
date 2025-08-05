@@ -103,12 +103,14 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
       const data = await response.json();
       console.log('📊 Respuesta COMPLETA del backend:', {
         estructura: Object.keys(data),
-        data: data,
         hayResultados: !!data.resultados,
         hayComprobantes: !!data.comprobantes,
         totalResultados: data.resultados?.length || 0,
         totalComprobantes: data.comprobantes?.length || 0
       });
+      
+      // Log separado para evitar React error #130
+      console.log('📊 Data completa (separado):', JSON.stringify(data, null, 2));
       
       // El backend puede devolver diferentes estructuras, adaptarse
       let comprobantes = data.resultados || data.comprobantes || data || [];
@@ -126,11 +128,15 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
          
          // ALERTA CRÍTICA: Si el backend devolvió archivos de otras ventas
          if (comprobantesOriginales > comprobantes.length) {
-           console.error('🚨 ERROR CRÍTICO: El backend devolvió archivos de otras ventas!', {
+           const errorInfo = {
              totalDevueltos: comprobantesOriginales,
              deEstaVenta: comprobantes.length,
-             filtroAplicado: comprobantesOriginales - comprobantes.length
-           });
+             filtroAplicado: comprobantesOriginales - comprobantes.length,
+             ventaId: venta.id
+           };
+           
+           console.error('🚨 ERROR CRÍTICO: El backend devolvió archivos de otras ventas!');
+           console.error('📊 Detalles del error:', JSON.stringify(errorInfo, null, 2));
            
            toast({
              title: "🚨 Error del servidor detectado",
@@ -157,12 +163,10 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
         });
         
         console.log('✅ Archivos procesados para mostrar:', todosLosArchivos.length);
-        console.log('📎 Lista detallada de archivos:', todosLosArchivos.map(a => ({
-          fieldId: a.field_id,
-          filename: a.filename,
-          originalName: a.original_name,
-          fileUrl: a.file_url.substring(0, 50) + '...'
-        })));
+        console.log('📎 Lista detallada de archivos:');
+        todosLosArchivos.forEach((a, index) => {
+          console.log(`  ${index + 1}. ${a.original_name} (${a.field_id}) - ${a.file_url.substring(0, 50)}...`);
+        });
         
         setArchivosActuales(todosLosArchivos);
       } else {
