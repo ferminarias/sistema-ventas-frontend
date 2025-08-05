@@ -393,9 +393,16 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                     </div>
                   ) : archivosActuales.length > 0 ? (
                     <div>
-                      <Label className="text-white text-sm">
-                        📁 Archivos Existentes ({archivosActuales.length} encontrados)
-                      </Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-white text-sm">
+                          📁 Archivos Existentes ({archivosActuales.length} encontrados)
+                        </Label>
+                        {archivosAEliminar.length > 0 && (
+                          <span className="bg-red-600 text-white px-2 py-1 rounded text-xs">
+                            {archivosAEliminar.length} marcados para eliminación
+                          </span>
+                        )}
+                      </div>
                       <div className="grid grid-cols-1 gap-2 mt-2">
                         {archivosActuales.map((archivo, index) => (
                           <div key={`${archivo.field_id}_${index}`} className="bg-gray-700 p-3 rounded border border-gray-600 hover:border-gray-500 transition-colors">
