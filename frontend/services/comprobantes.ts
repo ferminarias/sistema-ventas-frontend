@@ -233,14 +233,14 @@ class ComprobantesService {
             'Authorization': `Bearer ${token}`,
           },
           // NO usar credentials: 'include' para evitar CORS
-        })
+    })
 
-        if (!response.ok) {
+    if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
+    }
 
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
         const link = document.createElement("a")
         link.href = url
         link.download = originalName || filename.original_name || filename.filename || 'archivo'
@@ -278,7 +278,7 @@ class ComprobantesService {
       link.download = originalName || filename
       document.body.appendChild(link)
       link.click()
-      window.URL.revokeObjectURL(url)
+    window.URL.revokeObjectURL(url)
       document.body.removeChild(link)
     } catch (error) {
       console.error("❌ Error al descargar archivo:", error)
@@ -342,16 +342,12 @@ class ComprobantesService {
     
     // OPCIÓN 4.6: Detectar por extensión de imagen sin storage_type
     if (filename && (filename.includes('.jpeg') || filename.includes('.jpg') || filename.includes('.png') || filename.includes('.gif'))) {
-      // Si no tiene storage_type definido, asumir que es local
-      const url = `${API_BASE_URL}/static/uploads/${filename}`
-      console.log("✅ Archivo sin storage_type, asumiendo local /static/uploads/:", url)
-      return url
-    }
-    
-    // OPCIÓN 4.7: Detectar archivos específicos que sabemos que son imágenes
-    if (filename && filename.includes('imagen_comprobante_a4898462_20250729_175731')) {
-      const url = `${API_BASE_URL}/static/uploads/${filename}`
-      console.log("✅ Archivo específico detectado, usando /static/uploads/:", url)
+      // Probar múltiples rutas para archivos locales
+      console.log("✅ Archivo sin storage_type, probando múltiples rutas para:", filename)
+      
+      // Intentar primero con endpoint de preview (recomendado)
+      const url = `${API_BASE_URL}/api/comprobantes/preview/${filename}`
+      console.log("✅ Usando endpoint preview para archivo sin storage_type:", url)
       return url
     }
     
@@ -388,25 +384,7 @@ class ComprobantesService {
   // Detectar si un archivo es imagen
   isImageFile(filename: string): boolean {
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']
-    
-    // Verificar por extensión
-    if (imageExtensions.some(ext => filename.toLowerCase().endsWith(ext))) {
-      return true
-    }
-    
-    // Verificar por patrón de nombre (archivos sin extensión)
-    const imagePatterns = [
-      'imagen_comprobante',
-      'comprobante',
-      'edit_',
-      'ventas/imagen_comprobante'
-    ]
-    
-    if (imagePatterns.some(pattern => filename.toLowerCase().includes(pattern))) {
-      return true
-    }
-    
-    return false
+    return imageExtensions.some(ext => filename.toLowerCase().endsWith(ext))
   }
 
   // Detectar si un archivo es PDF

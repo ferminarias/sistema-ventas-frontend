@@ -71,20 +71,7 @@ const ComprobanteItem = memo(({ comprobante, onVerComprobante, onDownloadFile, d
   // Función segura para verificar si es imagen
   const isImageFile = (filename: any) => {
     if (typeof filename !== 'string') return false
-    
-    // Usar el servicio
-    const serviceResult = comprobantesService.isImageFile(filename)
-    
-    // Logging para debugging
-    console.log("🔍 isImageFile check:", {
-      filename,
-      serviceResult,
-      hasImagenComprobante: filename.toLowerCase().includes('imagen_comprobante'),
-      hasComprobante: filename.toLowerCase().includes('comprobante'),
-      hasEdit: filename.toLowerCase().includes('edit_')
-    })
-    
-    return serviceResult
+    return comprobantesService.isImageFile(filename)
   }
 
   // Función segura para verificar si es PDF
@@ -258,25 +245,48 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
           
           // Para URLs del backend, usar fetch con autenticación
           const token = localStorage.getItem("token")
-          const response = await fetch(previewUrl, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'image/*',
-            },
-            // NO usar credentials: 'include' para evitar CORS
-          })
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-          }
-
-          const blob = await response.blob()
-          const url = URL.createObjectURL(blob)
           
-          if (isMounted) {
-            setImageSrc(url)
-            setImageUrls(prev => new Map(prev).set(cacheKey, url))
-            setLoading(false)
+          // Intentar múltiples URLs si la primera falla
+          const urlsToTry = [
+            previewUrl, // URL principal
+            `${process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app'}/static/uploads/${archivo.filename || archivo.original_name}`, // Fallback /static/uploads/
+          ]
+          
+          let success = false
+          for (const urlToTry of urlsToTry) {
+            try {
+              console.log("🔄 Intentando cargar imagen desde:", urlToTry)
+              
+              const response = await fetch(urlToTry, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Accept': 'image/*',
+                },
+                // NO usar credentials: 'include' para evitar CORS
+              })
+
+              if (response.ok) {
+                const blob = await response.blob()
+                const url = URL.createObjectURL(blob)
+                
+                if (isMounted) {
+                  console.log("✅ Imagen cargada exitosamente desde:", urlToTry)
+                  setImageSrc(url)
+                  setImageUrls(prev => new Map(prev).set(cacheKey, url))
+                  setLoading(false)
+                  success = true
+                  break
+                }
+              } else {
+                console.log("❌ Fallo al cargar desde:", urlToTry, "Status:", response.status)
+              }
+            } catch (err) {
+              console.log("❌ Error al cargar desde:", urlToTry, err)
+            }
+          }
+          
+          if (!success) {
+            throw new Error("No se pudo cargar la imagen desde ninguna URL")
           }
         } catch (err) {
           console.error("❌ Error cargando imagen:", archivo.filename, err)
