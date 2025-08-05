@@ -65,7 +65,6 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
     setCargandoArchivos(true)
     try {
       const timestamp = forzarRecarga ? `&_t=${Date.now()}` : '';
-      console.log(forzarRecarga ? '🔄 FORZANDO recarga de archivos' : '🔍 EditVentaModal - Cargando archivos para venta ID:', venta.id);
       
       // NUEVO: Llamada directa al endpoint para obtener archivos por venta_id
       const token = localStorage.getItem("token");
@@ -82,13 +81,6 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
       
       const url = `${API_BASE_URL}/api/comprobantes/search?venta_id=${venta.id}${timestamp}`;
       
-      console.log('🎯 CRÍTICO - Buscando archivos para venta específica:', {
-        ventaId: venta.id,
-        ventaIdTipo: typeof venta.id,
-        urlCompleta: url,
-        parametroVentaId: `venta_id=${venta.id}`
-      });
-      
       const response = await fetch(url, {
         method: 'GET',
         headers,
@@ -101,49 +93,15 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
       }
       
       const data = await response.json();
-      console.log('📊 Respuesta COMPLETA del backend:', {
-        estructura: Object.keys(data),
-        hayResultados: !!data.resultados,
-        hayComprobantes: !!data.comprobantes,
-        totalResultados: data.resultados?.length || 0,
-        totalComprobantes: data.comprobantes?.length || 0
-      });
-      
-      // Log separado para evitar React error #130
-      console.log('📊 Data completa (separado):', JSON.stringify(data, null, 2));
       
       // El backend puede devolver diferentes estructuras, adaptarse
       let comprobantes = data.resultados || data.comprobantes || data || [];
-      console.log('📁 Comprobantes ANTES del filtro:', comprobantes.length);
       
              // FILTRO DE SEGURIDAD: Asegurar que solo mostremos archivos de esta venta
        if (Array.isArray(comprobantes)) {
-         const comprobantesOriginales = comprobantes.length;
-         comprobantes = comprobantes.filter(comp => {
-           const esDeEstaVenta = comp.venta_id === venta.id || comp.venta_id === venta.id.toString();
-           console.log(`🔍 Comprobante ID ${comp.id || 'sin_id'}: venta_id=${comp.venta_id}, buscamos=${venta.id}, coincide=${esDeEstaVenta}`);
-           return esDeEstaVenta;
-         });
-         console.log('📁 Comprobantes DESPUÉS del filtro:', comprobantes.length);
-         
-         // ALERTA CRÍTICA: Si el backend devolvió archivos de otras ventas
-         if (comprobantesOriginales > comprobantes.length) {
-           const errorInfo = {
-             totalDevueltos: comprobantesOriginales,
-             deEstaVenta: comprobantes.length,
-             filtroAplicado: comprobantesOriginales - comprobantes.length,
-             ventaId: venta.id
-           };
-           
-           console.error('🚨 ERROR CRÍTICO: El backend devolvió archivos de otras ventas!');
-           console.error('📊 Detalles del error:', JSON.stringify(errorInfo, null, 2));
-           
-           toast({
-             title: "🚨 Error del servidor detectado",
-             description: `El backend devolvió ${comprobantesOriginales} archivos pero solo ${comprobantes.length} son de esta venta. Filtro aplicado automáticamente.`,
-             variant: "destructive"
-           });
-         }
+         comprobantes = comprobantes.filter(comp => 
+           comp.venta_id === venta.id || comp.venta_id === venta.id.toString()
+         );
        }
       
       if (comprobantes.length > 0) {
@@ -162,20 +120,13 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
           }
         });
         
-        console.log('✅ Archivos procesados para mostrar:', todosLosArchivos.length);
-        console.log('📎 Lista detallada de archivos:');
-        todosLosArchivos.forEach((a, index) => {
-          console.log(`  ${index + 1}. ${a.original_name} (${a.field_id}) - ${a.file_url.substring(0, 50)}...`);
-        });
-        
         setArchivosActuales(todosLosArchivos);
       } else {
-        console.log('⚠️ No se encontraron archivos para esta venta');
         setArchivosActuales([]);
       }
       
     } catch (error) {
-      console.error('❌ Error cargando archivos:', error);
+      console.error('Error cargando archivos:', error);
       toast({
         title: "Error",
         description: "No se pudieron cargar los archivos adjuntos",
@@ -198,15 +149,6 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
     
     setArchivosAEliminar(nuevosArchivosAEliminar)
     setArchivosActuales(nuevosArchivosActuales)
-    
-    console.log('🗑️ Archivo marcado para eliminación:', {
-      fieldId,
-      totalArchivosOriginales: archivosActuales.length,
-      archivosAEliminar: nuevosArchivosAEliminar,
-      totalAEliminar: nuevosArchivosAEliminar.length,
-      archivosRestantes: nuevosArchivosActuales.length,
-      eliminandoTodos: nuevosArchivosActuales.length === 0
-    })
     
     if (nuevosArchivosActuales.length === 0) {
       toast({
@@ -262,23 +204,7 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
     setLoading(true)
     try {
       
-      console.log("🚀 EditVentaModal - Preparando envío:", {
-        ventaId: venta.id,
-        archivosAEliminar: archivosAEliminar,
-        archivosAEliminarCount: archivosAEliminar.length,
-        archivosNuevos: Object.keys(archivosNuevos),
-        archivosNuevosCount: Object.keys(archivosNuevos).length,
-        eliminandoTodos: archivosAEliminar.length > 0 && archivosActuales.length === 0
-      })
-      
-      // VERIFICACIÓN CRÍTICA: ¿Estamos enviando TODOS los archivos para eliminar?
-      if (archivosAEliminar.length > 0 && archivosActuales.length === 0) {
-        console.log("🚨 ELIMINACIÓN TOTAL DETECTADA - Enviando al backend:", {
-          totalArchivosAEliminar: archivosAEliminar.length,
-          listaCompleta: archivosAEliminar,
-          deberiaQuedarCero: true
-        })
-      }
+
       
       const payload = {
         ...formData,
@@ -286,59 +212,25 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
         ...(Object.keys(archivosNuevos).length > 0 && { archivos_nuevos: archivosNuevos })
       }
       
-      console.log("📦 Payload final enviado desde modal:", {
-        tieneArchivosEliminar: !!payload.archivos_eliminar,
-        archivosEliminarArray: payload.archivos_eliminar,
-        payloadKeys: Object.keys(payload)
-      })
-      
-      // 🔍 DEBUGGING ESPECÍFICO según guía del backend
-      console.log("🔍 DEBUG ELIMINACIÓN (según guía backend):");
-      console.log("📁 Total archivos que DEBERÍAN eliminarse:", (payload.archivos_eliminar || []).length);
-      console.log("📋 Lista exacta de field_ids a eliminar:", payload.archivos_eliminar || []);
-      console.log("❓ ¿Eliminando TODOS los archivos actuales?", 
-        (payload.archivos_eliminar?.length || 0) > 0 && archivosActuales.length === 0);
-      console.log("📡 Payload completo que se enviará al backend:", JSON.stringify(payload, null, 2));
+
       
       await onSave(payload)
       
       // Limpiar estados después del éxito
       setArchivosAEliminar([])
       setArchivosNuevos({})
-      console.log("✅ Estados de archivos limpiados después del éxito")
       
-      // RECARGAR archivos para verificar que se aplicaron los cambios
-      console.log("🔄 Recargando archivos para verificar cambios...")
-      const archivosEliminadosParaVerificar = [...archivosAEliminar]
-      const seEliminaronTodos = archivosActuales.length === 0
-      
-      setTimeout(async () => {
-        console.log("🔍 VERIFICACIÓN POST-ELIMINACIÓN:");
-        console.log("📋 Archivos que se enviaron para eliminar:", archivosEliminadosParaVerificar);
-        console.log("❓ Se suponía que se eliminaran TODOS:", seEliminaronTodos);
-        
-        await cargarArchivos(true) // true = forzar recarga
-        
-        // Verificar resultado después de la recarga
-        setTimeout(() => {
-          console.log("📊 RESULTADO DESPUÉS DE RECARGA:");
-          console.log("📁 Archivos encontrados ahora:", archivosActuales.length);
-          console.log("❓ ¿Quedó algún archivo cuando no debería?", 
-            seEliminaronTodos && archivosActuales.length > 0);
-          
-          if (seEliminaronTodos && archivosActuales.length > 0) {
-            console.error("🚨 PROBLEMA DETECTADO: Se eliminaron todos pero aparecieron archivos después de recargar!");
-            console.error("📋 Archivos que aparecieron:", archivosActuales.map(a => a.field_id));
-          }
-        }, 500);
-      }, 1000) // Esperar 1 segundo para que el backend procese
+      // Recargar archivos para mostrar cambios
+      setTimeout(() => {
+        cargarArchivos(true)
+      }, 1000)
       
     } catch (error) {
-      console.error("❌ Error en handleSubmit:", error)
+      console.error("Error en handleSubmit:", error)
       
       toast({
         title: "Error",
-        description: "No se pudieron guardar los cambios. Verifica la consola para más detalles.",
+        description: "No se pudieron guardar los cambios.",
         variant: "destructive"
       })
     } finally {
@@ -504,61 +396,25 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                         </Label>
                         <div className="flex items-center gap-2">
                           {archivosActuales.length > 0 && (
-                            <>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  // Marcar TODOS los archivos para eliminación
-                                  const todosLosFieldIds = archivosActuales.map(a => a.field_id)
-                                  setArchivosAEliminar(todosLosFieldIds)
-                                  setArchivosActuales([])
-                                  console.log('🗑️ TODOS los archivos marcados para eliminación:', todosLosFieldIds)
-                                  toast({
-                                    title: "🗑️ TODOS los archivos marcados",
-                                    description: `${todosLosFieldIds.length} archivos se eliminarán al guardar`,
-                                    variant: "destructive"
-                                  })
-                                }}
-                                className="border-red-600 text-red-300 hover:bg-red-700"
-                              >
-                                🗑️ Eliminar TODOS
-                              </Button>
-                              
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={async () => {
-                                  // TEST ESPECÍFICO según guía del backend
-                                  const todosLosFieldIds = archivosActuales.map(a => a.field_id)
-                                  
-                                  console.log("🧪 TEST ELIMINACIÓN TOTAL - INICIO");
-                                  console.log("📁 Archivos antes del test:", todosLosFieldIds);
-                                  console.log("📊 Total archivos:", todosLosFieldIds.length);
-                                  
-                                  // Preparar payload exactamente como dice la guía
-                                  const payloadTest = {
-                                    ...formData,
-                                    archivos_eliminar: todosLosFieldIds // ✅ TODOS
-                                  };
-                                  
-                                  console.log("📡 Payload de test:", JSON.stringify(payloadTest, null, 2));
-                                  
-                                  // Ejecutar test
-                                  try {
-                                    await onSave(payloadTest);
-                                    console.log("✅ Test completado - verificando resultado...");
-                                  } catch (error) {
-                                    console.error("❌ Test falló:", error);
-                                  }
-                                }}
-                                className="border-yellow-600 text-yellow-300 hover:bg-yellow-700"
-                              >
-                                🧪 Test Backend
-                              </Button>
-                            </>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Marcar TODOS los archivos para eliminación
+                                const todosLosFieldIds = archivosActuales.map(a => a.field_id)
+                                setArchivosAEliminar(todosLosFieldIds)
+                                setArchivosActuales([])
+                                toast({
+                                  title: "🗑️ TODOS los archivos marcados",
+                                  description: `${todosLosFieldIds.length} archivos se eliminarán al guardar`,
+                                  variant: "destructive"
+                                })
+                              }}
+                              className="border-red-600 text-red-300 hover:bg-red-700"
+                            >
+                              🗑️ Eliminar TODOS
+                            </Button>
                           )}
                           {archivosAEliminar.length > 0 && (
                             <span className="bg-red-600 text-white px-2 py-1 rounded text-xs">
