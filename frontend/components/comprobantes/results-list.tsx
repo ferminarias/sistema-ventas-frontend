@@ -533,36 +533,67 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
                 </div>
               </div>
 
-              {isImageFile(getFilename(currentFile)) || currentFile.tipo === 'imagen' ? (
-                <div className="flex justify-center">
-                  <div className="relative">
-                    <AuthenticatedImage
-                      archivo={currentFile}
-                    alt={getDisplayName(currentFile)}
-                      className="max-w-full max-h-96 object-contain rounded-lg shadow-lg"
-                    />
+              {(() => {
+                // Usar la misma lógica mejorada de detección
+                const filename = getFilename(currentFile)
+                const isImage = isImageFile(filename) || 
+                               currentFile.tipo === 'imagen' || 
+                               ((currentFile as any).storage_type === 'cloudinary' && currentFile.file_url && 
+                                (currentFile.file_url.includes('/image/upload/') || 
+                                 currentFile.file_url.match(/\.(jpg|jpeg|png|gif|webp)($|\?)/i))) ||
+                               filename.includes('imagen_comprobante')
+                
+                console.log("🖼️ Verificando si es imagen en modal:", {
+                  filename,
+                  tipo: currentFile.tipo,
+                  storage_type: (currentFile as any).storage_type,
+                  file_url: currentFile.file_url,
+                  isImage
+                })
+                
+                if (isImage) {
+                  return (
+                    <div className="flex justify-center">
+                      <div className="relative">
+                        <AuthenticatedImage
+                          archivo={currentFile}
+                          alt={getDisplayName(currentFile)}
+                          className="max-w-full max-h-96 object-contain rounded-lg shadow-lg"
+                        />
+                      </div>
+                    </div>
+                  )
+                }
+                
+                const isPdf = isPdfFile(filename) || 
+                             currentFile.tipo === 'pdf' || 
+                             (currentFile.file_url && currentFile.file_url.includes('.pdf'))
+                
+                if (isPdf) {
+                  return (
+                    <div className="flex justify-center">
+                      <iframe
+                        src={`${comprobantesService.getPreviewUrlFromFile(currentFile)}?token=${localStorage.getItem("token")}`}
+                        className="w-full h-96 rounded-lg border border-gray-600"
+                        title={getDisplayName(currentFile)}
+                        onLoad={() => {
+                          // PDF cargado exitosamente
+                        }}
+                      />
+                    </div>
+                  )
+                }
+                
+                return (
+                  <div className="flex items-center justify-center h-64 bg-gray-900 rounded-lg">
+                    <div className="text-center">
+                      <FileText className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+                      <p className="text-gray-400">Vista previa no disponible para este tipo de archivo</p>
+                      <p className="text-sm text-gray-500">Usa el botón de descarga para ver el contenido</p>
+                    </div>
                   </div>
-                </div>
-              ) : isPdfFile(getFilename(currentFile)) || currentFile.tipo === 'pdf' ? (
-                <div className="flex justify-center">
-                  <iframe
-                    src={`${comprobantesService.getPreviewUrlFromFile(currentFile)}?token=${localStorage.getItem("token")}`}
-                    className="w-full h-96 rounded-lg border border-gray-600"
-                    title={getDisplayName(currentFile)}
-                    onLoad={() => {
-                      // PDF cargado exitosamente
-                    }}
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-64 bg-gray-900 rounded-lg">
-                  <div className="text-center">
-                    <FileText className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-400">Vista previa no disponible para este tipo de archivo</p>
-                    <p className="text-sm text-gray-500">Usa el botón de descarga para ver el contenido</p>
-                  </div>
-                </div>
-              )}
+                )
+              })()}
             </div>
 
             <div className="p-4 border-t border-card bg-gray-900 rounded-b-xl">
