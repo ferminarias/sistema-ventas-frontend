@@ -55,12 +55,16 @@ const ComprobanteItem = memo(({ comprobante, onVerComprobante, onDownloadFile, d
   const canPreview = (filename: any) => {
     const actualFilename = typeof filename === 'string' ? filename : ''
     
+    console.log("🔍 Verificando preview para:", actualFilename)
+    
     // Si es una imagen o PDF, permitir preview
     if (actualFilename && (comprobantesService.isImageFile(actualFilename) || comprobantesService.isPdfFile(actualFilename))) {
+      console.log("✅ Preview permitido para:", actualFilename)
       return true
     }
     
     // Para otros tipos, no mostrar preview (solo descarga)
+    console.log("❌ Preview NO permitido para:", actualFilename)
     return false
   }
 
@@ -139,17 +143,22 @@ const ComprobanteItem = memo(({ comprobante, onVerComprobante, onDownloadFile, d
                         
                         {/* Botones de acción */}
                         <div className="flex gap-1 mt-2">
-                          {canPreview(getFilename(archivo)) && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => onVerComprobante(archivo, comprobante)}
-                              className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs px-2 py-1"
-                            >
-                              <Eye className="h-3 w-3 mr-1" />
-                              Ver
-                            </Button>
-                          )}
+                          {(() => {
+                            const filename = getFilename(archivo)
+                            const canPreviewFile = canPreview(filename)
+                            console.log("🔍 Archivo:", getDisplayName(archivo), "Filename:", filename, "CanPreview:", canPreviewFile)
+                            return canPreviewFile ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => onVerComprobante(archivo, comprobante)}
+                                className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs px-2 py-1"
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                Ver
+                              </Button>
+                            ) : null
+                          })()}
                           <Button
                             size="sm"
                             onClick={() => onDownloadFile(archivo)}
