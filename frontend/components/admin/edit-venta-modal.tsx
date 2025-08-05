@@ -81,7 +81,12 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
       const url = `${API_BASE_URL}/api/comprobantes/search?venta_id=${venta.id}${timestamp}`;
       
-      console.log('🔗 URL de búsqueda:', url);
+      console.log('🎯 CRÍTICO - Buscando archivos para venta específica:', {
+        ventaId: venta.id,
+        ventaIdTipo: typeof venta.id,
+        urlCompleta: url,
+        parametroVentaId: `venta_id=${venta.id}`
+      });
       
       const response = await fetch(url, {
         method: 'GET',
@@ -95,11 +100,44 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
       }
       
       const data = await response.json();
-      console.log('📊 Respuesta del backend:', data);
+      console.log('📊 Respuesta COMPLETA del backend:', {
+        estructura: Object.keys(data),
+        data: data,
+        hayResultados: !!data.resultados,
+        hayComprobantes: !!data.comprobantes,
+        totalResultados: data.resultados?.length || 0,
+        totalComprobantes: data.comprobantes?.length || 0
+      });
       
       // El backend puede devolver diferentes estructuras, adaptarse
-      const comprobantes = data.resultados || data.comprobantes || data || [];
-      console.log('📁 Total comprobantes encontrados:', comprobantes.length);
+      let comprobantes = data.resultados || data.comprobantes || data || [];
+      console.log('📁 Comprobantes ANTES del filtro:', comprobantes.length);
+      
+             // FILTRO DE SEGURIDAD: Asegurar que solo mostremos archivos de esta venta
+       if (Array.isArray(comprobantes)) {
+         const comprobantesOriginales = comprobantes.length;
+         comprobantes = comprobantes.filter(comp => {
+           const esDeEstaVenta = comp.venta_id === venta.id || comp.venta_id === venta.id.toString();
+           console.log(`🔍 Comprobante ID ${comp.id || 'sin_id'}: venta_id=${comp.venta_id}, buscamos=${venta.id}, coincide=${esDeEstaVenta}`);
+           return esDeEstaVenta;
+         });
+         console.log('📁 Comprobantes DESPUÉS del filtro:', comprobantes.length);
+         
+         // ALERTA CRÍTICA: Si el backend devolvió archivos de otras ventas
+         if (comprobantesOriginales > comprobantes.length) {
+           console.error('🚨 ERROR CRÍTICO: El backend devolvió archivos de otras ventas!', {
+             totalDevueltos: comprobantesOriginales,
+             deEstaVenta: comprobantes.length,
+             filtroAplicado: comprobantesOriginales - comprobantes.length
+           });
+           
+           toast({
+             title: "🚨 Error del servidor detectado",
+             description: `El backend devolvió ${comprobantesOriginales} archivos pero solo ${comprobantes.length} son de esta venta. Filtro aplicado automáticamente.`,
+             variant: "destructive"
+           });
+         }
+       }
       
       if (comprobantes.length > 0) {
         const todosLosArchivos: ArchivoAdjunto[] = [];
