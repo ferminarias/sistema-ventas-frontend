@@ -137,15 +137,7 @@ export const ventasApi = {
             const directUrl = `${API_BASE}/api/exportar?${params.toString()}`;
             console.log('🔥 NUEVO EXPORTAR - URL directa:', directUrl);
 
-            // Opción 1: Descarga directa por window.open (más simple)
-            try {
-                window.open(directUrl, '_blank');
-                return;
-            } catch (popupError) {
-                console.log('Popup bloqueado, intentando fetch + blob...');
-            }
-
-            // Opción 2: Fetch + blob si popup está bloqueado
+            // Descarga directa con fetch + blob (sin abrir pestaña)
             const response = await fetch(directUrl, {
                 method: 'GET',
                 headers: {
