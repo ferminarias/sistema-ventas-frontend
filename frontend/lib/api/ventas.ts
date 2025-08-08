@@ -112,96 +112,106 @@ export const ventasApi = {
         return response.json();
     },
 
-    // Exportar a Excel con fallback de ruta y CORS simplificado
+    // Exportar a Excel con intento de flujo de Reportes (analytics/export) y fallback por ventas/exportar
     async exportarExcel(cliente?: string): Promise<void> {
         try {
-            // Si cliente es "general", no enviar parámetro para exportar datos de todos los clientes
-            const shouldFilterByClient = cliente && cliente !== 'general' && cliente !== 'all';
+            // Normalizar cliente
+            const rawClient = cliente?.toString().trim();
+            const clientLower = rawClient?.toLowerCase();
+            const isGeneral = clientLower === 'general' || clientLower === 'all';
+            const shouldFilterByClient = !!rawClient && !isGeneral;
+            const clientParam = rawClient && /^\d+$/.test(rawClient) ? rawClient : (clientLower || '');
+
+            // 1) Intento por analytics/export (como en Reportes)
+            try {
+                const token = getToken();
+                const headers: HeadersInit = {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                const body: Record<string, unknown> = { format: 'excel' };
+                if (shouldFilterByClient) body.client = clientParam;
+
+                const analyticsResp = await fetch(`${API_BASE}/api/analytics/export`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(body),
+                    credentials: 'omit',
+                });
+                if (analyticsResp.ok) {
+                    const data = await analyticsResp.json();
+                    if (data?.path) {
+                        const tokenVal = getToken();
+                        const hasQuery = String(data.path).includes('?');
+                        const tokenQuery = tokenVal ? `${hasQuery ? '&' : '?'}token=${encodeURIComponent(tokenVal)}` : '';
+                        const downloadUrl = `${API_BASE}/${data.path}${tokenQuery}`;
+                        const a = document.createElement('a');
+                        a.href = downloadUrl;
+                        a.download = data.path.split('/').pop() || 'reporte.xlsx';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        return; // Éxito por ruta analytics
+                    }
+                }
+            } catch (_ignored) {
+                // Seguir con fallback
+            }
+
+            // 2) Fallback por ventas/exportar (stream de blob)
             const primaryUrl = shouldFilterByClient
-                ? `${API_BASE}/api/ventas/exportar?cliente=${encodeURIComponent(String(cliente))}`
+                ? `${API_BASE}/api/ventas/exportar?cliente=${encodeURIComponent(clientParam)}`
                 : `${API_BASE}/api/ventas/exportar`;
 
             const token = getToken();
             const headers: HeadersInit = {
-                // Accept es un header "simple", no dispara preflight
                 'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             };
 
-            // Helper para agregar token por query
             const withToken = (url: string): string => {
                 if (!token) return url;
                 const sep = url.includes('?') ? '&' : '?';
                 return `${url}${sep}token=${encodeURIComponent(token)}`;
             };
 
-            // Intento 1: endpoint primario sin Authorization (evita preflight)
-            let response = await fetch(primaryUrl, {
-                method: 'GET',
-                headers,
-                credentials: 'omit'
-            });
-
-            // Si no autorizado, reintentar con token en query
+            let response = await fetch(primaryUrl, { method: 'GET', headers, credentials: 'omit' });
             if (response.status === 401 || response.status === 403) {
-                response = await fetch(withToken(primaryUrl), {
-                    method: 'GET',
-                    headers,
-                    credentials: 'omit'
-                });
+                response = await fetch(withToken(primaryUrl), { method: 'GET', headers, credentials: 'omit' });
             }
-
-            // Fallback: algunos backends exponen /api/exportar-excel
             if (response.status === 404) {
                 const fallbackUrlBase = shouldFilterByClient
-                    ? `${API_BASE}/api/exportar-excel?cliente=${encodeURIComponent(String(cliente))}`
+                    ? `${API_BASE}/api/exportar-excel?cliente=${encodeURIComponent(clientParam)}`
                     : `${API_BASE}/api/exportar-excel`;
-                // Primero sin token
-                response = await fetch(fallbackUrlBase, {
-                    method: 'GET',
-                    headers,
-                    credentials: 'omit'
-                });
-                // Luego con token si sigue 401/403
+                response = await fetch(fallbackUrlBase, { method: 'GET', headers, credentials: 'omit' });
                 if (response.status === 401 || response.status === 403) {
-                    response = await fetch(withToken(fallbackUrlBase), {
-                        method: 'GET',
-                        headers,
-                        credentials: 'omit'
-                    });
+                    response = await fetch(withToken(fallbackUrlBase), { method: 'GET', headers, credentials: 'omit' });
                 }
             }
-
             if (!response.ok) {
-                throw new Error(`Error al exportar: ${response.status} ${response.statusText}`);
+                const proxyUrl = shouldFilterByClient
+                    ? `/api/exportar-excel?cliente=${encodeURIComponent(clientParam)}${token ? `&token=${encodeURIComponent(token)}` : ''}`
+                    : `/api/exportar-excel${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+                const proxyRes = await fetch(proxyUrl, { method: 'GET', credentials: 'omit' });
+                if (!proxyRes.ok) throw new Error(`Error al exportar: ${response.status} ${response.statusText}`);
+                response = proxyRes as unknown as Response;
             }
 
-            // Obtener el blob del archivo
             const blob = await response.blob();
-
-            // Crear URL del blob
             const url_blob = window.URL.createObjectURL(blob);
-
-            // Crear elemento de descarga
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url_blob;
-
-            // Obtener nombre del archivo del header Content-Disposition
             const contentDisposition = response.headers.get('Content-Disposition');
             let filename = 'ventas.xlsx';
             if (contentDisposition) {
                 const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-                if (filenameMatch && filenameMatch[1]) {
-                    filename = filenameMatch[1].replace(/['"]/g, '');
-                }
+                if (filenameMatch && filenameMatch[1]) filename = filenameMatch[1].replace(/['"]/g, '');
             }
             a.download = filename;
-
-            // Agregar al DOM y hacer clic
             document.body.appendChild(a);
             a.click();
-
-            // Limpiar
             window.URL.revokeObjectURL(url_blob);
             document.body.removeChild(a);
         } catch (error) {
