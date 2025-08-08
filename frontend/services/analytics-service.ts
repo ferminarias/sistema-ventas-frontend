@@ -73,12 +73,29 @@ export const analyticsService = {
   },
 
   async exportData(filters: any) {
-    const response = await fetch(`${API_BASE}/api/analytics/export`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(filters),
-      credentials: 'include',
-    });
-    return response.json();
+    // Intento primario: POST con Bearer Token (puede disparar preflight)
+    try {
+      const response = await fetch(`${API_BASE}/api/analytics/export`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(filters),
+        // Evitar cookies para reducir problemas CORS cuando el backend usa '*' en ACAO
+        credentials: 'omit',
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    } catch (_e) {
+      // Fallback: GET con querystring y token en URL (si el backend lo soporta)
+      const token = localStorage.getItem('token') || '';
+      const params = new URLSearchParams();
+      if (filters?.client) params.set('client', String(filters.client));
+      if (filters?.startDate) params.set('startDate', String(filters.startDate));
+      if (filters?.endDate) params.set('endDate', String(filters.endDate));
+      if (filters?.format) params.set('format', String(filters.format));
+      if (token) params.set('token', token);
+      const url = `${API_BASE}/api/analytics/export?${params.toString()}`;
+      const resp = await fetch(url, { method: 'GET', credentials: 'omit' });
+      return resp.json();
+    }
   }
 };

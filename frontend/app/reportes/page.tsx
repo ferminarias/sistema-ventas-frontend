@@ -395,7 +395,7 @@ export default function ReportesPage() {
                       {/* Icono animado en el fondo */}
                       <div className="absolute top-4 right-4 text-6xl opacity-10 group-hover:opacity-20 transition-opacity duration-300">
                         {metricData.icon}
-                      </div>
+                    </div>
                       
                       {/* Valor principal con animación de contador */}
                       <div className="text-4xl font-bold text-white mb-3 tracking-tight relative z-10">
@@ -403,7 +403,7 @@ export default function ReportesPage() {
                         {metricData.value !== '-' && (
                           <div className="absolute -top-2 -right-2 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/60"></div>
                         )}
-                      </div>
+                    </div>
                       
                       {/* Label con trend indicator */}
                       <div className="flex items-center justify-between mb-3">
@@ -441,8 +441,8 @@ export default function ReportesPage() {
                       
                       {/* Micro-interacción en hover */}
                       <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"></div>
-                    </CardContent>
-                  </Card>
+                  </CardContent>
+                </Card>
                 );
               })}
             </div>
@@ -579,24 +579,24 @@ export default function ReportesPage() {
                               {/* Avatar con animación 3D */}
                               <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-blue-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20">
                                 <span className="drop-shadow-lg">
-                                  {advisor.name
-                                    .split(" ")
-                                    .map((n: string) => n[0])
-                                    .join("")}
+                              {advisor.name
+                                .split(" ")
+                                .map((n: string) => n[0])
+                                .join("")}
                                 </span>
-                              </div>
+                            </div>
                               
                               {/* Badge animado para el primer lugar */}
                               {index === 0 && (
                                 <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-yellow-400/50 animate-bounce border-2 border-white/30">
                                   🏆
-                                </div>
+                            </div>
                               )}
                               
                               {/* Ranking indicator */}
                               <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
                                 {index + 1}
-                              </div>
+                          </div>
                             </div>
                             
                             <div className="min-w-0 flex-1">
@@ -663,21 +663,21 @@ export default function ReportesPage() {
                               {/* Avatar con animación 3D */}
                               <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-purple-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20">
                                 <span className="drop-shadow-lg">
-                                  {advisor.name.split(" ").map((n: string) => n[0]).join("")}
+                              {advisor.name.split(" ").map((n: string) => n[0]).join("")}
                                 </span>
-                              </div>
+                            </div>
                               
                               {/* Badge animado para el primer lugar */}
                               {index === 0 && (
                                 <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-emerald-400/50 animate-bounce border-2 border-white/30">
                                   👑
-                                </div>
+                            </div>
                               )}
                               
                               {/* Ranking indicator */}
                               <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
                                 {index + 1}
-                              </div>
+                          </div>
                             </div>
                             
                             <div className="min-w-0 flex-1">
@@ -833,8 +833,8 @@ export default function ReportesPage() {
                     const avg = hasRealData ? heatmap.reduce((acc, c) => acc + (c.sales || 0), 0) / heatmap.length : 0;
                     
                     return Array(28).fill(null).map((_, idx) => {
-                      const week = Math.floor(idx / 7);
-                      const dayIndex = idx % 7;
+                          const week = Math.floor(idx / 7);
+                          const dayIndex = idx % 7;
                       const dayName = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][dayIndex];
                       
                       // Buscar datos reales para esta celda
@@ -845,15 +845,15 @@ export default function ReportesPage() {
                       // Calcular intensidad: 0-5 basado en ventas
                       const intensity = real && real.sales ? Math.min(5, Math.ceil(real.sales / 2)) : 0;
                       
-                      return {
-                        day: ["L", "M", "X", "J", "V", "S", "D"][dayIndex],
+                          return {
+                            day: ["L", "M", "X", "J", "V", "S", "D"][dayIndex],
                         intensity,
-                        week,
-                        date: real?.date,
+                            week,
+                            date: real?.date,
                         sales: real?.sales || 0,
-                        avg,
-                        isActive: activeDay === dayIndex,
-                        onHover: () => setActiveDay(dayIndex),
+                            avg,
+                            isActive: activeDay === dayIndex,
+                            onHover: () => setActiveDay(dayIndex),
                         onClick: () => {
                           const ventasText = (real?.sales || 0) === 1 ? "venta" : "ventas";
                           const dateText = real?.date ? ` del ${real.date}` : "";
@@ -871,8 +871,8 @@ export default function ReportesPage() {
                           }
                           alert(message);
                         },
-                      };
-                    });
+                          };
+                        });
                   })().map((cell, index) => (
                     <HeatmapCell key={index} {...cell} />
                   ))}
@@ -963,7 +963,9 @@ export default function ReportesPage() {
                           const data = await analyticsService.exportData(filters);
                           if (option.format === "excel" || option.format === "pdf" || option.format === "csv") {
                             if (!data.path) throw new Error("No se recibió la ruta del archivo");
-                            const downloadUrl = `${API_BASE}/${data.path}`;
+                            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+                            const hasQuery = String(data.path).includes('?');
+                            const downloadUrl = `${API_BASE}/${data.path}${token ? `${hasQuery ? '&' : '?'}token=${token}` : ''}`;
                             const link = document.createElement("a");
                             link.href = downloadUrl;
                             link.download = data.path.split("/").pop() || `reporte.${option.format}`;
