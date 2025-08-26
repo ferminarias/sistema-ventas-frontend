@@ -89,7 +89,7 @@ export function CreateUserDialog({ open, onClose, onSubmit }: CreateUserDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-800 text-white border-gray-700">
+      <DialogContent className="bg-gray-800 text-white border-gray-700 overflow-visible">
         <DialogHeader>
           <DialogTitle>Crear Nuevo Usuario</DialogTitle>
         </DialogHeader>
@@ -137,7 +137,7 @@ export function CreateUserDialog({ open, onClose, onSubmit }: CreateUserDialogPr
             >
               <SelectTrigger
                 id="role"
-                className={`bg-gray-700 border-gray-600 text-white justify-between
+                className={`bg-gray-700 border-gray-600 text-white justify-between rounded-xl h-10 px-3
                   ${openRole ? "ring-2 ring-indigo-500/60 border-indigo-500/40" : ""}`}
               >
                 <SelectValue placeholder="Selecciona un rol" />
@@ -200,7 +200,7 @@ export function CreateUserDialog({ open, onClose, onSubmit }: CreateUserDialogPr
             </div>
           )}
 
-          <div className="sticky bottom-0 bg-card pt-4 pb-2 z-10 border-t flex justify-end space-x-2">
+          <div className="mt-6 pt-4 pb-2 border-t flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
