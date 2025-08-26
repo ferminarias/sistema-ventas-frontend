@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Eye, EyeOff, UserPlus } from "lucide-react"
+import { X, Eye, EyeOff, UserPlus, ChevronDown } from "lucide-react"
 import type { CreateUserRequest } from "@/types/auth"
 import { ApiError } from "@/lib/api-error"
 
@@ -42,6 +42,7 @@ export function CreateUserDialog({ open, onClose, onSubmit }: CreateUserDialogPr
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [availableClients, setAvailableClients] = useState<{ id: number, name: string }[]>([])
+  const [openRole, setOpenRole] = useState(false)
 
   // Obtener clientes al abrir el diálogo
   useEffect(() => {
@@ -127,37 +128,36 @@ export function CreateUserDialog({ open, onClose, onSubmit }: CreateUserDialogPr
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Rol</label>
+            <label htmlFor="role" className="text-sm font-medium text-gray-300">Rol</label>
             <Select
               value={formData.role}
-              onValueChange={(value: "admin" | "supervisor") => setFormData({ ...formData, role: value })}
+              onValueChange={(v) => setFormData({ ...formData, role: v as "admin"|"supervisor" })}
+              open={openRole} 
+              onOpenChange={setOpenRole}
             >
-              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+              <SelectTrigger
+                id="role"
+                className={`bg-gray-700 border-gray-600 text-white justify-between
+                  ${openRole ? "ring-2 ring-indigo-500/60 border-indigo-500/40" : ""}`}
+              >
                 <SelectValue placeholder="Selecciona un rol" />
+                <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${openRole ? "rotate-180" : ""}`} />
               </SelectTrigger>
-              <SelectContent 
-                className="bg-gray-700 border-gray-600 text-white z-[9999]"
-                style={{
-                  backgroundColor: 'rgb(55 65 81)',
-                  borderColor: 'rgb(75 85 99)',
-                  color: 'white'
-                }}
+
+              <SelectContent
+                position="popper"
+                sideOffset={8}
+                className="z-[80] min-w-[14rem] rounded-xl border border-white/10 bg-gray-800/95 shadow-2xl backdrop-blur"
               >
                 <SelectItem 
-                  value="admin"
-                  style={{
-                    color: 'white',
-                    backgroundColor: 'rgb(55 65 81)'
-                  }}
+                  value="admin" 
+                  className="px-3 py-2 rounded-lg text-white data-[highlighted]:bg-white/5 data-[state=checked]:bg-indigo-500/15 data-[state=checked]:outline data-[state=checked]:outline-1 data-[state=checked]:outline-indigo-500/40"
                 >
                   Administrador
                 </SelectItem>
                 <SelectItem 
-                  value="supervisor"
-                  style={{
-                    color: 'white',
-                    backgroundColor: 'rgb(55 65 81)'
-                  }}
+                  value="supervisor" 
+                  className="px-3 py-2 rounded-lg text-white data-[highlighted]:bg-white/5 data-[state=checked]:bg-indigo-500/15 data-[state=checked]:outline data-[state=checked]:outline-1 data-[state=checked]:outline-indigo-500/40"
                 >
                   Supervisor
                 </SelectItem>
@@ -213,3 +213,5 @@ export function CreateUserDialog({ open, onClose, onSubmit }: CreateUserDialogPr
     </Dialog>
   )
 } 
+
+
