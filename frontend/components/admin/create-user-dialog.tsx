@@ -135,9 +135,32 @@ export function CreateUserDialog({ open, onClose, onSubmit }: CreateUserDialogPr
               <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                 <SelectValue placeholder="Selecciona un rol" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                <SelectItem value="admin">Administrador</SelectItem>
-                <SelectItem value="supervisor">Supervisor</SelectItem>
+              <SelectContent 
+                className="bg-gray-700 border-gray-600 text-white z-[9999]"
+                style={{
+                  backgroundColor: 'rgb(55 65 81)',
+                  borderColor: 'rgb(75 85 99)',
+                  color: 'white'
+                }}
+              >
+                <SelectItem 
+                  value="admin"
+                  style={{
+                    color: 'white',
+                    backgroundColor: 'rgb(55 65 81)'
+                  }}
+                >
+                  Administrador
+                </SelectItem>
+                <SelectItem 
+                  value="supervisor"
+                  style={{
+                    color: 'white',
+                    backgroundColor: 'rgb(55 65 81)'
+                  }}
+                >
+                  Supervisor
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
