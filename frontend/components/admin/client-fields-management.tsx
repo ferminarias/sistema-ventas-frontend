@@ -380,6 +380,37 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
       </div>
 
       <div className="space-y-4">
+        {/* Campos fijos del sistema (solo lectura) */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Campos fijos del sistema</CardTitle>
+            <CardDescription>Siempre presentes en el formulario, no son configurables aquí</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2">
+              {[
+                { id: 'nombre', label: 'Nombre', type: 'text', required: true },
+                { id: 'apellido', label: 'Apellido', type: 'text', required: true },
+                { id: 'email', label: 'Email', type: 'email', required: true },
+                { id: 'telefono', label: 'Teléfono', type: 'tel', required: true },
+                { id: 'asesor', label: 'Asesor', type: 'select', required: true },
+                { id: 'fecha_venta', label: 'Fecha de venta', type: 'date', required: true },
+              ].map(fixed => (
+                <div key={fixed.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                  <div>
+                    <div className="font-medium">{fixed.label}</div>
+                    <div className="text-xs text-muted-foreground">Tipo: {fieldTypeLabels[fixed.type as keyof typeof fieldTypeLabels] || fixed.type} • ID: {fixed.id}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {fixed.required && <Badge variant="destructive" className="text-xs">Requerido</Badge>}
+                    <Badge variant="secondary" className="text-xs">Fijo</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex-1 min-w-0">
             <h2 className="text-2xl font-bold truncate">Campos de {clientName}</h2>
