@@ -65,7 +65,8 @@ class ClientFieldsService {
   async addClientField(clientId: number, field: Omit<ClientField, 'default' | 'order'>): Promise<ClientField> {
     console.log(`Agregando campo personalizado para cliente ${clientId}:`, field)
     
-    const response = await fetch(`${API_BASE}/api/clientes/${clientId}/campos`, {
+    const url = `${API_BASE}/api/clientes/${clientId}/campos`
+    const response = await fetch(url, {
       method: 'POST',
       headers: getAuthHeaders(),
       credentials: 'include',
@@ -87,8 +88,9 @@ class ClientFieldsService {
       } catch (e) {
         console.error(`❌ No es JSON válido:`, errorText);
       }
-      
-      throw new Error((errorData as any).message || errorText || 'Error al agregar campo personalizado');
+      const err: any = new Error((errorData as any).message || (errorData as any).error || errorText || 'Error al agregar campo personalizado')
+      err.status = response.status
+      throw err
     }
     
     const data = await response.json();

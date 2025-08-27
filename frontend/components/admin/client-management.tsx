@@ -85,51 +85,62 @@ export function ClientManagement({ user }: ClientManagementProps) {
 
   const handleBulkAddProgramaInteres = async () => {
     if (!canCreateClients) return
-    // Solicitar confirmación y permitir ajustar ID/definición para evitar supuestos
-    const fieldId = window.prompt("ID del campo universal (por backend):", "programa_interes")
-    if (!fieldId) return
-    const fieldLabel = window.prompt("Etiqueta a mostrar:", "Programa de Interés") || "Programa de Interés"
-    const type = window.prompt("Tipo (text, select, textarea, date, file, number, email, tel, checkbox, radio):", "select") || "select"
-    const optionsCsv = type === "select" || type === "radio" ? (window.prompt("Opciones (separadas por coma):", "") || "") : ""
-    const requiredAnswer = window.prompt("¿Requerido? (si/no):", "no") || "no"
-    const required = requiredAnswer.toLowerCase().startsWith("s")
 
+    // Definición fija idempotente según backend
     const fieldDef: any = {
-      id: fieldId,
-      label: fieldLabel,
-      type,
-      required,
-      placeholder: "",
-      help_text: "",
-      options: optionsCsv
-        .split(",")
-        .map(o => o.trim())
-        .filter(Boolean),
+      id: "programa_interes",
+      label: "Programa de Interés",
+      type: "text",
+      required: true,
     }
 
     if (!clients.length) return
-    if (!window.confirm(`Se agregará "${fieldLabel}" a ${clients.length} clientes si falta. ¿Continuar?`)) return
+    if (!window.confirm(`Se agregará "${fieldDef.label}" a ${clients.length} clientes si falta. ¿Continuar?`)) return
 
     setBulkSyncing(true)
     let updatedCount = 0
     try {
-      for (const c of clients) {
-        try {
-          const existing = await clientFieldsService.getClientFields(c.id)
-          const exists = existing.some((f: any) => f.id === fieldDef.id)
-          if (!exists) {
-            await clientFieldsService.addClientField(c.id, fieldDef)
-            updatedCount++
+      // Throttle por lotes (6 req/s)
+      const chunkSize = 6
+      for (let i = 0; i < clients.length; i += chunkSize) {
+        const chunk = clients.slice(i, i + chunkSize)
+        await Promise.all(chunk.map(async (c) => {
+          try {
+            const existing = await clientFieldsService.getClientFields(c.id)
+            const exists = existing.some((f: any) => f.id === fieldDef.id)
+            if (!exists) {
+              try {
+                await clientFieldsService.addClientField(c.id, fieldDef)
+                updatedCount++
+              } catch (err: any) {
+                if (err?.status === 400 && String(err.message || '').includes('Ya existe')) {
+                  return
+                }
+                if (err?.status === 500) {
+                  try {
+                    await clientFieldsService.addClientField(c.id, fieldDef)
+                    updatedCount++
+                    return
+                  } catch (err2) {
+                    console.error(`❌ 500 persistente en cliente ${c.id}`, err2)
+                    return
+                  }
+                }
+                console.error(`❌ Error agregando campo en cliente ${c.id}`, err)
+              }
+            }
+          } catch (e) {
+            console.error(`Error procesando cliente ${c.id}`, e)
           }
-        } catch (e) {
-          console.error(`Error procesando cliente ${c.id}`, e)
+        }))
+        if (i + chunkSize < clients.length) {
+          await new Promise(res => setTimeout(res, 1000))
         }
       }
       toast({
         title: "Sincronización completada",
         description: `Se agregó el campo a ${updatedCount} cliente(s). Los demás ya lo tenían.`,
       })
-      // Refrescar listado de clientes para reflejar cambios si es necesario
       await loadInitialData()
     } finally {
       setBulkSyncing(false)
