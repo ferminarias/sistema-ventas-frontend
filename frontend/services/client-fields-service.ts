@@ -114,14 +114,26 @@ class ClientFieldsService {
 
   // Eliminar campo personalizado
   async deleteClientField(clientId: number, fieldId: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/clientes/${clientId}/campos/${fieldId}`, {
+    const url = `${API_BASE}/api/clientes/${clientId}/campos/${fieldId}`
+    console.log(`🔎 DELETE URL:`, url)
+    const response = await fetch(url, {
       method: 'DELETE',
       headers: getAuthHeaders(false),
       credentials: 'include',
     });
     
     if (!response.ok) {
-      throw new Error('Error al eliminar campo');
+      const errorText = await response.text().catch(() => '')
+      let parsed: any = null
+      try {
+        parsed = JSON.parse(errorText)
+      } catch {}
+      const message = (parsed && (parsed.message || parsed.error)) || errorText || 'Error al eliminar campo'
+      const err: any = new Error(message)
+      if (parsed && parsed.available_ids) {
+        err.available_ids = parsed.available_ids
+      }
+      throw err
     }
   }
 

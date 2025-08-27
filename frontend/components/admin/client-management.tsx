@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Settings, Building2, Users, Loader2, Shield, FileText, MoreHorizontal, ExternalLink, Calendar, UserCheck } from "lucide-react"
+import { Plus, Edit, Trash2, Settings, Building2, Users, Loader2, Shield, FileText, MoreHorizontal, ExternalLink, Calendar, UserCheck, RefreshCw } from "lucide-react"
 import { CreateClientDialog } from "./create-client-dialog"
 import { EditClientDialog } from "./edit-client-dialog"
 import { ConfigureFormDialog } from "./configure-form-dialog"
@@ -14,6 +14,8 @@ import type { Client, CreateClientRequest, UpdateClientRequest } from "@/types/c
 import { clientService, getClientsByUser, canAccessClient } from "@/services/client-service"
 import { authService } from "@/services/auth-service"
 import { useAuth } from "@/contexts/auth-context"
+import { clientFieldsService } from "@/services/client-fields-service"
+import { useToast } from "@/components/ui/use-toast"
 
 interface ClientManagementProps {
   user: User
@@ -28,7 +30,9 @@ export function ClientManagement({ user }: ClientManagementProps) {
   const [showFormDialog, setShowFormDialog] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [bulkSyncing, setBulkSyncing] = useState(false)
   const router = useRouter();
+  const { toast } = useToast()
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -76,6 +80,59 @@ export function ClientManagement({ user }: ClientManagementProps) {
       setError("Error al cargar los datos. Por favor, intenta de nuevo.")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleBulkAddProgramaInteres = async () => {
+    if (!canCreateClients) return
+    // Solicitar confirmación y permitir ajustar ID/definición para evitar supuestos
+    const fieldId = window.prompt("ID del campo universal (por backend):", "programa_interes")
+    if (!fieldId) return
+    const fieldLabel = window.prompt("Etiqueta a mostrar:", "Programa de Interés") || "Programa de Interés"
+    const type = window.prompt("Tipo (text, select, textarea, date, file, number, email, tel, checkbox, radio):", "select") || "select"
+    const optionsCsv = type === "select" || type === "radio" ? (window.prompt("Opciones (separadas por coma):", "") || "") : ""
+    const requiredAnswer = window.prompt("¿Requerido? (si/no):", "no") || "no"
+    const required = requiredAnswer.toLowerCase().startsWith("s")
+
+    const fieldDef: any = {
+      id: fieldId,
+      label: fieldLabel,
+      type,
+      required,
+      placeholder: "",
+      help_text: "",
+      options: optionsCsv
+        .split(",")
+        .map(o => o.trim())
+        .filter(Boolean),
+    }
+
+    if (!clients.length) return
+    if (!window.confirm(`Se agregará "${fieldLabel}" a ${clients.length} clientes si falta. ¿Continuar?`)) return
+
+    setBulkSyncing(true)
+    let updatedCount = 0
+    try {
+      for (const c of clients) {
+        try {
+          const existing = await clientFieldsService.getClientFields(c.id)
+          const exists = existing.some((f: any) => f.id === fieldDef.id)
+          if (!exists) {
+            await clientFieldsService.addClientField(c.id, fieldDef)
+            updatedCount++
+          }
+        } catch (e) {
+          console.error(`Error procesando cliente ${c.id}`, e)
+        }
+      }
+      toast({
+        title: "Sincronización completada",
+        description: `Se agregó el campo a ${updatedCount} cliente(s). Los demás ya lo tenían.`,
+      })
+      // Refrescar listado de clientes para reflejar cambios si es necesario
+      await loadInitialData()
+    } finally {
+      setBulkSyncing(false)
     }
   }
 
@@ -243,6 +300,20 @@ export function ClientManagement({ user }: ClientManagementProps) {
             >
               <Plus className="h-4 w-4 mr-2" />
               Crear Cliente
+            </Button>
+          )}
+          {canCreateClients && (
+            <Button 
+              onClick={handleBulkAddProgramaInteres}
+              disabled={bulkSyncing}
+              className="ml-2 bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              {bulkSyncing ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Sincronizar “Programa de Interés”
             </Button>
           )}
         </div>

@@ -190,17 +190,21 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
     }
 
     try {
+      console.log('🗑️ Deleting fieldId=', field.id)
       await clientFieldsService.deleteClientField(clientId, field.id)
       toast({
         title: "Campo eliminado",
         description: `El campo "${field.label}" ha sido eliminado`,
       })
       loadFields()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting field:', error)
+      if (error && error.available_ids) {
+        console.log('Available IDs desde backend:', error.available_ids)
+      }
       toast({
         title: "Error",
-        description: "Error al eliminar el campo",
+        description: error?.message || "Error al eliminar el campo",
         variant: "destructive",
       })
     }
