@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeft, ChevronRight, Search } from "lucide-react"
 import { useVentas } from "@/hooks/useVentas"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/components/ui/use-toast"
@@ -341,6 +341,9 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{exportMode ? 'Exportar Excel personalizado' : 'Configurar columnas'}</DialogTitle>
+            <DialogDescription>
+              Selecciona y reordena las columnas que quieres ver en la tabla.
+            </DialogDescription>
           </DialogHeader>
           {exportMode && (
             <div className="mb-2 flex items-center gap-2 text-sm">
@@ -419,11 +422,14 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
                 </Button>
                 <Button
                   onClick={() => {
-                    savePrefs(visibleColumns, columnOrder)
+                    // Aplicar cambios del diálogo
+                    setVisibleColumns(dialogVisible)
+                    setColumnOrder(dialogOrder)
+                    savePrefs(dialogVisible, dialogOrder)
                     setManageColumnsOpen(false)
                   }}
                 >
-                  Guardar
+                  Aceptar
                 </Button>
               </>
             )}
