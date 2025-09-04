@@ -13,6 +13,8 @@ export interface Venta {
     asesor: string;
     fecha_venta: string;
     cliente: string;
+    // Soporte para campos dinámicos del backend
+    campos_adicionales?: Record<string, any>;
 }
 
 export interface NuevaVenta {
