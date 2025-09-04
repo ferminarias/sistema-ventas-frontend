@@ -135,6 +135,26 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
       const defs = Array.isArray(data?.fields) ? data.fields : data
       const mapped = defs.map((f: any) => ({ id: String(f.id), label: String(f.label ?? f.id), type: String(f.type || 'text'), options: Array.isArray(f.options) ? f.options : undefined }))
       setDynamicFieldDefs(mapped)
+
+      // Asegurar que las nuevas columnas dinámicas existan en el orden del diálogo y global
+      const baseIds = new Set(["id","nombre","apellido","email","telefono","asesor","fecha_venta","cliente"])
+      const newDynamicIds = mapped
+        .filter((def: {id:string}) => !baseIds.has(def.id))
+        .map((def: {id:string}) => `campos_adicionales.${def.id}`)
+
+      setDialogOrder((prev: string[]) => {
+        const setPrev = new Set(prev)
+        const merged = [...prev]
+        newDynamicIds.forEach((id: string) => { if (!setPrev.has(id)) merged.push(id) })
+        return merged
+      })
+
+      setColumnOrder((prev: string[]) => {
+        const setPrev = new Set(prev)
+        const merged = [...prev]
+        newDynamicIds.forEach((id: string) => { if (!setPrev.has(id)) merged.push(id) })
+        return merged
+      })
     } catch {}
   }
 
