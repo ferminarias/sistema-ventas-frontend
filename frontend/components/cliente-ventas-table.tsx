@@ -12,12 +12,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/components/ui/use-toast"
+import { API_BASE, getAuthHeaders } from "@/lib/api"
 
 interface ClienteVentasTableProps {
   cliente: string
+  clientId?: number
 }
 
-export function ClienteVentasTable({ cliente }: ClienteVentasTableProps) {
+export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState("10")
@@ -27,6 +29,7 @@ export function ClienteVentasTable({ cliente }: ClienteVentasTableProps) {
   const [exportMode, setExportMode] = useState(false)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [useBasicColumns, setUseBasicColumns] = useState(false)
+  const [dynamicFieldDefs, setDynamicFieldDefs] = useState<Array<{id:string;label:string;type:string;options?:string[]}>>([])
 
   // Validación defensiva para cliente
   if (!cliente || cliente === "null" || cliente === "undefined") {
@@ -39,7 +42,7 @@ export function ClienteVentasTable({ cliente }: ClienteVentasTableProps) {
     )
   }
 
-  const { ventas, loading, error, exportarExcel } = useVentas(cliente.toLowerCase())
+  const { ventas, loading, error, exportarExcel } = useVentas((clientId ? String(clientId) : cliente).toLowerCase())
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -76,16 +79,21 @@ export function ClienteVentasTable({ cliente }: ClienteVentasTableProps) {
     { id: "cliente", label: "Cliente", accessor: v => String(v.cliente ?? "") },
   ]
 
-  const customKeys = Array.from(new Set(ventas.flatMap(v => Object.keys(v.campos_adicionales || {}))))
-  const CUSTOM_COLUMNS: ColumnDef[] = customKeys.map(key => ({
-    id: `custom.${key}`,
-    label: key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-    accessor: v => {
-      const value = (v.campos_adicionales || {})[key]
-      return typeof value === "string" ? value : JSON.stringify(value ?? "")
-    },
-    isCustom: true,
-  }))
+  // Columnas dinámicas según definición del cliente (GET /api/clientes/:id/campos)
+  const CUSTOM_COLUMNS: ColumnDef[] = dynamicFieldDefs
+    .filter(def => !["nombre","apellido","email","telefono","asesor","fecha_venta","cliente","id"].includes(def.id))
+    .map(def => ({
+      id: `campos_adicionales.${def.id}`,
+      label: def.label || def.id,
+      accessor: v => {
+        const raw = (v.campos_adicionales || {})[def.id]
+        if (raw == null) return ""
+        if (def.type === 'date') return String(raw)
+        if (def.type === 'select' && def.options && def.options.length) return String(raw)
+        return typeof raw === 'string' ? raw : JSON.stringify(raw)
+      },
+      isCustom: true,
+    }))
 
   const ALL_COLUMNS: ColumnDef[] = [...BASE_COLUMNS, ...CUSTOM_COLUMNS]
 
@@ -115,6 +123,20 @@ export function ClienteVentasTable({ cliente }: ClienteVentasTableProps) {
     .map(id => ALL_COLUMNS.find(c => c.id === id))
     .filter((c): c is ColumnDef => !!c)
   const renderColumns = orderedColumns.filter(c => visibleColumns.includes(c.id))
+
+  // Cargar definiciones de campos dinámicos al abrir el gestor
+  const loadDynamicDefs = async () => {
+    try {
+      const id = clientId ? String(clientId) : undefined
+      if (!id) return
+      const res = await fetch(`${API_BASE}/api/clientes/${id}/campos`, { headers: getAuthHeaders(false), credentials: 'include' })
+      if (!res.ok) return
+      const data = await res.json()
+      const defs = Array.isArray(data?.fields) ? data.fields : data
+      const mapped = defs.map((f: any) => ({ id: String(f.id), label: String(f.label ?? f.id), type: String(f.type || 'text'), options: Array.isArray(f.options) ? f.options : undefined }))
+      setDynamicFieldDefs(mapped)
+    } catch {}
+  }
 
   // Filtrar ventas por término de búsqueda
   const filteredVentas = ventas.filter(
@@ -188,9 +210,10 @@ export function ClienteVentasTable({ cliente }: ClienteVentasTableProps) {
             />
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => {
+            <Button variant="outline" onClick={async () => {
               setDialogVisible(visibleColumns)
               setDialogOrder(columnOrder)
+              await loadDynamicDefs()
               setManageColumnsOpen(true)
             }}>
               Editar columnas
