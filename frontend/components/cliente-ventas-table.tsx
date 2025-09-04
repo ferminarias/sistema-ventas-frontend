@@ -338,71 +338,73 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
       </CardContent>
       {/* Gestor de columnas */}
       <Dialog open={manageColumnsOpen} onOpenChange={(open) => { setManageColumnsOpen(open); if (!open) setExportMode(false) }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>{exportMode ? 'Exportar Excel personalizado' : 'Configurar columnas'}</DialogTitle>
             <DialogDescription>
               Selecciona y reordena las columnas que quieres ver en la tabla.
             </DialogDescription>
           </DialogHeader>
-          {exportMode && (
-            <div className="mb-2 flex items-center gap-2 text-sm">
-              <Checkbox id="basic-cols" checked={useBasicColumns} onCheckedChange={(v) => setUseBasicColumns(!!v)} />
-              <label htmlFor="basic-cols" className="cursor-pointer select-none">Usar columnas básicas (ignorar selección de la vista)</label>
+          <div className="flex flex-col gap-3 overflow-hidden">
+            {exportMode && (
+              <div className="mb-1 flex items-center gap-2 text-sm">
+                <Checkbox id="basic-cols" checked={useBasicColumns} onCheckedChange={(v) => setUseBasicColumns(!!v)} />
+                <label htmlFor="basic-cols" className="cursor-pointer select-none">Usar columnas básicas (ignorar selección de la vista)</label>
+              </div>
+            )}
+            <div className="space-y-2 text-xs text-muted-foreground">
+              Seleccionadas: {dialogVisible.length}
             </div>
-          )}
-          <div className="space-y-2 text-xs text-muted-foreground">
-            Seleccionadas: {dialogVisible.length}
-          </div>
-          <div className="space-y-4">
-            {dialogOrder
-              .map((id: string) => ALL_COLUMNS.find(c => c.id === id))
-              .filter((c): c is ColumnDef => !!c)
-              .map((col: ColumnDef) => (
-              <div
-                key={col.id}
-                className="flex items-center justify-between gap-2"
-                draggable
-                onDragStart={() => setDraggingId(col.id)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => {
-                  if (!draggingId || draggingId === col.id) return
-                  setDialogOrder((prev: string[]) => {
-                    const next = [...prev]
-                    const from = next.indexOf(draggingId)
-                    const to = next.indexOf(col.id)
-                    if (from === -1 || to === -1) return prev
-                    next.splice(to, 0, next.splice(from, 1)[0])
-                    return next
-                  })
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    checked={dialogVisible.includes(col.id)}
-                    onCheckedChange={(checked) => {
-                      setDialogVisible((prev: string[]) => {
-                        const next = new Set(prev)
-                        if (checked) {
-                          next.add(col.id)
-                        } else {
-                          next.delete(col.id)
-                        }
-                        return Array.from(next)
-                      })
-                    }}
-                  />
-                  <div>
-                    <div className="text-sm font-medium">{col.label}</div>
-                    <div className="text-xs text-muted-foreground">{col.id}</div>
+            <div className="space-y-2 overflow-y-auto max-h-[58vh] pr-1">
+              {dialogOrder
+                .map((id: string) => ALL_COLUMNS.find(c => c.id === id))
+                .filter((c): c is ColumnDef => !!c)
+                .map((col: ColumnDef) => (
+                <div
+                  key={col.id}
+                  className="flex items-center justify-between gap-2"
+                  draggable
+                  onDragStart={() => setDraggingId(col.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => {
+                    if (!draggingId || draggingId === col.id) return
+                    setDialogOrder((prev: string[]) => {
+                      const next = [...prev]
+                      const from = next.indexOf(draggingId)
+                      const to = next.indexOf(col.id)
+                      if (from === -1 || to === -1) return prev
+                      next.splice(to, 0, next.splice(from, 1)[0])
+                      return next
+                    })
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={dialogVisible.includes(col.id)}
+                      onCheckedChange={(checked) => {
+                        setDialogVisible((prev: string[]) => {
+                          const next = new Set(prev)
+                          if (checked) {
+                            next.add(col.id)
+                          } else {
+                            next.delete(col.id)
+                          }
+                          return Array.from(next)
+                        })
+                      }}
+                    />
+                    <div>
+                      <div className="text-sm font-medium">{col.label}</div>
+                      <div className="text-xs text-muted-foreground">{col.id}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setDialogOrder((prev: string[]) => { const idx = prev.indexOf(col.id); if (idx <= 0) return prev; const nx = [...prev]; const t = nx[idx-1]; nx[idx-1] = nx[idx]; nx[idx] = t; return nx })}>↑</Button>
+                    <Button variant="outline" size="sm" onClick={() => setDialogOrder((prev: string[]) => { const idx = prev.indexOf(col.id); if (idx === -1 || idx === prev.length-1) return prev; const nx = [...prev]; const t = nx[idx+1]; nx[idx+1] = nx[idx]; nx[idx] = t; return nx })}>↓</Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setDialogOrder((prev: string[]) => { const idx = prev.indexOf(col.id); if (idx <= 0) return prev; const nx = [...prev]; const t = nx[idx-1]; nx[idx-1] = nx[idx]; nx[idx] = t; return nx })}>↑</Button>
-                  <Button variant="outline" size="sm" onClick={() => setDialogOrder((prev: string[]) => { const idx = prev.indexOf(col.id); if (idx === -1 || idx === prev.length-1) return prev; const nx = [...prev]; const t = nx[idx+1]; nx[idx+1] = nx[idx]; nx[idx] = t; return nx })}>↓</Button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
           <DialogFooter className="flex gap-2">
             {!exportMode && (
