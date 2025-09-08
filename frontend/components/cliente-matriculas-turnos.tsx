@@ -131,10 +131,11 @@ export function ClienteMatriculasTurnos({ clientId, clientName }: Props) {
     const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3))
     const width = 720
     const rowH = 40
-    const headerH = 46
-    const footerH = 10
+    const headerH = 46 // título azul
+    const colHeaderH = 32 // fila de encabezados de columnas
+    const footerH = 10 // respiro inferior
     const rows = 3
-    const height = headerH + rows * rowH + footerH
+    const height = headerH + colHeaderH + rows * rowH + footerH
 
     const canvas = document.createElement('canvas')
     canvas.width = Math.floor(width * dpr)
@@ -166,20 +167,20 @@ export function ClienteMatriculasTurnos({ clientId, clientName }: Props) {
     let x = 0
     let y = headerH
     ctx.fillStyle = '#1e3a8a'
-    ctx.fillRect(0, y, width, 32)
+    ctx.fillRect(0, y, width, colHeaderH)
     ctx.fillStyle = '#ffffff'
     ctx.font = '600 12px Inter, system-ui, -apple-system, Segoe UI, Roboto'
     x = 16
     const colXs: number[] = []
     cols.forEach((c, i) => {
       colXs.push(x)
-      ctx.fillText(c.label, x, y + 16)
+      ctx.fillText(c.label, x, y + Math.floor(colHeaderH / 2))
       x += c.w
     })
 
     // Rows helper
     const drawRow = (cells: string[], idx: number, isTotal = false) => {
-      const ry = headerH + 32 + idx * rowH
+      const ry = headerH + colHeaderH + idx * rowH
       // background
       ctx.fillStyle = isTotal ? '#1e3a8a' : (idx % 2 === 0 ? '#0b1220' : '#0e1626')
       ctx.fillRect(0, ry, width, rowH)
