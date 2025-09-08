@@ -9,6 +9,7 @@ import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
 import { ClienteVentasCharts } from "@/components/cliente-ventas-charts";
 import { ClienteVentasTable } from "@/components/cliente-ventas-table";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { ClienteMatriculasTurnos } from "@/components/cliente-matriculas-turnos";
 
 interface Client {
   id: number;
@@ -92,6 +93,11 @@ export default function ClienteDashboardPage() {
         </Card>
         <ClienteVentasCharts cliente={String(client.id)} nombreCliente={client.name} />
         <ClienteVentasTable cliente={client.name || String(client.id)} clientId={client.id} />
+        {client.id === 2 && (
+          <div className="pt-4">
+            <ClienteMatriculasTurnos clientId={client.id} clientName={client.name} />
+          </div>
+        )}
       </div>
     </div>
   );
