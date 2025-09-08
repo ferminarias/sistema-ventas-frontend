@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { useVentas } from "@/hooks/useVentas"
 import { Badge } from "@/components/ui/badge"
+import { ImageDown } from "lucide-react"
 
 type Turno = "manana" | "tarde" | ""
 const OBJETIVO_DIA = 3
@@ -120,6 +121,112 @@ export function ClienteMatriculasTurnos({ clientId, clientName }: Props) {
     setOpen(true)
   }
 
+  // Exportar tabla como imagen PNG (sin dependencias)
+  const downloadTableAsImage = (
+    titulo: string,
+    data: {manana: number; tarde: number; total: number},
+    objetivo: number,
+    opts?: { filename?: string }
+  ) => {
+    const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3))
+    const width = 720
+    const rowH = 40
+    const headerH = 46
+    const footerH = 10
+    const rows = 3
+    const height = headerH + rows * rowH + footerH
+
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.floor(width * dpr)
+    canvas.height = Math.floor(height * dpr)
+    canvas.style.width = `${width}px`
+    canvas.style.height = `${height}px`
+    const ctx = canvas.getContext('2d')!
+    ctx.scale(dpr, dpr)
+
+    // Fondo
+    ctx.fillStyle = '#0f172a' // slate-900
+    ctx.fillRect(0, 0, width, height)
+
+    // Header
+    ctx.fillStyle = '#1e3a8a' // blue-800
+    ctx.fillRect(0, 0, width, headerH)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 16px Inter, system-ui, -apple-system, Segoe UI, Roboto'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(titulo, 16, headerH / 2)
+
+    // Column titles
+    const cols = [
+      { label: 'Detalle', w: 280 },
+      { label: 'Objetivo', w: 140 },
+      { label: 'Real', w: 140 },
+      { label: 'Alcance', w: 160 },
+    ]
+    let x = 0
+    let y = headerH
+    ctx.fillStyle = '#1e3a8a'
+    ctx.fillRect(0, y, width, 32)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = '600 12px Inter, system-ui, -apple-system, Segoe UI, Roboto'
+    x = 16
+    const colXs: number[] = []
+    cols.forEach((c, i) => {
+      colXs.push(x)
+      ctx.fillText(c.label, x, y + 16)
+      x += c.w
+    })
+
+    // Rows helper
+    const drawRow = (cells: string[], idx: number, isTotal = false) => {
+      const ry = headerH + 32 + idx * rowH
+      // background
+      ctx.fillStyle = isTotal ? '#1e3a8a' : (idx % 2 === 0 ? '#0b1220' : '#0e1626')
+      ctx.fillRect(0, ry, width, rowH)
+      // text
+      ctx.fillStyle = isTotal ? '#ffffff' : '#e5e7eb'
+      ctx.font = `${isTotal ? 'bold' : '600'} 13px Inter, system-ui, -apple-system, Segoe UI, Roboto`
+      cells.forEach((text, i) => {
+        const tx = colXs[i]
+        ctx.fillText(text, tx, ry + rowH / 2)
+      })
+    }
+
+    const objetivoManiana = Math.floor(objetivo / 2)
+    const objetivoTarde = Math.ceil(objetivo / 2)
+
+    drawRow([
+      'Turno mañana',
+      String(objetivoManiana),
+      String(data.manana),
+      pct(data.manana, objetivoManiana)
+    ], 0)
+
+    drawRow([
+      'Turno tarde',
+      String(objetivoTarde),
+      String(data.tarde),
+      pct(data.tarde, objetivoTarde)
+    ], 1)
+
+    drawRow([
+      'Total',
+      String(objetivo),
+      String(data.total),
+      pct(data.total, objetivo)
+    ], 2, true)
+
+    // Download
+    const url = canvas.toDataURL('image/png')
+    const a = document.createElement('a')
+    a.href = url
+    const fallbackName = `${titulo.replace(/\s+/g, '_').toLowerCase()}.png`
+    a.download = opts?.filename || fallbackName
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
   const moverVenta = (ventaId: string, nuevoTurno: Turno) => {
     const setTurnos = editingDate === "today" ? setTurnosToday : setTurnosYesterday
     setTurnos(prev => ({ ...prev, [ventaId]: nuevoTurno }))
@@ -143,7 +250,22 @@ export function ClienteMatriculasTurnos({ clientId, clientName }: Props) {
   }) => (
     <Card className="bg-card border-border/60 shadow-sm">
       <CardHeader className="py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
-        <CardTitle className="text-sm font-semibold text-center">{titulo}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-semibold">{titulo}</CardTitle>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7 border-white/40 text-white hover:bg-white/10"
+            onClick={() => {
+              const day = isToday ? today : yesterday
+              const name = `${(clientName || `cliente-${clientId}`).replace(/\s+/g,'_').toLowerCase()}_${day}_${titulo.replace(/\s+/g,'_').toLowerCase()}.png`
+              downloadTableAsImage(titulo, data, objetivo, { filename: name })
+            }}
+            title="Descargar imagen"
+          >
+            <ImageDown className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="pt-0 p-0">
         <div className="overflow-hidden">
