@@ -32,6 +32,19 @@ export interface Contact {
   }
 }
 
+export interface ContactStats {
+  total_contacts: number
+  no_contactado: number
+  contactado: number
+  interesado: number
+  seguimiento: number
+  propuesta: number
+  negociacion: number
+  ganado: number
+  perdido: number
+  descartado: number
+}
+
 export interface ContactFilters {
   search?: string
   estado?: string

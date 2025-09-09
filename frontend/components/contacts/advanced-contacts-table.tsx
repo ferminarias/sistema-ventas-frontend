@@ -375,6 +375,28 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
     }
   }
 
+  const handleDeleteContact = async (contact: Contact) => {
+    try {
+      await contactsService.deleteContact(clientId, contact.id)
+      
+      toast({
+        title: "Éxito",
+        description: "Contacto eliminado correctamente",
+      })
+      
+      loadContacts()
+      loadStats()
+      setDeletingContact(null)
+    } catch (error: any) {
+      console.error('Error deleting contact:', error)
+      toast({
+        title: "Error",
+        description: error.message || "Error al eliminar el contacto",
+        variant: "destructive",
+      })
+    }
+  }
+
   const formatCellValue = (column: ColumnDef, contact: Contact) => {
     const value = column.accessor(contact)
     
@@ -407,34 +429,34 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
   return (
     <div className="space-y-4">
       {/* Stats Cards */}
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold">{stats.total_contacts}</div>
-              <div className="text-sm text-muted-foreground">Total Contactos</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-green-600">{stats.ganado}</div>
-              <div className="text-sm text-muted-foreground">Ganados</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-blue-600">{stats.interesado + stats.seguimiento + stats.propuesta + stats.negociacion}</div>
-              <div className="text-sm text-muted-foreground">En Proceso</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-gray-600">{stats.no_contactado}</div>
-              <div className="text-sm text-muted-foreground">Sin Contactar</div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{stats?.total_contacts || 0}</div>
+            <div className="text-sm text-muted-foreground">Total Contactos</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-green-600">{stats?.ganado || 0}</div>
+            <div className="text-sm text-muted-foreground">Ganados</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-blue-600">
+              {(stats?.interesado || 0) + (stats?.seguimiento || 0) + (stats?.propuesta || 0) + (stats?.negociacion || 0)}
+            </div>
+            <div className="text-sm text-muted-foreground">En Proceso</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-gray-600">{stats?.no_contactado || 0}</div>
+            <div className="text-sm text-muted-foreground">Sin Contactar</div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Tabla principal */}
       <Card>
@@ -762,6 +784,33 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
           onSuccess={() => {
             loadContacts()
             setManagingFieldsContact(null)
+          }}
+        />
+      )}
+
+      {/* Dialog de crear contacto */}
+      <CreateContactDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        clientId={clientId}
+        onContactCreated={() => {
+          loadContacts()
+          loadStats()
+          setShowCreateDialog(false)
+        }}
+      />
+
+      {/* Dialog de editar contacto */}
+      {editingContact && (
+        <EditContactDialog
+          open={!!editingContact}
+          onOpenChange={() => setEditingContact(null)}
+          contact={editingContact}
+          clientId={clientId}
+          onContactUpdated={() => {
+            loadContacts()
+            loadStats()
+            setEditingContact(null)
           }}
         />
       )}
