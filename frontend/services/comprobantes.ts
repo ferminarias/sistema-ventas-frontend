@@ -174,8 +174,14 @@ class ComprobantesService {
       }
     })
 
-    console.log("🔍 DEBUG: Enviando búsqueda con filtros:", filters)
-    console.log("🔍 DEBUG: URL de búsqueda:", `${API_BASE_URL}/api/comprobantes/search?${params}`)
+    console.log("🔍 DEBUG: Filtros recibidos en searchComprobantes:", filters)
+    console.log("🔍 DEBUG: Parámetros URL construidos:", Object.fromEntries(params))
+    console.log("🔍 DEBUG: URL completa de búsqueda:", `${API_BASE_URL}/api/comprobantes/search?${params}`)
+    
+    // Si no hay filtros específicos, el backend debe devolver TODAS las ventas con archivos
+    if (params.toString() === 'page=1&limit=20' || params.toString() === 'page=1&limit=50') {
+      console.log("🎯 BÚSQUEDA SIN FILTROS: Esperamos TODAS las ventas con archivos")
+    }
 
     const response = await fetch(`${API_BASE_URL}/api/comprobantes/search?${params}`, {
       headers: getAuthHeaders(),

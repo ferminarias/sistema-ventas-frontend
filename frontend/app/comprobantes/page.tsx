@@ -102,7 +102,7 @@ export default function BusquedaComprobantesPage() {
             <FileSearch className="h-8 w-8 text-purple-500" />
             <div>
               <h1 className="text-2xl font-bold text-white">Búsqueda de Comprobantes</h1>
-              <p className="text-gray-400">Encuentra y gestiona todos los comprobantes de venta del sistema</p>
+              <p className="text-gray-400">Todas las ventas con archivos adjuntos</p>
             </div>
           </div>
 
@@ -192,7 +192,7 @@ export default function BusquedaComprobantesPage() {
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-12 text-center">
             <FileSearch className="h-12 w-12 text-gray-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-white mb-2">Buscar Comprobantes</h3>
-            <p className="text-gray-400">Utiliza los filtros de arriba para buscar comprobantes específicos</p>
+            <p className="text-gray-400">Haz clic en "Buscar Comprobantes" para ver todas las ventas con archivos</p>
           </div>
         )}
       </div>
