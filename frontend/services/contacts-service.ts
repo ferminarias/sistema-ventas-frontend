@@ -86,10 +86,11 @@ export interface ContactResponse {
 }
 
 class ContactsService {
-  private baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app'
+  // ✅ CORREGIDO: Eliminar baseUrl ya que apiRequest maneja la URL base automáticamente
 
   async getAvailableClients(): Promise<{ available_clients: any[], user_info: any }> {
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/available-clients`)
+    // ✅ CORREGIDO: Solo pasar el endpoint, apiRequest agregará la base URL
+    const response = await apiRequest('/api/contacts/available-clients')
     if (!response.ok) {
       throw new Error('Error al obtener clientes disponibles')
     }
@@ -105,7 +106,8 @@ class ContactsService {
       }
     })
 
-    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts?${params.toString()}`)
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest(`/api/clients/${clientId}/contacts?${params.toString()}`)
     if (!response.ok) {
       throw new Error('Error al obtener contactos')
     }
@@ -113,7 +115,8 @@ class ContactsService {
   }
 
   async getContact(clientId: number, id: number): Promise<Contact> {
-    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts/${id}`)
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest(`/api/clients/${clientId}/contacts/${id}`)
     if (!response.ok) {
       throw new Error('Error al obtener contacto')
     }
@@ -121,7 +124,8 @@ class ContactsService {
   }
 
   async createContact(clientId: number, contact: Partial<Contact>): Promise<Contact> {
-    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts`, {
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest(`/api/clients/${clientId}/contacts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -144,7 +148,8 @@ class ContactsService {
   }
 
   async updateContact(clientId: number, id: number, contact: Partial<Contact>): Promise<Contact> {
-    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts/${id}`, {
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest(`/api/clients/${clientId}/contacts/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -167,7 +172,8 @@ class ContactsService {
   }
 
   async deleteContact(clientId: number, id: number): Promise<void> {
-    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts/${id}`, {
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest(`/api/clients/${clientId}/contacts/${id}`, {
       method: 'DELETE',
     })
     
@@ -177,7 +183,8 @@ class ContactsService {
   }
 
   async getStats(clientId: number): Promise<ContactStats> {
-    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts/stats`)
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest(`/api/clients/${clientId}/contacts/stats`)
     if (!response.ok) {
       throw new Error('Error al obtener estadísticas')
     }
@@ -185,7 +192,8 @@ class ContactsService {
   }
 
   async getUsers(): Promise<ContactUser[]> {
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/users`)
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest('/api/contacts/users')
     if (!response.ok) {
       throw new Error('Error al obtener usuarios')
     }
@@ -193,7 +201,8 @@ class ContactsService {
   }
 
   async getFields(): Promise<ContactField[]> {
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/fields`)
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest('/api/contacts/fields')
     if (!response.ok) {
       throw new Error('Error al obtener campos')
     }
@@ -201,7 +210,8 @@ class ContactsService {
   }
 
   async updateContactField(id: number, fieldId: string, value: any): Promise<Contact> {
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/${id}/fields/${fieldId}`, {
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest(`/api/contacts/${id}/fields/${fieldId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -216,7 +226,8 @@ class ContactsService {
   }
 
   async deleteContactField(id: number, fieldId: string): Promise<Contact> {
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/${id}/fields/${fieldId}`, {
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest(`/api/contacts/${id}/fields/${fieldId}`, {
       method: 'DELETE',
     })
     
@@ -235,7 +246,8 @@ class ContactsService {
       }
     })
 
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/client/${clientId}/export?${params.toString()}`)
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest(`/api/contacts/client/${clientId}/export?${params.toString()}`)
     if (!response.ok) {
       throw new Error('Error al exportar contactos')
     }
@@ -246,7 +258,8 @@ class ContactsService {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts/import`, {
+    // ✅ CORREGIDO: Solo pasar el endpoint
+    const response = await apiRequest(`/api/clients/${clientId}/contacts/import`, {
       method: 'POST',
       body: formData,
     })
