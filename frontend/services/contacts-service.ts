@@ -123,8 +123,8 @@ class ContactsService {
       }
     })
 
-    // ✅ CORREGIDO: Solo pasar el endpoint
-    const response = await apiRequest(`/api/clients/${clientId}/contacts?${params.toString()}`)
+    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
+    const response = await apiRequest(`/api/contacts/client/${clientId}?${params.toString()}`)
     
     if (!response.ok) {
       // Debug específico para problemas de autenticación
@@ -144,8 +144,8 @@ class ContactsService {
   }
 
   async getContact(clientId: number, id: number): Promise<Contact> {
-    // ✅ CORREGIDO: Solo pasar el endpoint
-    const response = await apiRequest(`/api/clients/${clientId}/contacts/${id}`)
+    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
+    const response = await apiRequest(`/api/contacts/client/${clientId}/contact/${id}`)
     if (!response.ok) {
       throw new Error('Error al obtener contacto')
     }
@@ -157,8 +157,8 @@ class ContactsService {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token')
     console.log('🔐 CREATE CONTACT - Token disponible:', !!token)
     
-    // ✅ CORREGIDO: Solo pasar el endpoint
-    const response = await apiRequest(`/api/clients/${clientId}/contacts`, {
+    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
+    const response = await apiRequest(`/api/contacts/client/${clientId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -192,8 +192,8 @@ class ContactsService {
   }
 
   async updateContact(clientId: number, id: number, contact: Partial<Contact>): Promise<Contact> {
-    // ✅ CORREGIDO: Solo pasar el endpoint
-    const response = await apiRequest(`/api/clients/${clientId}/contacts/${id}`, {
+    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
+    const response = await apiRequest(`/api/contacts/client/${clientId}/contact/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -216,8 +216,8 @@ class ContactsService {
   }
 
   async deleteContact(clientId: number, id: number): Promise<void> {
-    // ✅ CORREGIDO: Solo pasar el endpoint
-    const response = await apiRequest(`/api/clients/${clientId}/contacts/${id}`, {
+    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
+    const response = await apiRequest(`/api/contacts/client/${clientId}/contact/${id}`, {
       method: 'DELETE',
     })
     
@@ -227,8 +227,8 @@ class ContactsService {
   }
 
   async getStats(clientId: number): Promise<ContactStats> {
-    // ✅ CORREGIDO: Solo pasar el endpoint
-    const response = await apiRequest(`/api/clients/${clientId}/contacts/stats`)
+    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
+    const response = await apiRequest(`/api/contacts/client/${clientId}/stats`)
     if (!response.ok) {
       throw new Error('Error al obtener estadísticas')
     }
@@ -236,8 +236,8 @@ class ContactsService {
   }
 
   async getUsers(): Promise<ContactUser[]> {
-    // ✅ CORREGIDO: Solo pasar el endpoint
-    const response = await apiRequest('/api/contacts/users')
+    // ✅ CORREGIDO: Usar endpoint de usuarios existente
+    const response = await apiRequest('/api/users')
     if (!response.ok) {
       throw new Error('Error al obtener usuarios')
     }
@@ -302,8 +302,8 @@ class ContactsService {
     const formData = new FormData()
     formData.append('file', file)
 
-    // ✅ CORREGIDO: Solo pasar el endpoint
-    const response = await apiRequest(`/api/clients/${clientId}/contacts/import`, {
+    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
+    const response = await apiRequest(`/api/contacts/client/${clientId}/import`, {
       method: 'POST',
       body: formData,
     })
