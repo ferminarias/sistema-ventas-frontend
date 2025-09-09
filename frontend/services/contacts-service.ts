@@ -102,8 +102,8 @@ class ContactsService {
   // ✅ CORREGIDO: Eliminar baseUrl ya que apiRequest maneja la URL base automáticamente
 
   async getAvailableClients(): Promise<{ available_clients: any[], user_info: any }> {
-    // ✅ CORREGIDO: Solo pasar el endpoint, apiRequest agregará la base URL
-    const response = await apiRequest('/api/contacts/available-clients')
+    // ✅ USAR ESTRUCTURA COMO /api/clientes que SÍ funciona
+    const response = await apiRequest('/api/clientes')
     if (!response.ok) {
       throw new Error('Error al obtener clientes disponibles')
     }
@@ -123,8 +123,8 @@ class ContactsService {
       }
     })
 
-    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
-    const response = await apiRequest(`/api/contacts/client/${clientId}?${params.toString()}`)
+    // ✅ USAR ESTRUCTURA COMO /api/ventas que SÍ funciona
+    const response = await apiRequest(`/api/clientes/${clientId}/contactos?${params.toString()}`)
     
     if (!response.ok) {
       // Debug específico para problemas de autenticación
@@ -144,8 +144,8 @@ class ContactsService {
   }
 
   async getContact(clientId: number, id: number): Promise<Contact> {
-    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
-    const response = await apiRequest(`/api/contacts/client/${clientId}/contact/${id}`)
+    // ✅ USAR ESTRUCTURA COMO /api/ventas que SÍ funciona  
+    const response = await apiRequest(`/api/clientes/${clientId}/contactos/${id}`)
     if (!response.ok) {
       throw new Error('Error al obtener contacto')
     }
@@ -157,8 +157,8 @@ class ContactsService {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token')
     console.log('🔐 CREATE CONTACT - Token disponible:', !!token)
     
-    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
-    const response = await apiRequest(`/api/contacts/client/${clientId}`, {
+    // ✅ USAR ESTRUCTURA COMO /api/ventas que SÍ funciona
+    const response = await apiRequest(`/api/clientes/${clientId}/contactos`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -192,8 +192,8 @@ class ContactsService {
   }
 
   async updateContact(clientId: number, id: number, contact: Partial<Contact>): Promise<Contact> {
-    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
-    const response = await apiRequest(`/api/contacts/client/${clientId}/contact/${id}`, {
+    // ✅ USAR ESTRUCTURA COMO /api/ventas que SÍ funciona
+    const response = await apiRequest(`/api/clientes/${clientId}/contactos/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -216,8 +216,8 @@ class ContactsService {
   }
 
   async deleteContact(clientId: number, id: number): Promise<void> {
-    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
-    const response = await apiRequest(`/api/contacts/client/${clientId}/contact/${id}`, {
+    // ✅ USAR ESTRUCTURA COMO /api/ventas que SÍ funciona
+    const response = await apiRequest(`/api/clientes/${clientId}/contactos/${id}`, {
       method: 'DELETE',
     })
     
@@ -227,8 +227,8 @@ class ContactsService {
   }
 
   async getStats(clientId: number): Promise<ContactStats> {
-    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
-    const response = await apiRequest(`/api/contacts/client/${clientId}/stats`)
+    // ✅ USAR ESTRUCTURA COMO /api/ventas que SÍ funciona
+    const response = await apiRequest(`/api/clientes/${clientId}/contactos/stats`)
     if (!response.ok) {
       throw new Error('Error al obtener estadísticas')
     }

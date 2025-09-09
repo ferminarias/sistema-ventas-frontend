@@ -518,9 +518,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
                 variant="outline"
                 size="sm"
                 onClick={() => setManageColumnsOpen(true)}
-                disabled={true}
-                className="opacity-50"
-                title="Deshabilitado - CORS Error"
+                title="Gestionar columnas"
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -529,9 +527,8 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
                 variant="outline"
                 size="sm"
                 onClick={handleExport}
-                disabled={true}
-                className="opacity-50"
-                title="Deshabilitado - CORS Error"
+                disabled={exporting}
+                title="Exportar contactos"
               >
                 <Download className="h-4 w-4" />
               </Button>
@@ -540,9 +537,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
                 variant="outline"
                 size="sm"
                 onClick={() => setShowImportDialog(true)}
-                disabled={true}
-                className="opacity-50"
-                title="Deshabilitado - CORS Error"
+                title="Importar contactos"
               >
                 <Upload className="h-4 w-4" />
               </Button>
@@ -550,12 +545,10 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
               <Button
                 size="sm"
                 onClick={() => setShowCreateDialog(true)}
-                disabled={true}
-                className="opacity-50 cursor-not-allowed"
-                title="Funcionalidad deshabilitada - Endpoint bloqueado por CORS"
+                title="Crear nuevo contacto"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Nuevo (CORS Error)
+                Nuevo
               </Button>
             </div>
           </div>
