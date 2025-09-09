@@ -27,9 +27,10 @@ interface ClientSelectorProps {
     total_accessible_clients: number
   }
   compact?: boolean
+  centered?: boolean
 }
 
-export function ClientSelector({ clients, selectedClient, onSelectClient, userInfo, compact = false }: ClientSelectorProps) {
+export function ClientSelector({ clients, selectedClient, onSelectClient, userInfo, compact = false, centered = false }: ClientSelectorProps) {
   const getEstadoBadgeVariant = (estado: string) => {
     switch (estado) {
       case "ganado": return "default"
@@ -70,6 +71,8 @@ export function ClientSelector({ clients, selectedClient, onSelectClient, userIn
 
   // Modo compacto: solo dropdown
   if (compact) {
+    const widthClass = centered ? "w-[300px]" : "w-[200px]"
+    
     return (
       <Select
         value={selectedClient?.id.toString() || ""}
@@ -78,25 +81,33 @@ export function ClientSelector({ clients, selectedClient, onSelectClient, userIn
           if (client) onSelectClient(client)
         }}
       >
-        <SelectTrigger className="w-[200px]">
-          <SelectValue placeholder="Elegir cliente" />
+        <SelectTrigger className={`${widthClass} ${centered ? 'text-base' : ''}`}>
+          <SelectValue placeholder="🏢 Elegir cliente" />
         </SelectTrigger>
         <SelectContent>
-          {clients
-            .filter(client => client.has_contacts_table)
-            .map((client) => (
-              <SelectItem key={client.id} value={client.id.toString()}>
-                <div className="flex items-center justify-between w-full min-w-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Building2 className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{client.name}</span>
-                  </div>
-                  <Badge variant="secondary" className="ml-2 flex-shrink-0 text-xs">
-                    {client.total_contacts}
-                  </Badge>
+          {clients.map((client) => (
+            <SelectItem 
+              key={client.id} 
+              value={client.id.toString()}
+              disabled={!client.has_contacts_table}
+            >
+              <div className="flex items-center justify-between w-full min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Building2 className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{client.name}</span>
+                  {!client.has_contacts_table && (
+                    <span className="text-xs text-muted-foreground">(Sin tabla)</span>
+                  )}
                 </div>
-              </SelectItem>
-            ))}
+                <Badge 
+                  variant={client.has_contacts_table ? "secondary" : "outline"} 
+                  className="ml-2 flex-shrink-0 text-xs"
+                >
+                  {client.total_contacts}
+                </Badge>
+              </div>
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     )

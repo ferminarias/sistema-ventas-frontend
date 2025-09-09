@@ -75,7 +75,7 @@ export default function ContactosPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header con selector compacto */}
+      {/* Header - Solo título cuando no hay cliente seleccionado */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Sistema de Contactos</h1>
@@ -84,14 +84,12 @@ export default function ContactosPage() {
           </p>
         </div>
         
-        {/* Selector de Cliente Compacto - Siempre visible */}
-        {availableClients.length > 0 && (
+        {/* Selector compacto solo cuando hay cliente seleccionado */}
+        {selectedClient && availableClients.length > 0 && (
           <div className="flex items-center gap-4">
-            {selectedClient && (
-              <div className="text-sm text-muted-foreground">
-                <span className="font-medium">{selectedClient.name}</span> • {selectedClient.total_contacts} contactos
-              </div>
-            )}
+            <div className="text-sm text-muted-foreground">
+              <span className="font-medium">{selectedClient.name}</span> • {selectedClient.total_contacts} contactos
+            </div>
             <ClientSelector
               clients={availableClients}
               selectedClient={selectedClient}
@@ -103,24 +101,52 @@ export default function ContactosPage() {
         )}
       </div>
 
-      {/* Lista de Contactos del Cliente Seleccionado */}
+      {/* Contenido principal */}
       {selectedClient ? (
         <ContactsList
           clientId={selectedClient.id}
           clientName={selectedClient.name}
         />
       ) : availableClients.length > 0 ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="text-xl font-medium text-muted-foreground mb-2">
-              👆 Selecciona un cliente en la lista desplegable
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center space-y-8">
+            <div className="space-y-4">
+              <div className="text-3xl font-bold text-foreground">
+                🏢 Selecciona un Cliente
+              </div>
+              <div className="text-lg text-muted-foreground max-w-md">
+                Elige un cliente para ver y gestionar sus contactos
+              </div>
             </div>
+            
+            <div className="flex justify-center">
+              <ClientSelector
+                clients={availableClients}
+                selectedClient={selectedClient}
+                onSelectClient={handleSelectClient}
+                userInfo={userInfo}
+                compact={true}
+                centered={true}
+              />
+            </div>
+            
             <div className="text-sm text-muted-foreground">
-              Los contactos se cargarán dinámicamente al seleccionar un cliente
+              Los contactos se cargarán automáticamente al seleccionar un cliente
             </div>
           </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="text-xl font-medium text-muted-foreground mb-2">
+              No hay clientes disponibles
+            </div>
+            <div className="text-sm text-muted-foreground">
+              No tienes acceso a ningún cliente con sistema de contactos
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
