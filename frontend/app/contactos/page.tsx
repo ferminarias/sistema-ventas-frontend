@@ -34,12 +34,16 @@ export default function ContactosPage() {
     try {
       setLoading(true)
       const response = await contactsService.getAvailableClients()
-      setAvailableClients(response.available_clients)
-      setUserInfo(response.user_info)
+      // Validar que la respuesta tenga la estructura esperada
+      setAvailableClients(response.available_clients || [])
+      setUserInfo(response.user_info || null)
       
       // No auto-seleccionar ningún cliente - que el usuario elija
     } catch (error) {
       console.error('Error loading available clients:', error)
+      // Asegurar que availableClients siempre sea un array válido
+      setAvailableClients([])
+      setUserInfo(null)
       toast({
         title: "Error",
         description: "Error al cargar clientes disponibles",
@@ -126,7 +130,7 @@ export default function ContactosPage() {
           clientId={selectedClient.id}
           clientName={selectedClient.name}
         />
-      ) : availableClients.length > 0 ? (
+      ) : availableClients && availableClients.length > 0 ? (
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center space-y-8">
             <div className="space-y-4">
