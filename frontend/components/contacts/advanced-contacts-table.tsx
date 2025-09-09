@@ -281,13 +281,23 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
       const response = await contactsService.getContacts(clientId, filters)
       setContacts(response.contacts)
       setTotalPages(response.total_pages)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading contacts:', error)
-      toast({
-        title: "Error",
-        description: "Error al cargar contactos",
-        variant: "destructive",
-      })
+      
+      // Detectar si es un error de CORS
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('CORS')) {
+        toast({
+          title: "⚠️ Sistema de Contactos en Mantenimiento",
+          description: "Los endpoints de contactos necesitan configuración CORS en Railway. Contacta al administrador del sistema.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Error al cargar contactos",
+          variant: "destructive",
+        })
+      }
     } finally {
       setLoading(false)
     }
@@ -297,8 +307,13 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
     try {
       const statsData = await contactsService.getStats(clientId)
       setStats(statsData)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading stats:', error)
+      
+      // Detectar si es un error de CORS y mostrar mensaje específico
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('CORS')) {
+        console.warn('📊 Stats endpoint bloqueado por CORS - configurar en Railway')
+      }
     }
   }
 
@@ -503,6 +518,9 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
                 variant="outline"
                 size="sm"
                 onClick={() => setManageColumnsOpen(true)}
+                disabled={true}
+                className="opacity-50"
+                title="Deshabilitado - CORS Error"
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -511,7 +529,9 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
                 variant="outline"
                 size="sm"
                 onClick={handleExport}
-                disabled={exporting}
+                disabled={true}
+                className="opacity-50"
+                title="Deshabilitado - CORS Error"
               >
                 <Download className="h-4 w-4" />
               </Button>
@@ -520,6 +540,9 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
                 variant="outline"
                 size="sm"
                 onClick={() => setShowImportDialog(true)}
+                disabled={true}
+                className="opacity-50"
+                title="Deshabilitado - CORS Error"
               >
                 <Upload className="h-4 w-4" />
               </Button>
@@ -527,19 +550,12 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
               <Button
                 size="sm"
                 onClick={() => setShowCreateDialog(true)}
+                disabled={true}
+                className="opacity-50 cursor-not-allowed"
+                title="Funcionalidad deshabilitada - Endpoint bloqueado por CORS"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Nuevo
-              </Button>
-
-              {/* Botón temporal para debug de autenticación */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={debugAuth}
-                className="border-orange-500 text-orange-600"
-              >
-                🔐 Debug Auth
+                Nuevo (CORS Error)
               </Button>
             </div>
           </div>

@@ -101,6 +101,25 @@ export default function ContactosPage() {
         )}
       </div>
 
+      {/* Banner informativo sobre CORS */}
+      {selectedClient && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="text-orange-600 mt-0.5">⚠️</div>
+            <div>
+              <h3 className="text-sm font-medium text-orange-800">Sistema de Contactos en Configuración</h3>
+              <p className="text-sm text-orange-700 mt-1">
+                Los endpoints de contactos necesitan configuración CORS en Railway. 
+                <span className="font-medium"> Las rutas están correctas</span> pero el backend debe agregar los headers CORS apropiados.
+              </p>
+              <p className="text-xs text-orange-600 mt-2">
+                Endpoints afectados: /api/contacts/client/* • Estado: Pendiente de configuración en Railway
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Contenido principal */}
       {selectedClient ? (
         <ContactsList
