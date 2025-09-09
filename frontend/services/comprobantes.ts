@@ -124,8 +124,44 @@ class ComprobantesService {
     }
     
     const data = await response.json()
+    console.log("🔍 DEBUG: Filtros recibidos del backend:", data)
     
-    return this.ensureAllValuesRenderable(data)
+    // SOLUCIÓN: Agregar tipos de archivo que siempre deben estar disponibles
+    const enhancedData = this.enhanceFiltersWithLegacyTypes(data)
+    
+    return this.ensureAllValuesRenderable(enhancedData)
+  }
+
+  // NUEVO: Mejorar filtros para incluir tipos legacy como 'imagen_comprobante'
+  private enhanceFiltersWithLegacyTypes(data: any): any {
+    const enhanced = { ...data }
+    
+    // Asegurar que tipos_archivo existe
+    if (!enhanced.tipos_archivo) {
+      enhanced.tipos_archivo = []
+    }
+    
+    // Tipos legacy que siempre deben estar disponibles
+    const legacyTypes = [
+      'imagen_comprobante',
+      'comprobantes', 
+      'comprobante',
+      'imagen',
+      'archivo',
+      'documento'
+    ]
+    
+    // Agregar tipos legacy que no estén ya presentes
+    legacyTypes.forEach(type => {
+      if (!enhanced.tipos_archivo.includes(type)) {
+        enhanced.tipos_archivo.push(type)
+        console.log(`✅ Agregado tipo legacy: ${type}`)
+      }
+    })
+    
+    console.log("🔧 Tipos de archivo después de mejoras:", enhanced.tipos_archivo)
+    
+    return enhanced
   }
 
   // Realizar búsqueda de comprobantes
@@ -138,6 +174,9 @@ class ComprobantesService {
       }
     })
 
+    console.log("🔍 DEBUG: Enviando búsqueda con filtros:", filters)
+    console.log("🔍 DEBUG: URL de búsqueda:", `${API_BASE_URL}/api/comprobantes/search?${params}`)
+
     const response = await fetch(`${API_BASE_URL}/api/comprobantes/search?${params}`, {
       headers: getAuthHeaders(),
       credentials: "include"
@@ -149,6 +188,20 @@ class ComprobantesService {
     }
 
     const backendResponse = await response.json()
+    console.log("🔍 DEBUG: Respuesta del backend:", backendResponse)
+
+    // Analizar archivos encontrados para debugging
+    if (backendResponse.resultados?.length > 0) {
+      console.log("📁 DEBUG: Analizando archivos encontrados...")
+      backendResponse.resultados.forEach((comprobante: any, index: number) => {
+        if (comprobante.archivos?.length > 0) {
+          console.log(`📋 Comprobante ${index + 1} (ID: ${comprobante.venta_id}):`)
+          comprobante.archivos.forEach((archivo: any, archIndex: number) => {
+            console.log(`  📁 Archivo ${archIndex + 1}: field_id="${archivo.field_id}", filename="${archivo.filename}", tipo="${archivo.tipo}"`)
+          })
+        }
+      })
+    }
 
     // Mapear la respuesta del backend PRESERVANDO la estructura de archivos
     const mappedResponse: ComprobanteSearchResponse = {
@@ -183,6 +236,7 @@ class ComprobantesService {
       total_pages: ensureRenderableValue(extractValue(backendResponse.pagination?.total_pages)) || 1
     }
 
+    console.log("✅ DEBUG: Respuesta mapeada:", mappedResponse)
     return mappedResponse
   }
 

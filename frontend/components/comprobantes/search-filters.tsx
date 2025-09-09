@@ -148,7 +148,21 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
               <SelectItem value="all" className="text-foreground hover:bg-muted">
                 Todos los tipos
               </SelectItem>
-              {filtrosDisponibles?.tipos_archivo?.map((tipo: any, index: number) => (
+              {/* Tipos prioritarios primero */}
+              <SelectItem value="imagen_comprobante" className="text-foreground hover:bg-muted font-medium">
+                🎯 Imagen Comprobante (Legacy)
+              </SelectItem>
+              <SelectItem value="comprobantes" className="text-foreground hover:bg-muted font-medium">
+                📋 Comprobantes
+              </SelectItem>
+              {/* Separador visual */}
+              <SelectItem value="" disabled className="text-muted-foreground">
+                ───────────────────
+              </SelectItem>
+              {filtrosDisponibles?.tipos_archivo?.filter((tipo: any) => {
+                const tipoValue = getTipoValue(tipo)
+                return tipoValue !== 'imagen_comprobante' && tipoValue !== 'comprobantes'
+              }).map((tipo: any, index: number) => (
                 <SelectItem key={index} value={getTipoValue(tipo)} className="text-foreground hover:bg-muted">
                   {getTipoLabel(tipo)}
                 </SelectItem>
@@ -208,7 +222,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
         <Button
           onClick={handleSearch}
           disabled={loading}
@@ -217,6 +231,40 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
           <Search className="h-4 w-4" />
           {loading ? "Buscando..." : "Buscar Comprobantes"}
         </Button>
+        
+        {/* Búsquedas rápidas */}
+        <Button
+          variant="outline"
+          onClick={() => {
+            const anahuacFilters: ComprobanteFilters = {
+              tipo_archivo: "imagen_comprobante",
+              page: 1,
+              limit: 20
+            }
+            setFilters(anahuacFilters)
+            onSearch(anahuacFilters)
+          }}
+          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white flex items-center gap-2"
+        >
+          🎯 Buscar Anahuac (Legacy)
+        </Button>
+        
+        <Button
+          variant="outline"
+          onClick={() => {
+            const comprobantesFilters: ComprobanteFilters = {
+              tipo_archivo: "comprobantes",
+              page: 1,
+              limit: 20
+            }
+            setFilters(comprobantesFilters)
+            onSearch(comprobantesFilters)
+          }}
+          className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center gap-2"
+        >
+          📋 Buscar Comprobantes
+        </Button>
+        
         <Button
           variant="outline"
           onClick={handleReset}
