@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Building2, Users, UserCheck, AlertTriangle, Eye } from "lucide-react"
 
 interface ClientForContacts {
@@ -25,9 +26,10 @@ interface ClientSelectorProps {
     role: string
     total_accessible_clients: number
   }
+  compact?: boolean
 }
 
-export function ClientSelector({ clients, selectedClient, onSelectClient, userInfo }: ClientSelectorProps) {
+export function ClientSelector({ clients, selectedClient, onSelectClient, userInfo, compact = false }: ClientSelectorProps) {
   const getEstadoBadgeVariant = (estado: string) => {
     switch (estado) {
       case "ganado": return "default"
@@ -66,6 +68,48 @@ export function ClientSelector({ clients, selectedClient, onSelectClient, userIn
     )
   }
 
+  // Modo compacto: solo dropdown
+  if (compact) {
+    return (
+      <Select
+        value={selectedClient?.id.toString() || ""}
+        onValueChange={(value) => {
+          const client = clients.find(c => c.id.toString() === value)
+          if (client) onSelectClient(client)
+        }}
+      >
+        <SelectTrigger className="w-[240px]">
+          <SelectValue placeholder="Seleccionar cliente">
+            {selectedClient && (
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                {selectedClient.name}
+              </div>
+            )}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {clients
+            .filter(client => client.has_contacts_table)
+            .map((client) => (
+              <SelectItem key={client.id} value={client.id.toString()}>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    <span>{client.name}</span>
+                  </div>
+                  <Badge variant="secondary" className="ml-2">
+                    {client.total_contacts}
+                  </Badge>
+                </div>
+              </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+    )
+  }
+
+  // Modo completo: cards
   return (
     <div className="space-y-6">
       {/* Información del usuario */}
