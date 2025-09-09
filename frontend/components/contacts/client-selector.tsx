@@ -78,27 +78,20 @@ export function ClientSelector({ clients, selectedClient, onSelectClient, userIn
           if (client) onSelectClient(client)
         }}
       >
-        <SelectTrigger className="w-[240px]">
-          <SelectValue placeholder="Seleccionar cliente">
-            {selectedClient && (
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                {selectedClient.name}
-              </div>
-            )}
-          </SelectValue>
+        <SelectTrigger className="w-[200px]">
+          <SelectValue placeholder="Elegir cliente" />
         </SelectTrigger>
         <SelectContent>
           {clients
             .filter(client => client.has_contacts_table)
             .map((client) => (
               <SelectItem key={client.id} value={client.id.toString()}>
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    <span>{client.name}</span>
+                <div className="flex items-center justify-between w-full min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Building2 className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{client.name}</span>
                   </div>
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="ml-2 flex-shrink-0 text-xs">
                     {client.total_contacts}
                   </Badge>
                 </div>

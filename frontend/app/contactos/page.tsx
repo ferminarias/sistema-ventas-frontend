@@ -37,10 +37,7 @@ export default function ContactosPage() {
       setAvailableClients(response.available_clients)
       setUserInfo(response.user_info)
       
-      // Auto-seleccionar cliente si solo hay uno disponible
-      if (response.available_clients.length === 1) {
-        setSelectedClient(response.available_clients[0])
-      }
+      // No auto-seleccionar ningún cliente - que el usuario elija
     } catch (error) {
       console.error('Error loading available clients:', error)
       toast({
@@ -59,11 +56,17 @@ export default function ContactosPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="text-lg font-medium">Cargando clientes disponibles...</div>
-          <div className="text-sm text-muted-foreground mt-2">
-            Obteniendo información de acceso y permisos
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Sistema de Contactos</h1>
+            <p className="text-muted-foreground">
+              Gestiona contactos y leads organizados por cliente
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-muted-foreground">Cargando clientes...</div>
+            <div className="w-[200px] h-9 bg-muted rounded-md animate-pulse"></div>
           </div>
         </div>
       </div>
@@ -81,7 +84,7 @@ export default function ContactosPage() {
           </p>
         </div>
         
-        {/* Selector de Cliente Compacto */}
+        {/* Selector de Cliente Compacto - Siempre visible */}
         {availableClients.length > 0 && (
           <div className="flex items-center gap-4">
             {selectedClient && (
@@ -101,23 +104,23 @@ export default function ContactosPage() {
       </div>
 
       {/* Lista de Contactos del Cliente Seleccionado */}
-      {selectedClient && (
+      {selectedClient ? (
         <ContactsList
           clientId={selectedClient.id}
           clientName={selectedClient.name}
         />
-      )}
-
-      {/* Estado inicial: mostrar selector completo si no hay cliente seleccionado */}
-      {!selectedClient && availableClients.length > 0 && (
-        <ClientSelector
-          clients={availableClients}
-          selectedClient={selectedClient}
-          onSelectClient={handleSelectClient}
-          userInfo={userInfo}
-          compact={false}
-        />
-      )}
+      ) : availableClients.length > 0 ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="text-xl font-medium text-muted-foreground mb-2">
+              👆 Selecciona un cliente en la lista desplegable
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Los contactos se cargarán dinámicamente al seleccionar un cliente
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
