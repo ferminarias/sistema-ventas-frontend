@@ -109,7 +109,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
   const [searchTerm, setSearchTerm] = useState("")
   const [sortBy, setSortBy] = useState("updated_at")
   const [sortOrder, setSortOrder] = useState("desc")
-  const [estadoFilter, setEstadoFilter] = useState<string>("")
+  const [estadoFilter, setEstadoFilter] = useState<string>("all")
   
   // Estados de UI
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -250,7 +250,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
       }
 
       if (searchTerm) filters.search = searchTerm
-      if (estadoFilter) filters.estado = estadoFilter
+      if (estadoFilter && estadoFilter !== "all") filters.estado = estadoFilter
 
       const response = await contactsService.getContacts(clientId, filters)
       setContacts(response.contacts)
@@ -277,17 +277,18 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
   }
 
   const loadDynamicFields = async () => {
-    try {
-      const fields = await contactsService.getFields()
-      setDynamicFieldDefs(fields.map(f => ({
-        id: f.id,
-        label: f.label,
-        type: f.type,
-        options: f.options
-      })))
-    } catch (error) {
-      console.error('Error loading dynamic fields:', error)
-    }
+    // TODO: Implementar campos dinámicos cuando el backend esté listo
+    // try {
+    //   const fields = await contactsService.getFields()
+    //   setDynamicFieldDefs(fields.map(f => ({
+    //     id: f.id,
+    //     label: f.label,
+    //     type: f.type,
+    //     options: f.options
+    //   })))
+    // } catch (error) {
+    //   console.error('Error loading dynamic fields:', error)
+    // }
   }
 
   // Manejadores de eventos
@@ -341,7 +342,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
       setExporting(true)
       const filters: ContactFilters = {}
       if (searchTerm) filters.search = searchTerm
-      if (estadoFilter) filters.estado = estadoFilter
+      if (estadoFilter && estadoFilter !== "all") filters.estado = estadoFilter
 
       const blob = await contactsService.exportContacts(clientId, {
         ...filters,
@@ -463,7 +464,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {ESTADOS_OPTIONS.map(estado => (
                     <SelectItem key={estado.value} value={estado.value}>
                       {estado.label}

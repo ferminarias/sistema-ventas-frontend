@@ -84,7 +84,7 @@ export function CreateContactDialog({ clientId, open, onOpenChange, onContactCre
       
       const contactData = {
         ...formData,
-        assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : undefined,
+        assigned_to: formData.assigned_to && formData.assigned_to !== "unassigned" ? parseInt(formData.assigned_to) : undefined,
         campos_adicionales: formData.notas ? { notas: formData.notas } : undefined,
       }
       
@@ -286,7 +286,7 @@ export function CreateContactDialog({ clientId, open, onOpenChange, onContactCre
                   <SelectValue placeholder="Seleccionar usuario" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin asignar</SelectItem>
+                  <SelectItem value="unassigned">Sin asignar</SelectItem>
                   {users.map((usuario) => (
                     <SelectItem key={usuario.id} value={usuario.id.toString()}>
                       {usuario.nombre} {usuario.apellido}

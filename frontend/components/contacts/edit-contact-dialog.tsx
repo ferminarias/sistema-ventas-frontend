@@ -66,7 +66,7 @@ export function EditContactDialog({ clientId, contact, open, onOpenChange, onCon
         utm_source: contact.utm_source || "",
         utm_campaign: contact.utm_campaign || "",
         utm_content: contact.utm_content || "",
-        assigned_to: contact.assigned_to?.toString() || "",
+        assigned_to: contact.assigned_to?.toString() || "unassigned",
         notas: contact.campos_adicionales?.notas || "",
       })
       loadUsers()
@@ -99,7 +99,7 @@ export function EditContactDialog({ clientId, contact, open, onOpenChange, onCon
       
       const contactData = {
         ...formData,
-        assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : undefined,
+        assigned_to: formData.assigned_to && formData.assigned_to !== "unassigned" ? parseInt(formData.assigned_to) : undefined,
         campos_adicionales: {
           ...contact.campos_adicionales,
           ...(formData.notas ? { notas: formData.notas } : {}),
@@ -272,7 +272,7 @@ export function EditContactDialog({ clientId, contact, open, onOpenChange, onCon
                   <SelectValue placeholder="Seleccionar usuario" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin asignar</SelectItem>
+                  <SelectItem value="unassigned">Sin asignar</SelectItem>
                   {users.map((usuario) => (
                     <SelectItem key={usuario.id} value={usuario.id.toString()}>
                       {usuario.nombre} {usuario.apellido}
