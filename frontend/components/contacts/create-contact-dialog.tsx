@@ -12,6 +12,7 @@ import { contactsService, type ContactUser } from "@/services/contacts-service"
 import { useAuth } from "@/contexts/auth-context"
 
 interface CreateContactDialogProps {
+  clientId: number
   open: boolean
   onOpenChange: (open: boolean) => void
   onContactCreated: () => void
@@ -29,7 +30,7 @@ const ESTADOS_OPTIONS = [
   { value: "descartado", label: "Descartado" },
 ]
 
-export function CreateContactDialog({ open, onOpenChange, onContactCreated }: CreateContactDialogProps) {
+export function CreateContactDialog({ clientId, open, onOpenChange, onContactCreated }: CreateContactDialogProps) {
   const { user } = useAuth()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -94,7 +95,7 @@ export function CreateContactDialog({ open, onOpenChange, onContactCreated }: Cr
         }
       })
 
-      await contactsService.createContact(contactData)
+      await contactsService.createContact(clientId, contactData)
       
       toast({
         title: "Éxito",

@@ -12,12 +12,13 @@ import { useToast } from "@/hooks/use-toast"
 import { contactsService } from "@/services/contacts-service"
 
 interface ImportContactsDialogProps {
+  clientId: number
   open: boolean
   onOpenChange: (open: boolean) => void
   onContactsImported: () => void
 }
 
-export function ImportContactsDialog({ open, onOpenChange, onContactsImported }: ImportContactsDialogProps) {
+export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsImported }: ImportContactsDialogProps) {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
@@ -87,7 +88,7 @@ export function ImportContactsDialog({ open, onOpenChange, onContactsImported }:
 
     try {
       setLoading(true)
-      const result = await contactsService.importContacts(selectedFile)
+      const result = await contactsService.importContacts(clientId, selectedFile)
       setImportResult(result)
       
       if (result.imported > 0) {

@@ -88,7 +88,15 @@ export interface ContactResponse {
 class ContactsService {
   private baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app'
 
-  async getContacts(filters: ContactFilters = {}): Promise<ContactResponse> {
+  async getAvailableClients(): Promise<{ available_clients: any[], user_info: any }> {
+    const response = await apiRequest(`${this.baseUrl}/api/contacts/available-clients`)
+    if (!response.ok) {
+      throw new Error('Error al obtener clientes disponibles')
+    }
+    return response.json()
+  }
+
+  async getContacts(clientId: number, filters: ContactFilters = {}): Promise<ContactResponse> {
     const params = new URLSearchParams()
     
     Object.entries(filters).forEach(([key, value]) => {
@@ -97,23 +105,23 @@ class ContactsService {
       }
     })
 
-    const response = await apiRequest(`${this.baseUrl}/api/contacts?${params.toString()}`)
+    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts?${params.toString()}`)
     if (!response.ok) {
       throw new Error('Error al obtener contactos')
     }
     return response.json()
   }
 
-  async getContact(id: number): Promise<Contact> {
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/${id}`)
+  async getContact(clientId: number, id: number): Promise<Contact> {
+    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts/${id}`)
     if (!response.ok) {
       throw new Error('Error al obtener contacto')
     }
     return response.json()
   }
 
-  async createContact(contact: Partial<Contact>): Promise<Contact> {
-    const response = await apiRequest(`${this.baseUrl}/api/contacts`, {
+  async createContact(clientId: number, contact: Partial<Contact>): Promise<Contact> {
+    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -135,8 +143,8 @@ class ContactsService {
     return response.json()
   }
 
-  async updateContact(id: number, contact: Partial<Contact>): Promise<Contact> {
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/${id}`, {
+  async updateContact(clientId: number, id: number, contact: Partial<Contact>): Promise<Contact> {
+    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -158,8 +166,8 @@ class ContactsService {
     return response.json()
   }
 
-  async deleteContact(id: number): Promise<void> {
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/${id}`, {
+  async deleteContact(clientId: number, id: number): Promise<void> {
+    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts/${id}`, {
       method: 'DELETE',
     })
     
@@ -168,8 +176,8 @@ class ContactsService {
     }
   }
 
-  async getStats(): Promise<ContactStats> {
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/stats`)
+  async getStats(clientId: number): Promise<ContactStats> {
+    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts/stats`)
     if (!response.ok) {
       throw new Error('Error al obtener estadísticas')
     }
@@ -218,7 +226,7 @@ class ContactsService {
     return response.json()
   }
 
-  async exportContacts(filters: ContactFilters & { format?: 'excel' | 'csv'; include_fields?: boolean } = {}): Promise<Blob> {
+  async exportContacts(clientId: number, filters: ContactFilters & { format?: 'excel' | 'csv'; include_fields?: boolean } = {}): Promise<Blob> {
     const params = new URLSearchParams()
     
     Object.entries(filters).forEach(([key, value]) => {
@@ -227,18 +235,18 @@ class ContactsService {
       }
     })
 
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/export?${params.toString()}`)
+    const response = await apiRequest(`${this.baseUrl}/api/contacts/client/${clientId}/export?${params.toString()}`)
     if (!response.ok) {
       throw new Error('Error al exportar contactos')
     }
     return response.blob()
   }
 
-  async importContacts(file: File): Promise<{ message: string; imported: number; errors?: string[] }> {
+  async importContacts(clientId: number, file: File): Promise<{ message: string; imported: number; errors?: string[] }> {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await apiRequest(`${this.baseUrl}/api/contacts/import`, {
+    const response = await apiRequest(`${this.baseUrl}/api/clients/${clientId}/contacts/import`, {
       method: 'POST',
       body: formData,
     })

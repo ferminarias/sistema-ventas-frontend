@@ -17,13 +17,14 @@ import { useToast } from "@/hooks/use-toast"
 import { contactsService, type Contact, type ContactField } from "@/services/contacts-service"
 
 interface ContactFieldsDialogProps {
+  clientId: number
   contact: Contact
   open: boolean
   onOpenChange: (open: boolean) => void
   onContactUpdated: () => void
 }
 
-export function ContactFieldsDialog({ contact, open, onOpenChange, onContactUpdated }: ContactFieldsDialogProps) {
+export function ContactFieldsDialog({ clientId, contact, open, onOpenChange, onContactUpdated }: ContactFieldsDialogProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [availableFields, setAvailableFields] = useState<ContactField[]>([])

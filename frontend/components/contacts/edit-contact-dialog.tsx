@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import { contactsService, type Contact, type ContactUser } from "@/services/contacts-service"
 
 interface EditContactDialogProps {
+  clientId: number
   contact: Contact
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -29,7 +30,7 @@ const ESTADOS_OPTIONS = [
   { value: "descartado", label: "Descartado" },
 ]
 
-export function EditContactDialog({ contact, open, onOpenChange, onContactUpdated }: EditContactDialogProps) {
+export function EditContactDialog({ clientId, contact, open, onOpenChange, onContactUpdated }: EditContactDialogProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [users, setUsers] = useState<ContactUser[]>([])
@@ -112,7 +113,7 @@ export function EditContactDialog({ contact, open, onOpenChange, onContactUpdate
         }
       })
 
-      await contactsService.updateContact(contact.id, contactData)
+      await contactsService.updateContact(clientId, contact.id, contactData)
       
       toast({
         title: "Éxito",
