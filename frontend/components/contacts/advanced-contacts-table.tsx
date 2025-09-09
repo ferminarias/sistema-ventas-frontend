@@ -231,8 +231,34 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
   const renderColumns = orderedColumns.filter(c => visibleColumns.includes(c.id))
 
   // Cargar datos
+  // Debug: Verificar autenticación para contactos
+  const debugAuth = () => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+    const authUser = localStorage.getItem('auth_user')
+    
+    console.log('🔐 DEBUG AUTH CONTACTOS:')
+    console.log('- Token existe:', !!token)
+    console.log('- Token length:', token ? token.length : 0)
+    console.log('- Auth user existe:', !!authUser)
+    console.log('- User from context:', user)
+    console.log('- Client ID:', clientId)
+    
+    if (token) {
+      try {
+        // Verificar si el token no está expirado (básico)
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        const now = Date.now() / 1000
+        console.log('- Token expira en:', new Date(payload.exp * 1000))
+        console.log('- Token válido:', payload.exp > now)
+      } catch (e) {
+        console.log('- Error al parsear token:', e)
+      }
+    }
+  }
+
   useEffect(() => {
     if (clientId) {
+      debugAuth() // Debug de autenticación
       loadContacts()
       loadStats()
       loadDynamicFields()
@@ -504,6 +530,16 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo
+              </Button>
+
+              {/* Botón temporal para debug de autenticación */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={debugAuth}
+                className="border-orange-500 text-orange-600"
+              >
+                🔐 Debug Auth
               </Button>
             </div>
           </div>

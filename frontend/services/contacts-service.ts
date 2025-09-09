@@ -111,6 +111,10 @@ class ContactsService {
   }
 
   async getContacts(clientId: number, filters: ContactFilters = {}): Promise<ContactResponse> {
+    // Debug de autenticación antes de obtener contactos
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+    console.log('🔐 GET CONTACTS - Token disponible:', !!token)
+    
     const params = new URLSearchParams()
     
     Object.entries(filters).forEach(([key, value]) => {
@@ -121,7 +125,19 @@ class ContactsService {
 
     // ✅ CORREGIDO: Solo pasar el endpoint
     const response = await apiRequest(`/api/clients/${clientId}/contacts?${params.toString()}`)
+    
     if (!response.ok) {
+      // Debug específico para problemas de autenticación
+      if (response.status === 401) {
+        console.error('❌ ERROR 401: Token no válido o expirado al obtener contactos')
+        throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.')
+      }
+      if (response.status === 403) {
+        console.error('❌ ERROR 403: Sin permisos para ver contactos del cliente', clientId)
+        throw new Error('No tiene permisos para ver contactos de este cliente.')
+      }
+      
+      console.error('❌ GET CONTACTS ERROR:', response.status, await response.text())
       throw new Error('Error al obtener contactos')
     }
     return response.json()
@@ -137,6 +153,10 @@ class ContactsService {
   }
 
   async createContact(clientId: number, contact: Partial<Contact>): Promise<Contact> {
+    // Debug de autenticación antes de crear contacto
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+    console.log('🔐 CREATE CONTACT - Token disponible:', !!token)
+    
     // ✅ CORREGIDO: Solo pasar el endpoint
     const response = await apiRequest(`/api/clients/${clientId}/contacts`, {
       method: 'POST',
@@ -147,6 +167,16 @@ class ContactsService {
     })
     
     if (!response.ok) {
+      // Debug específico para problemas de autenticación
+      if (response.status === 401) {
+        console.error('❌ ERROR 401: Token no válido o expirado')
+        throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.')
+      }
+      if (response.status === 403) {
+        console.error('❌ ERROR 403: Sin permisos para crear contactos')
+        throw new Error('No tiene permisos para crear contactos en este cliente.')
+      }
+      
       const errorData = await response.text()
       let errorMessage = 'Error al crear contacto'
       try {
@@ -155,6 +185,7 @@ class ContactsService {
       } catch (e) {
         // Si no es JSON válido, usar el texto como está
       }
+      console.error('❌ CREATE CONTACT ERROR:', response.status, errorMessage)
       throw new Error(errorMessage)
     }
     return response.json()
