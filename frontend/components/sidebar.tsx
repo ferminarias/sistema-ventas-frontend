@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart3, FileSpreadsheet, Home, Plus, Settings, Users, LogOut, UserCog, Building2, Moon, UserPlus, FileSearch, Shield } from "lucide-react"
+import { BarChart3, FileSpreadsheet, Home, Plus, Settings, Users, LogOut, UserCog, Building2, Moon, UserPlus, FileSearch, Shield, UserCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -178,6 +178,18 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
               <Link href="/nueva-venta">
                 <Plus className="mr-2 h-4 w-4" />
                 Nueva Venta
+              </Link>
+            </Button>
+
+            {/* Contactos */}
+            <Button 
+              asChild 
+              variant={pathname === "/contactos" ? "default" : "ghost"} 
+              className="w-full justify-start"
+            >
+              <Link href="/contactos">
+                <UserCheck className="mr-2 h-4 w-4" />
+                Contactos
               </Link>
             </Button>
 

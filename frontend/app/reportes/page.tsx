@@ -32,6 +32,7 @@ import {
 import { Info } from "lucide-react"
 import { clientService } from '@/services/client-service'
 import { ClienteVentasCharts } from '@/components/cliente-ventas-charts'
+import { useAuth } from "@/contexts/auth-context"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
 
@@ -157,6 +158,7 @@ const generateHeatmap = () => {
 export default function ReportesPage() {
   console.log("=== REPORTES PAGE RENDER ===");
   const router = useRouter()
+  const { user } = useAuth()
   const [selectedPeriod, setSelectedPeriod] = useState("30d")
   const [selectedClient, setSelectedClient] = useState<string>("all")
   
@@ -180,9 +182,46 @@ export default function ReportesPage() {
   const [activeDay, setActiveDay] = useState<number | null>(null)
   const [allClients, setAllClients] = useState<any[]>([])
   const [clientIdToName, setClientIdToName] = useState<Record<string, string>>({})
+  const [allowedClients, setAllowedClients] = useState<any[]>([])
+  const [clienteFiltro, setClienteFiltro] = useState<string | undefined>(undefined)
 
   const lineChartRef = useRef<any>(null);
   const barChartRef = useRef<any>(null);
+
+  // Configurar clientes permitidos basado en el rol del usuario
+  useEffect(() => {
+    if (user?.role === "supervisor" && user.allowedClients) {
+      // Para supervisores, filtrar solo clientes permitidos
+      const filtered = allClients.filter(client => 
+        user.allowedClients?.includes(String(client.id)) || 
+        user.allowedClients?.includes(client.name)
+      );
+      setAllowedClients(filtered);
+      
+      // Si solo tiene un cliente permitido, seleccionarlo automáticamente
+      if (filtered.length === 1) {
+        setSelectedClient(String(filtered[0].id));
+        setClienteFiltro(String(filtered[0].id));
+      } else if (filtered.length > 0) {
+        // Si tiene múltiples, pero selectedClient no está permitido, tomar el primero
+        const isCurrentAllowed = filtered.some(c => String(c.id) === selectedClient);
+        if (!isCurrentAllowed) {
+          setSelectedClient(String(filtered[0].id));
+          setClienteFiltro(String(filtered[0].id));
+        } else {
+          setClienteFiltro(selectedClient === "all" ? undefined : selectedClient);
+        }
+      }
+    } else if (user?.role === "admin") {
+      // Para admins, todos los clientes están permitidos
+      setAllowedClients(allClients);
+      setClienteFiltro(selectedClient === "all" ? undefined : selectedClient);
+    } else {
+      // Para otros roles, no hay clientes permitidos
+      setAllowedClients([]);
+      setClienteFiltro(undefined);
+    }
+  }, [user, allClients, selectedClient]);
 
   useEffect(() => {
     async function loadData() {
@@ -190,13 +229,13 @@ export default function ReportesPage() {
         setLoading(true)
         setError(null)
         const [metricsData, advisorsData, clientsData, salesTrendData, hourlyData, pipelineData, heatmapData] = await Promise.all([
-          analyticsService.getMetrics(),
-          analyticsService.getTopAdvisors(),
-          analyticsService.getTopClients(),
-          analyticsService.getSalesTrend(selectedPeriod),
-          analyticsService.getHourlyDistribution(),
-          analyticsService.getPipeline(),
-          analyticsService.getHeatmap(),
+          analyticsService.getMetrics(clienteFiltro),
+          analyticsService.getTopAdvisors(clienteFiltro),
+          analyticsService.getTopClients(clienteFiltro),
+          analyticsService.getSalesTrend(selectedPeriod, clienteFiltro),
+          analyticsService.getHourlyDistribution(clienteFiltro),
+          analyticsService.getPipeline(clienteFiltro),
+          analyticsService.getHeatmap(clienteFiltro),
         ])
         setMetrics(metricsData)
         setTopAdvisorsGeneral(advisorsData.general)
@@ -213,7 +252,7 @@ export default function ReportesPage() {
       }
     }
     loadData()
-  }, [selectedPeriod])
+  }, [selectedPeriod, clienteFiltro])
 
   useEffect(() => {
     setFadeIn(true)
@@ -907,15 +946,20 @@ export default function ReportesPage() {
                     <label className="block text-sm font-medium text-white mb-2">Cliente</label>
                     <Select
                       value={selectedClient}
-                      onValueChange={(value) => setSelectedClient(String(value))}
-                      disabled={Object.keys(clientIdToName).length === 0}
+                      onValueChange={(value) => {
+                        setSelectedClient(String(value));
+                        setClienteFiltro(value === "all" ? undefined : String(value));
+                      }}
+                      disabled={allowedClients.length === 0}
                     >
                       <SelectTrigger className="bg-gray-900 border-gray-700 text-white focus:border-blue-500 relative z-40">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-gray-700 z-50">
-                        <SelectItem value="all" className="text-white hover:bg-gray-700">Todos los clientes</SelectItem>
-                        {allClients.map((client) => (
+                        {user?.role === "admin" && (
+                          <SelectItem value="all" className="text-white hover:bg-gray-700">Todos los clientes</SelectItem>
+                        )}
+                        {allowedClients.map((client) => (
                           <SelectItem key={String(client.id)} value={String(client.id)} className="text-white hover:bg-gray-700">
                             {client.name}
                           </SelectItem>

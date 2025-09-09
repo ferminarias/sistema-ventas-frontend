@@ -16,56 +16,64 @@ function getAuthHeaders(): HeadersInit {
 }
 
 export const analyticsService = {
-  async getMetrics() {
-    const response = await fetch(`${API_BASE}/api/analytics/metrics`, { 
+  async getMetrics(cliente?: string) {
+    const params = cliente ? `?cliente=${encodeURIComponent(cliente)}` : '';
+    const response = await fetch(`${API_BASE}/api/analytics/metrics${params}`, {
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
     return response.json();
   },
 
-  async getSalesTrend(period: string) {
-    const response = await fetch(`${API_BASE}/api/analytics/sales-trend?period=${period}`, { 
+  async getSalesTrend(period: string, cliente?: string) {
+    const params = new URLSearchParams({ period });
+    if (cliente) params.append('cliente', cliente);
+    const response = await fetch(`${API_BASE}/api/analytics/sales-trend?${params.toString()}`, { 
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
     return response.json();
   },
 
-  async getTopAdvisors() {
-    const response = await fetch(`${API_BASE}/api/analytics/top-advisors`, { 
+  async getTopAdvisors(cliente?: string) {
+    const params = cliente ? `?cliente=${encodeURIComponent(cliente)}` : '';
+    const response = await fetch(`${API_BASE}/api/analytics/top-advisors${params}`, { 
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
     return response.json();
   },
 
-  async getTopClients() {
-    const response = await fetch(`${API_BASE}/api/analytics/top-clients`, { 
+  async getTopClients(cliente?: string) {
+    const params = cliente ? `?cliente=${encodeURIComponent(cliente)}` : '';
+    const response = await fetch(`${API_BASE}/api/analytics/top-clients${params}`, { 
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
     return response.json();
   },
 
-  async getHourlyDistribution() {
-    const response = await fetch(`${API_BASE}/api/analytics/hourly-distribution`, { 
+  async getHourlyDistribution(cliente?: string) {
+    const params = cliente ? `?cliente=${encodeURIComponent(cliente)}` : '';
+    const response = await fetch(`${API_BASE}/api/analytics/hourly-distribution${params}`, { 
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
     return response.json();
   },
 
-  async getPipeline() {
-    const response = await fetch(`${API_BASE}/api/analytics/pipeline`, { 
+  async getPipeline(cliente?: string) {
+    const params = cliente ? `?cliente=${encodeURIComponent(cliente)}` : '';
+    const response = await fetch(`${API_BASE}/api/analytics/pipeline${params}`, { 
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
     return response.json();
   },
 
-  async getHeatmap() {
-    const response = await fetch(`${API_BASE}/api/analytics/heatmap`, { 
+  async getHeatmap(cliente?: string) {
+    const params = cliente ? `?cliente=${encodeURIComponent(cliente)}` : '';
+    const response = await fetch(`${API_BASE}/api/analytics/heatmap${params}`, { 
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
