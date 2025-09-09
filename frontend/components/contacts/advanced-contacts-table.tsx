@@ -375,28 +375,6 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
     }
   }
 
-  const handleDeleteContact = async (contact: Contact) => {
-    try {
-      await contactsService.deleteContact(clientId, contact.id)
-      
-      toast({
-        title: "Éxito",
-        description: "Contacto eliminado correctamente",
-      })
-      
-      loadContacts()
-      loadStats()
-      setDeletingContact(null)
-    } catch (error: any) {
-      console.error('Error deleting contact:', error)
-      toast({
-        title: "Error",
-        description: error.message || "Error al eliminar el contacto",
-        variant: "destructive",
-      })
-    }
-  }
-
   const formatCellValue = (column: ColumnDef, contact: Contact) => {
     const value = column.accessor(contact)
     
