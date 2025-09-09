@@ -156,7 +156,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
                 📋 Comprobantes
               </SelectItem>
               {/* Separador visual */}
-              <SelectItem value="" disabled className="text-muted-foreground">
+              <SelectItem value="separator" disabled className="text-muted-foreground">
                 ───────────────────
               </SelectItem>
               {filtrosDisponibles?.tipos_archivo?.filter((tipo: any) => {
