@@ -38,6 +38,7 @@ import { CreateContactDialog } from "@/components/contacts/create-contact-dialog
 import { EditContactDialog } from "@/components/contacts/edit-contact-dialog"
 import { ImportContactsDialog } from "@/components/contacts/import-contacts-dialog"
 import { ContactFieldsDialog } from "@/components/contacts/contact-fields-dialog"
+import { ContactDetailView } from "@/components/contacts/contact-detail-view"
 
 const ESTADOS_OPTIONS = [
   { value: "no contactado", label: "No Contactado" },
@@ -117,6 +118,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
   const [editingContact, setEditingContact] = useState<Contact | null>(null)
   const [deletingContact, setDeletingContact] = useState<Contact | null>(null)
   const [managingFieldsContact, setManagingFieldsContact] = useState<Contact | null>(null)
+  const [viewingContact, setViewingContact] = useState<Contact | null>(null)
   const [exporting, setExporting] = useState(false)
   
   // Estados de gestión de columnas
@@ -605,6 +607,10 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setViewingContact(contact)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Ver detalles
+                            </DropdownMenuItem>
                             {contact.can_edit && (
                               <DropdownMenuItem onClick={() => setEditingContact(contact)}>
                                 <Edit className="h-4 w-4 mr-2" />
@@ -858,6 +864,20 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Vista detallada del contacto */}
+      {viewingContact && (
+        <ContactDetailView
+          contact={viewingContact}
+          onClose={() => setViewingContact(null)}
+          onUpdate={(updatedContact) => {
+            setContacts(prev => 
+              prev.map(c => c.id === updatedContact.id ? updatedContact : c)
+            )
+            setViewingContact(updatedContact)
+          }}
+        />
+      )}
     </div>
   )
 }
