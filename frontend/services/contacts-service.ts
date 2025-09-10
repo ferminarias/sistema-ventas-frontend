@@ -32,18 +32,6 @@ export interface Contact {
   }
 }
 
-export interface ContactStats {
-  total_contacts: number
-  no_contactado: number
-  contactado: number
-  interesado: number
-  seguimiento: number
-  propuesta: number
-  negociacion: number
-  ganado: number
-  perdido: number
-  descartado: number
-}
 
 export interface ContactFilters {
   search?: string
@@ -264,7 +252,46 @@ class ContactsService {
     if (!response.ok) {
       throw new Error('Error al obtener estadísticas')
     }
-    return response.json()
+    const data = await response.json()
+    
+    // El backend devuelve {client: {...}, stats: {...}}, necesitamos extraer solo stats
+    if (data.stats) {
+      const stats = data.stats
+      
+      // Mapear los estados desde by_estado a propiedades directas
+      return {
+        total_contacts: stats.total_contacts || 0,
+        no_contactado: stats.by_estado?.no_contactado || 0,
+        contactado: stats.by_estado?.contactado || 0,
+        interesado: stats.by_estado?.interesado || 0,
+        seguimiento: stats.by_estado?.seguimiento || 0,
+        propuesta: stats.by_estado?.propuesta || 0,
+        negociacion: stats.by_estado?.negociacion || 0,
+        ganado: stats.by_estado?.ganado || 0,
+        perdido: stats.by_estado?.perdido || 0,
+        descartado: stats.by_estado?.descartado || 0,
+        por_programa: stats.por_programa || {},
+        por_utm_source: stats.por_utm_source || {},
+        por_utm_campaign: stats.por_utm_campaign || {}
+      }
+    }
+    
+    // Si no hay stats, devolver estructura por defecto
+    return {
+      total_contacts: 0,
+      no_contactado: 0,
+      contactado: 0,
+      interesado: 0,
+      seguimiento: 0,
+      propuesta: 0,
+      negociacion: 0,
+      ganado: 0,
+      perdido: 0,
+      descartado: 0,
+      por_programa: {},
+      por_utm_source: {},
+      por_utm_campaign: {}
+    }
   }
 
   async getUsers(): Promise<ContactUser[]> {
