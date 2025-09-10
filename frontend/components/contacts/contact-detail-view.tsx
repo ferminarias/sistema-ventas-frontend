@@ -264,8 +264,8 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-2">
-      <div className="bg-background border rounded-lg shadow-xl w-full max-w-[95vw] h-[95vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-1">
+      <div className="bg-background border rounded-lg shadow-xl w-full max-w-[98vw] h-[98vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-4">
@@ -286,9 +286,9 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
         </div>
 
         {/* Contenido principal */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Sidebar izquierdo - Información del contacto */}
-          <div className="w-80 border-r bg-muted/30 p-6">
+          <div className="w-80 border-r bg-muted/30 p-6 overflow-y-auto">
             {/* Avatar y nombre */}
             <div className="text-center mb-6">
               <Avatar className="h-20 w-20 mx-auto mb-4">
@@ -439,7 +439,7 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
           </div>
 
           {/* Centro - Timeline de actividades */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             {/* Barra de búsqueda y filtros */}
             <div className="p-6 border-b">
               <div className="flex items-center gap-4 mb-4">
@@ -485,7 +485,7 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
             </div>
 
             {/* Timeline */}
-            <ScrollArea className="flex-1 p-6">
+            <ScrollArea className="flex-1 p-6 max-h-[calc(98vh-200px)]">
               <div className="space-y-6">
                 {/* Agregar nueva nota */}
                 <Card>
@@ -542,7 +542,7 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
           </div>
 
           {/* Sidebar derecho - Información avanzada */}
-          <div className="w-80 border-l bg-muted/30 p-6">
+          <div className="w-80 border-l bg-muted/30 p-6 overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Información avanzada</h3>
               <Button variant="ghost" size="sm">
