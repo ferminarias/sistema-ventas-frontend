@@ -142,7 +142,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
   ]
 
   // Columnas dinámicas basadas en campos adicionales
-  const CUSTOM_COLUMNS: ColumnDef[] = (dynamicFieldDefs || [])
+  const CUSTOM_COLUMNS: ColumnDef[] = Array.isArray(dynamicFieldDefs) ? dynamicFieldDefs
     .map(def => ({
       id: `campos_adicionales.${def.id}`,
       label: def.label || def.id,
@@ -154,7 +154,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
         return typeof raw === 'string' ? raw : JSON.stringify(raw)
       },
       isCustom: true,
-    }))
+    })) : []
 
   const ALL_COLUMNS: ColumnDef[] = [...BASE_COLUMNS, ...CUSTOM_COLUMNS]
 
@@ -326,7 +326,12 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
       console.log('🔧 Cargando campos dinámicos...')
       const fields = await contactsService.getFields()
       console.log('🔧 Campos dinámicos recibidos:', fields)
-      setDynamicFieldDefs(fields.map(f => ({
+      
+      // Verificar si fields es un array o un objeto
+      const fieldsArray = Array.isArray(fields) ? fields : Object.values(fields)
+      console.log('🔧 Campos procesados como array:', fieldsArray)
+      
+      setDynamicFieldDefs(fieldsArray.map(f => ({
         id: f.id,
         label: f.label,
         type: f.type,
