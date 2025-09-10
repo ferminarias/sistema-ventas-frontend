@@ -107,7 +107,27 @@ class ContactsService {
     if (!response.ok) {
       throw new Error('Error al obtener clientes disponibles')
     }
-    return response.json()
+    
+    // Los clientes vienen directamente como array, necesitamos adaptarlos
+    const clientsArray = await response.json()
+    
+    // Transformar cada cliente para agregar las propiedades que necesita el frontend
+    const available_clients = clientsArray.map((client: any) => ({
+      id: client.id,
+      name: client.name,
+      description: client.description,
+      // Agregar propiedades requeridas para contactos
+      has_contacts_table: true, // Todos los clientes tienen tabla de contactos ahora
+      total_contacts: 0, // Se actualizará cuando se seleccione
+      contacts_by_estado: {}
+    }))
+    
+    console.log('🎯 CLIENTES DISPONIBLES PARA CONTACTOS:', available_clients)
+    
+    return {
+      available_clients,
+      user_info: { role: 'admin' } // Info básica del usuario
+    }
   }
 
   async getContacts(clientId: number, filters: ContactFilters = {}): Promise<ContactResponse> {
