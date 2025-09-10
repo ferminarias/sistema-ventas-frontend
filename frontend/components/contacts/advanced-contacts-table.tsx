@@ -307,7 +307,9 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
 
   const loadStats = async () => {
     try {
+      console.log('📊 Cargando estadísticas para cliente:', clientId)
       const statsData = await contactsService.getStats(clientId)
+      console.log('📊 Estadísticas recibidas:', statsData)
       setStats(statsData)
     } catch (error: any) {
       console.error('Error loading stats:', error)
@@ -320,18 +322,19 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
   }
 
   const loadDynamicFields = async () => {
-    // TODO: Implementar campos dinámicos cuando el backend esté listo
-    // try {
-    //   const fields = await contactsService.getFields()
-    //   setDynamicFieldDefs(fields.map(f => ({
-    //     id: f.id,
-    //     label: f.label,
-    //     type: f.type,
-    //     options: f.options
-    //   })))
-    // } catch (error) {
-    //   console.error('Error loading dynamic fields:', error)
-    // }
+    try {
+      console.log('🔧 Cargando campos dinámicos...')
+      const fields = await contactsService.getFields()
+      console.log('🔧 Campos dinámicos recibidos:', fields)
+      setDynamicFieldDefs(fields.map(f => ({
+        id: f.id,
+        label: f.label,
+        type: f.type,
+        options: f.options
+      })))
+    } catch (error) {
+      console.error('Error loading dynamic fields:', error)
+    }
   }
 
   // Manejadores de eventos
