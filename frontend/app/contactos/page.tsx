@@ -105,24 +105,6 @@ export default function ContactosPage() {
         )}
       </div>
 
-      {/* Banner informativo sobre CORS */}
-      {selectedClient && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <div className="flex items-start gap-3">
-            <div className="text-blue-600 mt-0.5">🔄</div>
-            <div>
-              <h3 className="text-sm font-medium text-blue-800">Sistema de Contactos - Probando Nueva Estructura</h3>
-              <p className="text-sm text-blue-700 mt-1">
-                Cambiado a estructura <span className="font-mono">/api/clientes/[id]/contactos</span> 
-                <span className="font-medium"> que usa la misma configuración CORS que ventas</span>.
-              </p>
-              <p className="text-xs text-blue-600 mt-2">
-                Nueva estructura: /api/clientes/* • Debería funcionar con la configuración CORS existente
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Contenido principal */}
       {selectedClient ? (
