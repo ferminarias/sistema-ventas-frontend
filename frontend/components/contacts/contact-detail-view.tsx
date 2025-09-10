@@ -93,18 +93,18 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
         
         // Convertir notas a actividades (verificar que notes sea un array)
         const noteActivities: Activity[] = Array.isArray(notes) ? notes.map(note => ({
-          id: `note-${note.id || Date.now()}`,
+          id: `note-${String(note.id || Date.now())}`,
           type: 'note' as const,
           title: 'Nota agregada',
           description: String(note.note || ''),
-          timestamp: new Date(note.created_at).toLocaleString('es-ES', {
+          timestamp: String(new Date(note.created_at).toLocaleString('es-ES', {
             day: 'numeric',
             month: 'long',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
             timeZoneName: 'short'
-          }),
+          })),
           user: String(note.created_by || 'Usuario actual')
         })) : []
 
@@ -127,23 +127,26 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
     try {
       // Guardar nota en el backend
       const savedNote = await contactsService.addContactNote(clientId, contact.id, newNote)
+      console.log('📝 Nota guardada en backend:', savedNote)
       
       // Crear actividad para mostrar en el timeline
       const newActivity: Activity = {
-        id: `note-${savedNote.id || Date.now()}`,
+        id: `note-${String(savedNote.id || Date.now())}`,
         type: 'note',
         title: 'Nota agregada',
         description: String(savedNote.note || ''),
-        timestamp: new Date(savedNote.created_at).toLocaleString('es-ES', {
+        timestamp: String(new Date(savedNote.created_at).toLocaleString('es-ES', {
           day: 'numeric',
           month: 'long',
           year: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
           timeZoneName: 'short'
-        }),
+        })),
         user: String(savedNote.created_by || 'Usuario actual')
       }
+      
+      console.log('📝 Actividad creada:', newActivity)
 
       setActivities(prev => [newActivity, ...prev])
       setNewNote("")
