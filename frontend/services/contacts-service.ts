@@ -234,6 +234,30 @@ class ContactsService {
     }
   }
 
+  // Gestión de notas del contacto
+  async addContactNote(clientId: number, contactId: number, note: string): Promise<{ id: number; note: string; created_at: string; created_by: string }> {
+    const response = await apiRequest(`/api/clientes/${clientId}/contactos/${contactId}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    })
+    
+    if (!response.ok) {
+      throw new Error('Error al agregar nota')
+    }
+    
+    return response.json()
+  }
+
+  async getContactNotes(clientId: number, contactId: number): Promise<Array<{ id: number; note: string; created_at: string; created_by: string }>> {
+    const response = await apiRequest(`/api/clientes/${clientId}/contactos/${contactId}/notes`)
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener notas')
+    }
+    
+    return response.json()
+  }
+
   async getStats(clientId: number): Promise<ContactStats> {
     // ✅ USAR ESTRUCTURA COMO /api/ventas que SÍ funciona
     const response = await apiRequest(`/api/clientes/${clientId}/contactos/stats`)

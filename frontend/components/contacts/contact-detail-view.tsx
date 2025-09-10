@@ -33,10 +33,11 @@ import {
   AlertCircle
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { type Contact } from "@/services/contacts-service"
+import { type Contact, contactsService } from "@/services/contacts-service"
 
 interface ContactDetailViewProps {
   contact: Contact
+  clientId: number
   onClose: () => void
   onUpdate: (contact: Contact) => void
 }
@@ -51,7 +52,7 @@ interface Activity {
   metadata?: Record<string, any>
 }
 
-export function ContactDetailView({ contact, onClose, onUpdate }: ContactDetailViewProps) {
+export function ContactDetailView({ contact, clientId, onClose, onUpdate }: ContactDetailViewProps) {
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [newNote, setNewNote] = useState("")
@@ -64,64 +65,124 @@ export function ContactDetailView({ contact, onClose, onUpdate }: ContactDetailV
     return `${name?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
   }
 
-  // Cargar actividades del contacto (mock por ahora)
+  // Cargar actividades del contacto
   useEffect(() => {
-    // Simular carga de actividades
-    const mockActivities: Activity[] = [
-      {
-        id: '1',
-        type: 'lifecycle_change',
-        title: 'Etapa del ciclo de vida actualizada',
-        description: 'La etapa del ciclo de vida de este contacto se actualizó en Oportunidad.',
-        timestamp: '20 de nov. de 2024 a la(s) 14:26 GMT-3',
-        user: 'Sistema'
-      },
-      {
-        id: '2',
-        type: 'form_submission',
-        title: 'Formulario enviado',
-        description: `${contact.nombre} ${contact.apellido} envió Formulario Turismo en Turismo | Educación Continua Anáhuac.`,
-        timestamp: '19 de nov. de 2024 a la(s) 10:15 GMT-3',
-        user: 'Sistema'
-      },
-      {
-        id: '3',
-        type: 'contact_created',
-        title: 'Contacto creado',
-        description: 'Contacto creado a partir de Tráfico directo de www.anahuac.mx/mexico/educacioncontinua/turismo',
-        timestamp: '19 de nov. de 2024 a la(s) 10:14 GMT-3',
-        user: 'Sistema'
+    const loadActivities = async () => {
+      try {
+        // Cargar notas del backend
+        const notes = await contactsService.getContactNotes(clientId, contact.id)
+        
+        // Convertir notas a actividades
+        const noteActivities: Activity[] = notes.map(note => ({
+          id: note.id.toString(),
+          type: 'note' as const,
+          title: 'Nota agregada',
+          description: note.note,
+          timestamp: new Date(note.created_at).toLocaleString('es-ES', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZoneName: 'short'
+          }),
+          user: note.created_by
+        }))
+
+        // Actividades del sistema (mock por ahora)
+        const systemActivities: Activity[] = [
+          {
+            id: 'system-1',
+            type: 'lifecycle_change',
+            title: 'Etapa del ciclo de vida actualizada',
+            description: 'La etapa del ciclo de vida de este contacto se actualizó en Oportunidad.',
+            timestamp: '20 de nov. de 2024 a la(s) 14:26 GMT-3',
+            user: 'Sistema'
+          },
+          {
+            id: 'system-2',
+            type: 'form_submission',
+            title: 'Formulario enviado',
+            description: `${contact.nombre} ${contact.apellido} envió Formulario Turismo en Turismo | Educación Continua Anáhuac.`,
+            timestamp: '19 de nov. de 2024 a la(s) 10:15 GMT-3',
+            user: 'Sistema'
+          },
+          {
+            id: 'system-3',
+            type: 'contact_created',
+            title: 'Contacto creado',
+            description: 'Contacto creado a partir de Tráfico directo de www.anahuac.mx/mexico/educacioncontinua/turismo',
+            timestamp: '19 de nov. de 2024 a la(s) 10:14 GMT-3',
+            user: 'Sistema'
+          }
+        ]
+
+        // Combinar y ordenar por fecha (más recientes primero)
+        const allActivities = [...noteActivities, ...systemActivities].sort((a, b) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        )
+        
+        setActivities(allActivities)
+      } catch (error: any) {
+        console.error('Error al cargar actividades:', error)
+        // En caso de error, mostrar solo actividades del sistema
+        const systemActivities: Activity[] = [
+          {
+            id: 'system-1',
+            type: 'lifecycle_change',
+            title: 'Etapa del ciclo de vida actualizada',
+            description: 'La etapa del ciclo de vida de este contacto se actualizó en Oportunidad.',
+            timestamp: '20 de nov. de 2024 a la(s) 14:26 GMT-3',
+            user: 'Sistema'
+          }
+        ]
+        setActivities(systemActivities)
       }
-    ]
-    setActivities(mockActivities)
-  }, [contact])
-
-  // Agregar nueva nota
-  const handleAddNote = () => {
-    if (!newNote.trim()) return
-
-    const newActivity: Activity = {
-      id: Date.now().toString(),
-      type: 'note',
-      title: 'Nota agregada',
-      description: newNote,
-      timestamp: new Date().toLocaleString('es-ES', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZoneName: 'short'
-      }),
-      user: 'Usuario actual'
     }
 
-    setActivities(prev => [newActivity, ...prev])
-    setNewNote("")
-    toast({
-      title: "Nota agregada",
-      description: "La nota se ha guardado correctamente",
-    })
+    loadActivities()
+  }, [contact, clientId])
+
+  // Agregar nueva nota
+  const handleAddNote = async () => {
+    if (!newNote.trim()) return
+
+    try {
+      // Guardar nota en el backend
+      const savedNote = await contactsService.addContactNote(clientId, contact.id, newNote)
+      
+      // Crear actividad para mostrar en el timeline
+      const newActivity: Activity = {
+        id: savedNote.id.toString(),
+        type: 'note',
+        title: 'Nota agregada',
+        description: savedNote.note,
+        timestamp: new Date(savedNote.created_at).toLocaleString('es-ES', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZoneName: 'short'
+        }),
+        user: savedNote.created_by
+      }
+
+      setActivities(prev => [newActivity, ...prev])
+      setNewNote("")
+      
+      toast({
+        title: "Nota guardada",
+        description: "La nota se ha guardado correctamente en el backend",
+      })
+    } catch (error: any) {
+      console.error('Error al guardar nota:', error)
+      toast({
+        title: "Error",
+        description: error.message || "Error al guardar la nota",
+        variant: "destructive",
+      })
+    }
   }
 
   // Acciones rápidas

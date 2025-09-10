@@ -869,6 +869,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
       {viewingContact && (
         <ContactDetailView
           contact={viewingContact}
+          clientId={clientId}
           onClose={() => setViewingContact(null)}
           onUpdate={(updatedContact) => {
             setContacts(prev => 
