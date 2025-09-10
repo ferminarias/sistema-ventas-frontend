@@ -122,7 +122,6 @@ class ContactsService {
       contacts_by_estado: {}
     }))
     
-    console.log('🎯 CLIENTES DISPONIBLES PARA CONTACTOS:', available_clients)
     
     return {
       available_clients,
@@ -131,9 +130,6 @@ class ContactsService {
   }
 
   async getContacts(clientId: number, filters: ContactFilters = {}): Promise<ContactResponse> {
-    // Debug de autenticación antes de obtener contactos
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-    console.log('🔐 GET CONTACTS - Token disponible:', !!token)
     
     const params = new URLSearchParams()
     
@@ -173,16 +169,11 @@ class ContactsService {
   }
 
   async createContact(clientId: number, contact: Partial<Contact>): Promise<Contact> {
-    // Debug de autenticación antes de crear contacto
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-    console.log('🔐 CREATE CONTACT - Token disponible:', !!token)
     
     // ✅ USAR ESTRUCTURA COMO /api/ventas que SÍ funciona
+    // ⚠️ IMPORTANTE: No pasar headers personalizados - apiRequest maneja Authorization automáticamente
     const response = await apiRequest(`/api/clientes/${clientId}/contactos`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(contact),
     })
     
@@ -215,9 +206,6 @@ class ContactsService {
     // ✅ USAR ESTRUCTURA COMO /api/ventas que SÍ funciona
     const response = await apiRequest(`/api/clientes/${clientId}/contactos/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(contact),
     })
     
@@ -277,9 +265,6 @@ class ContactsService {
     // ✅ CORREGIDO: Solo pasar el endpoint
     const response = await apiRequest(`/api/contacts/${id}/fields/${fieldId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ value }),
     })
     
