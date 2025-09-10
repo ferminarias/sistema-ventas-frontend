@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarInitials } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
   Mail, 
   Phone, 
@@ -90,9 +91,9 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
         // Cargar notas del backend
         const notes = await contactsService.getContactNotes(clientId, contact.id)
         
-        // Convertir notas a actividades
-        const noteActivities: Activity[] = notes.map(note => ({
-          id: note.id.toString(),
+        // Convertir notas a actividades (verificar que notes sea un array)
+        const noteActivities: Activity[] = Array.isArray(notes) ? notes.map(note => ({
+          id: `note-${note.id || Date.now()}`,
           type: 'note' as const,
           title: 'Nota agregada',
           description: note.note,
@@ -104,8 +105,8 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
             minute: '2-digit',
             timeZoneName: 'short'
           }),
-          user: note.created_by
-        }))
+          user: note.created_by || 'Usuario actual'
+        })) : []
 
         // Solo mostrar notas reales del backend
         setActivities(noteActivities)
@@ -129,7 +130,7 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
       
       // Crear actividad para mostrar en el timeline
       const newActivity: Activity = {
-        id: savedNote.id.toString(),
+        id: `note-${savedNote.id || Date.now()}`,
         type: 'note',
         title: 'Nota agregada',
         description: savedNote.note,
@@ -141,7 +142,7 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
           minute: '2-digit',
           timeZoneName: 'short'
         }),
-        user: savedNote.created_by
+        user: savedNote.created_by || 'Usuario actual'
       }
 
       setActivities(prev => [newActivity, ...prev])
