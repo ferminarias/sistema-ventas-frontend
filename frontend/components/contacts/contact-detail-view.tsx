@@ -92,21 +92,29 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
         const notes = await contactsService.getContactNotes(clientId, contact.id)
         
         // Convertir notas a actividades (verificar que notes sea un array)
-        const noteActivities: Activity[] = Array.isArray(notes) ? notes.map(note => ({
-          id: `note-${String(note.id || Date.now())}`,
-          type: 'note' as const,
-          title: 'Nota agregada',
-          description: String(note.note || ''),
-          timestamp: String(new Date(note.created_at).toLocaleString('es-ES', {
+        const noteActivities: Activity[] = Array.isArray(notes) ? notes.map(note => {
+          // Extraer el texto de la nota correctamente
+          const noteText = String(note.note || '')
+          
+          const noteDate = new Date(note.created_at)
+          const formattedDate = noteDate.toLocaleString('es-ES', {
             day: 'numeric',
             month: 'long',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
             timeZoneName: 'short'
-          })),
-          user: String(note.created_by || 'Usuario actual')
-        })) : []
+          })
+          
+          return {
+            id: `note-${String(note.id || Date.now())}`,
+            type: 'note' as const,
+            title: `Nota agregada - ${formattedDate}`,
+            description: String(noteText),
+            timestamp: formattedDate,
+            user: String(note.created_by || 'Usuario actual')
+          }
+        }) : []
 
         // Solo mostrar notas reales del backend
         setActivities(noteActivities)
@@ -129,20 +137,27 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
       const savedNote = await contactsService.addContactNote(clientId, contact.id, newNote)
       console.log('📝 Nota guardada en backend:', savedNote)
       
+      // Extraer el texto de la nota correctamente
+      const noteText = String(savedNote.note || '')
+      console.log('📝 Texto de la nota extraído:', noteText)
+      
       // Crear actividad para mostrar en el timeline
+      const noteDate = new Date(savedNote.created_at)
+      const formattedDate = noteDate.toLocaleString('es-ES', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'short'
+      })
+      
       const newActivity: Activity = {
         id: `note-${String(savedNote.id || Date.now())}`,
         type: 'note',
-        title: 'Nota agregada',
-        description: String(savedNote.note || ''),
-        timestamp: String(new Date(savedNote.created_at).toLocaleString('es-ES', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZoneName: 'short'
-        })),
+        title: `Nota agregada - ${formattedDate}`,
+        description: String(noteText),
+        timestamp: formattedDate,
         user: String(savedNote.created_by || 'Usuario actual')
       }
       
