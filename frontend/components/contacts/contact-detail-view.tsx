@@ -124,6 +124,53 @@ export function ContactDetailView({ contact, onClose, onUpdate }: ContactDetailV
     })
   }
 
+  // Acciones rápidas
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'note':
+        // Enfocar el área de texto para agregar nota
+        const textarea = document.querySelector('textarea[placeholder="Agregar una nota..."]') as HTMLTextAreaElement
+        if (textarea) {
+          textarea.focus()
+        }
+        break
+      case 'email':
+        toast({
+          title: "Enviar correo",
+          description: `Abriendo cliente de correo para ${contact.correo}`,
+        })
+        window.open(`mailto:${contact.correo}`, '_blank')
+        break
+      case 'call':
+        toast({
+          title: "Llamar",
+          description: `Iniciando llamada a ${contact.telefono || contact.telefono_whatsapp}`,
+        })
+        if (contact.telefono || contact.telefono_whatsapp) {
+          window.open(`tel:${contact.telefono || contact.telefono_whatsapp}`, '_self')
+        }
+        break
+      case 'task':
+        toast({
+          title: "Crear tarea",
+          description: "Funcionalidad de tareas próximamente disponible",
+        })
+        break
+      case 'meeting':
+        toast({
+          title: "Programar reunión",
+          description: "Funcionalidad de reuniones próximamente disponible",
+        })
+        break
+      case 'more':
+        toast({
+          title: "Más opciones",
+          description: "Funcionalidades adicionales próximamente disponibles",
+        })
+        break
+    }
+  }
+
   // Obtener icono según tipo de actividad
   const getActivityIcon = (type: Activity['type']) => {
     switch (type) {
@@ -156,8 +203,8 @@ export function ContactDetailView({ contact, onClose, onUpdate }: ContactDetailV
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-2">
+      <div className="bg-background border rounded-lg shadow-xl w-full max-w-[95vw] h-[95vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-4">
@@ -180,7 +227,7 @@ export function ContactDetailView({ contact, onClose, onUpdate }: ContactDetailV
         {/* Contenido principal */}
         <div className="flex-1 flex overflow-hidden">
           {/* Sidebar izquierdo - Información del contacto */}
-          <div className="w-80 border-r bg-gray-50 p-6">
+          <div className="w-80 border-r bg-muted/30 p-6">
             {/* Avatar y nombre */}
             <div className="text-center mb-6">
               <Avatar className="h-20 w-20 mx-auto mb-4">
@@ -189,32 +236,62 @@ export function ContactDetailView({ contact, onClose, onUpdate }: ContactDetailV
                 </AvatarFallback>
               </Avatar>
               <h2 className="text-xl font-bold">{contact.nombre} {contact.apellido}</h2>
-              <p className="text-gray-600">{contact.correo}</p>
+              <p className="text-muted-foreground">{contact.correo}</p>
             </div>
 
             {/* Acciones rápidas */}
             <div className="grid grid-cols-3 gap-2 mb-6">
-              <Button variant="outline" size="sm" className="flex flex-col h-16">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex flex-col h-16"
+                onClick={() => handleQuickAction('note')}
+              >
                 <MessageSquare className="h-4 w-4 mb-1" />
                 <span className="text-xs">Nota</span>
               </Button>
-              <Button variant="outline" size="sm" className="flex flex-col h-16">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex flex-col h-16"
+                onClick={() => handleQuickAction('email')}
+              >
                 <Mail className="h-4 w-4 mb-1" />
                 <span className="text-xs">Correo</span>
               </Button>
-              <Button variant="outline" size="sm" className="flex flex-col h-16">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex flex-col h-16"
+                onClick={() => handleQuickAction('call')}
+              >
                 <Phone className="h-4 w-4 mb-1" />
                 <span className="text-xs">Llamada</span>
               </Button>
-              <Button variant="outline" size="sm" className="flex flex-col h-16">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex flex-col h-16"
+                onClick={() => handleQuickAction('task')}
+              >
                 <CheckSquare className="h-4 w-4 mb-1" />
                 <span className="text-xs">Tarea</span>
               </Button>
-              <Button variant="outline" size="sm" className="flex flex-col h-16">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex flex-col h-16"
+                onClick={() => handleQuickAction('meeting')}
+              >
                 <Calendar className="h-4 w-4 mb-1" />
                 <span className="text-xs">Reunión</span>
               </Button>
-              <Button variant="outline" size="sm" className="flex flex-col h-16">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex flex-col h-16"
+                onClick={() => handleQuickAction('more')}
+              >
                 <MoreVertical className="h-4 w-4 mb-1" />
                 <span className="text-xs">Más</span>
               </Button>
@@ -227,42 +304,62 @@ export function ContactDetailView({ contact, onClose, onUpdate }: ContactDetailV
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Correo</label>
+                  <label className="text-sm font-medium text-muted-foreground">Correo</label>
                   <p className="text-sm">{contact.correo}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Número de móvil</label>
+                  <label className="text-sm font-medium text-muted-foreground">Número de móvil</label>
                   <p className="text-sm">{contact.telefono_whatsapp || contact.telefono || 'No especificado'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Propietario del contacto</label>
-                  <p className="text-sm">Usuario actual</p>
+                  <label className="text-sm font-medium text-muted-foreground">Propietario del contacto</label>
+                  <p className="text-sm">{contact.assigned_user?.nombre || 'Usuario actual'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Estado del lead</label>
+                  <label className="text-sm font-medium text-muted-foreground">Estado del lead</label>
                   <Badge variant={getEstadoBadgeVariant(contact.estado)} className="mt-1">
                     {contact.estado || 'No especificado'}
                   </Badge>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Programa de Interés</label>
+                  <label className="text-sm font-medium text-muted-foreground">Programa de Interés</label>
                   <p className="text-sm">{contact.programa_interes || 'No especificado'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Etapa de Negocio</label>
-                  <p className="text-sm">Lead nuevo</p>
+                  <label className="text-sm font-medium text-muted-foreground">Etapa de Negocio</label>
+                  <p className="text-sm">{contact.estado === 'ganado' ? 'Ganado' : contact.estado === 'perdido' ? 'Perdido' : 'Lead nuevo'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Nombre</label>
+                  <label className="text-sm font-medium text-muted-foreground">Nombre</label>
                   <p className="text-sm">{contact.nombre}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Apellidos</label>
+                  <label className="text-sm font-medium text-muted-foreground">Apellidos</label>
                   <p className="text-sm">{contact.apellido}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Número de teléfono</label>
+                  <label className="text-sm font-medium text-muted-foreground">Número de teléfono</label>
                   <p className="text-sm">{contact.telefono || 'No especificado'}</p>
+                </div>
+                {contact.utm_source && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">UTM Source</label>
+                    <p className="text-sm">{contact.utm_source}</p>
+                  </div>
+                )}
+                {contact.utm_campaign && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">UTM Campaign</label>
+                    <p className="text-sm">{contact.utm_campaign}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Fecha de creación</label>
+                  <p className="text-sm">{contact.fecha_insercion ? new Date(contact.fecha_insercion).toLocaleDateString('es-ES') : 'No especificado'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Última actualización</label>
+                  <p className="text-sm">{contact.updated_at ? new Date(contact.updated_at).toLocaleDateString('es-ES') : 'No especificado'}</p>
                 </div>
               </CardContent>
             </Card>
@@ -384,7 +481,7 @@ export function ContactDetailView({ contact, onClose, onUpdate }: ContactDetailV
           </div>
 
           {/* Sidebar derecho - Información avanzada */}
-          <div className="w-80 border-l bg-gray-50 p-6">
+          <div className="w-80 border-l bg-muted/30 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Información avanzada</h3>
               <Button variant="ghost" size="sm">
@@ -400,10 +497,67 @@ export function ContactDetailView({ contact, onClose, onUpdate }: ContactDetailV
             <div className="space-y-4">
               <Card>
                 <CardHeader>
+                  <CardTitle className="text-sm">Estado del Contacto</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Estado actual:</span>
+                      <Badge variant={getEstadoBadgeVariant(contact.estado)}>
+                        {contact.estado || 'No especificado'}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Puede editar:</span>
+                      <span className="text-sm">{contact.can_edit ? 'Sí' : 'No'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Puede eliminar:</span>
+                      <span className="text-sm">{contact.can_delete ? 'Sí' : 'No'}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
                   <CardTitle className="text-sm">Propiedades personalizadas</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-500">No hay propiedades personalizadas configuradas.</p>
+                  {contact.campos_adicionales && Object.keys(contact.campos_adicionales).length > 0 ? (
+                    <div className="space-y-2">
+                      {Object.entries(contact.campos_adicionales).map(([key, value]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">{key}:</span>
+                          <span className="text-sm">{String(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No hay propiedades personalizadas configuradas.</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Estadísticas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Total actividades:</span>
+                      <span className="text-sm">{activities.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Notas:</span>
+                      <span className="text-sm">{activities.filter(a => a.type === 'note').length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Última actividad:</span>
+                      <span className="text-sm">{activities[0]?.timestamp.split(' ')[0] || 'N/A'}</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
