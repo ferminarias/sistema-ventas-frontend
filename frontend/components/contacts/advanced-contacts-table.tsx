@@ -140,7 +140,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
   ]
 
   // Columnas dinámicas basadas en campos adicionales
-  const CUSTOM_COLUMNS: ColumnDef[] = dynamicFieldDefs
+  const CUSTOM_COLUMNS: ColumnDef[] = (dynamicFieldDefs || [])
     .map(def => ({
       id: `campos_adicionales.${def.id}`,
       label: def.label || def.id,

@@ -78,7 +78,7 @@ export default function ContactosPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ zoom: 0.8, transformOrigin: 'top left' }}>
       {/* Header - Solo título cuando no hay cliente seleccionado */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
