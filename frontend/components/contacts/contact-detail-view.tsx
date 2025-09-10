@@ -35,6 +35,18 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { type Contact, contactsService } from "@/services/contacts-service"
 
+const ESTADOS_OPTIONS = [
+  { value: "no contactado", label: "No Contactado" },
+  { value: "contactado", label: "Contactado" },
+  { value: "interesado", label: "Interesado" },
+  { value: "seguimiento", label: "Seguimiento" },
+  { value: "propuesta", label: "Propuesta" },
+  { value: "negociacion", label: "Negociación" },
+  { value: "ganado", label: "Ganado" },
+  { value: "perdido", label: "Perdido" },
+  { value: "descartado", label: "Descartado" },
+]
+
 interface ContactDetailViewProps {
   contact: Contact
   clientId: number
@@ -59,6 +71,12 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
   const [activities, setActivities] = useState<Activity[]>([])
   const [searchActivity, setSearchActivity] = useState("")
   const [activeTab, setActiveTab] = useState<'activity' | 'notes' | 'emails' | 'calls' | 'tasks' | 'meetings'>('activity')
+  
+  // Estados para edición inline
+  const [editingField, setEditingField] = useState<string | null>(null)
+  const [editingValue, setEditingValue] = useState("")
+  const [hasChanges, setHasChanges] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   // Generar iniciales del contacto
   const getInitials = (name: string, lastName: string) => {
@@ -89,54 +107,12 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
           user: note.created_by
         }))
 
-        // Actividades del sistema (mock por ahora)
-        const systemActivities: Activity[] = [
-          {
-            id: 'system-1',
-            type: 'lifecycle_change',
-            title: 'Etapa del ciclo de vida actualizada',
-            description: 'La etapa del ciclo de vida de este contacto se actualizó en Oportunidad.',
-            timestamp: '20 de nov. de 2024 a la(s) 14:26 GMT-3',
-            user: 'Sistema'
-          },
-          {
-            id: 'system-2',
-            type: 'form_submission',
-            title: 'Formulario enviado',
-            description: `${contact.nombre} ${contact.apellido} envió Formulario Turismo en Turismo | Educación Continua Anáhuac.`,
-            timestamp: '19 de nov. de 2024 a la(s) 10:15 GMT-3',
-            user: 'Sistema'
-          },
-          {
-            id: 'system-3',
-            type: 'contact_created',
-            title: 'Contacto creado',
-            description: 'Contacto creado a partir de Tráfico directo de www.anahuac.mx/mexico/educacioncontinua/turismo',
-            timestamp: '19 de nov. de 2024 a la(s) 10:14 GMT-3',
-            user: 'Sistema'
-          }
-        ]
-
-        // Combinar y ordenar por fecha (más recientes primero)
-        const allActivities = [...noteActivities, ...systemActivities].sort((a, b) => 
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        )
-        
-        setActivities(allActivities)
+        // Solo mostrar notas reales del backend
+        setActivities(noteActivities)
       } catch (error: any) {
         console.error('Error al cargar actividades:', error)
-        // En caso de error, mostrar solo actividades del sistema
-        const systemActivities: Activity[] = [
-          {
-            id: 'system-1',
-            type: 'lifecycle_change',
-            title: 'Etapa del ciclo de vida actualizada',
-            description: 'La etapa del ciclo de vida de este contacto se actualizó en Oportunidad.',
-            timestamp: '20 de nov. de 2024 a la(s) 14:26 GMT-3',
-            user: 'Sistema'
-          }
-        ]
-        setActivities(systemActivities)
+        // En caso de error, mostrar array vacío
+        setActivities([])
       }
     }
 
@@ -182,6 +158,63 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
         description: error.message || "Error al guardar la nota",
         variant: "destructive",
       })
+    }
+  }
+
+  // Funciones para edición inline
+  const startEditing = (field: string, currentValue: any) => {
+    setEditingField(field)
+    setEditingValue(String(currentValue || ''))
+    setHasChanges(false)
+  }
+
+  const cancelEditing = () => {
+    setEditingField(null)
+    setEditingValue("")
+    setHasChanges(false)
+  }
+
+  const handleFieldChange = (value: string) => {
+    setEditingValue(value)
+    setHasChanges(value !== String(contact[editingField as keyof Contact] || ''))
+  }
+
+  const saveField = async () => {
+    if (!editingField || !hasChanges) return
+
+    try {
+      setSaving(true)
+      
+      // Crear objeto con el campo actualizado
+      const updatedContact = {
+        ...contact,
+        [editingField]: editingValue
+      }
+
+      // Actualizar en el backend
+      await contactsService.updateContact(clientId, contact.id, updatedContact)
+      
+      // Actualizar el contacto local
+      onUpdate(updatedContact)
+      
+      // Cerrar edición
+      setEditingField(null)
+      setEditingValue("")
+      setHasChanges(false)
+      
+      toast({
+        title: "Campo actualizado",
+        description: "El campo se ha guardado correctamente",
+      })
+    } catch (error: any) {
+      console.error('Error al actualizar campo:', error)
+      toast({
+        title: "Error",
+        description: error.message || "Error al actualizar el campo",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -261,6 +294,71 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
       case "no contactado": return "outline"
       default: return "outline"
     }
+  }
+
+  // Componente para campo editable
+  const EditableField = ({ field, label, value, type = "text" }: { field: string; label: string; value: any; type?: string }) => {
+    const isEditing = editingField === field
+    const displayValue = String(value || 'No especificado')
+
+    if (isEditing) {
+      return (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">{label}</label>
+          <div className="flex gap-2">
+            {type === "select" && field === "estado" ? (
+              <Select value={editingValue} onValueChange={handleFieldChange}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ESTADOS_OPTIONS.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                value={editingValue}
+                onChange={(e) => handleFieldChange(e.target.value)}
+                className="flex-1"
+                type={type}
+              />
+            )}
+            <Button 
+              size="sm" 
+              onClick={saveField}
+              disabled={!hasChanges || saving}
+            >
+              {saving ? "..." : "✓"}
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={cancelEditing}
+              disabled={saving}
+            >
+              ✕
+            </Button>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div 
+        className="cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors group"
+        onClick={() => startEditing(field, value)}
+      >
+        <label className="text-sm font-medium text-muted-foreground">{label}</label>
+        <div className="flex items-center justify-between">
+          <p className="text-sm">{displayValue}</p>
+          <Edit3 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -362,65 +460,37 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Acerca de este objeto Contacto</CardTitle>
+                <CardDescription className="text-sm text-muted-foreground">
+                  Haz clic en cualquier campo para editarlo
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Correo</label>
-                  <p className="text-sm">{contact.correo}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Número de móvil</label>
-                  <p className="text-sm">{contact.telefono_whatsapp || contact.telefono || 'No especificado'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Propietario del contacto</label>
-                  <p className="text-sm">{contact.assigned_user?.nombre || 'Usuario actual'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Estado del lead</label>
-                  <Badge variant={getEstadoBadgeVariant(contact.estado)} className="mt-1">
-                    {contact.estado || 'No especificado'}
-                  </Badge>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Programa de Interés</label>
-                  <p className="text-sm">{contact.programa_interes || 'No especificado'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Etapa de Negocio</label>
-                  <p className="text-sm">{contact.estado === 'ganado' ? 'Ganado' : contact.estado === 'perdido' ? 'Perdido' : 'Lead nuevo'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Nombre</label>
-                  <p className="text-sm">{contact.nombre}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Apellidos</label>
-                  <p className="text-sm">{contact.apellido}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Número de teléfono</label>
-                  <p className="text-sm">{contact.telefono || 'No especificado'}</p>
-                </div>
-                {contact.utm_source && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">UTM Source</label>
-                    <p className="text-sm">{contact.utm_source}</p>
+              <CardContent className="space-y-4 group">
+                <EditableField field="nombre" label="Nombre" value={contact.nombre} />
+                <EditableField field="apellido" label="Apellidos" value={contact.apellido} />
+                <EditableField field="correo" label="Correo" value={contact.correo} type="email" />
+                <EditableField field="telefono" label="Teléfono" value={contact.telefono} type="tel" />
+                <EditableField field="telefono_whatsapp" label="WhatsApp" value={contact.telefono_whatsapp} type="tel" />
+                <EditableField field="estado" label="Estado del Lead" value={contact.estado} type="select" />
+                <EditableField field="programa_interes" label="Programa de Interés" value={contact.programa_interes} />
+                <EditableField field="utm_source" label="UTM Source" value={contact.utm_source} />
+                <EditableField field="utm_campaign" label="UTM Campaign" value={contact.utm_campaign} />
+                
+                {/* Campos de solo lectura */}
+                <div className="pt-4 border-t">
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Propietario del contacto</label>
+                      <p className="text-sm">{contact.assigned_user?.nombre || 'Usuario actual'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Fecha de creación</label>
+                      <p className="text-sm">{contact.fecha_insercion ? new Date(contact.fecha_insercion).toLocaleDateString('es-ES') : 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Última actualización</label>
+                      <p className="text-sm">{contact.updated_at ? new Date(contact.updated_at).toLocaleDateString('es-ES') : 'No especificado'}</p>
+                    </div>
                   </div>
-                )}
-                {contact.utm_campaign && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">UTM Campaign</label>
-                    <p className="text-sm">{contact.utm_campaign}</p>
-                  </div>
-                )}
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Fecha de creación</label>
-                  <p className="text-sm">{contact.fecha_insercion ? new Date(contact.fecha_insercion).toLocaleDateString('es-ES') : 'No especificado'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Última actualización</label>
-                  <p className="text-sm">{contact.updated_at ? new Date(contact.updated_at).toLocaleDateString('es-ES') : 'No especificado'}</p>
                 </div>
               </CardContent>
             </Card>
