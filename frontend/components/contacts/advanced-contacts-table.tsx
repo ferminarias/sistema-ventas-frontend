@@ -328,7 +328,13 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
       console.log('🔧 Campos dinámicos recibidos:', fields)
       
       // Verificar si fields es un array o un objeto
-      const fieldsArray = Array.isArray(fields) ? fields : Object.values(fields)
+      let fieldsArray = []
+      if (Array.isArray(fields)) {
+        fieldsArray = fields
+      } else if (fields && typeof fields === 'object') {
+        // Si es un objeto, convertir a array
+        fieldsArray = Object.values(fields).filter(field => field && typeof field === 'object')
+      }
       console.log('🔧 Campos procesados como array:', fieldsArray)
       
       setDynamicFieldDefs(fieldsArray.map(f => ({

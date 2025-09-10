@@ -96,7 +96,7 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
           id: `note-${note.id || Date.now()}`,
           type: 'note' as const,
           title: 'Nota agregada',
-          description: note.note,
+          description: String(note.note || ''),
           timestamp: new Date(note.created_at).toLocaleString('es-ES', {
             day: 'numeric',
             month: 'long',
@@ -105,7 +105,7 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
             minute: '2-digit',
             timeZoneName: 'short'
           }),
-          user: note.created_by || 'Usuario actual'
+          user: String(note.created_by || 'Usuario actual')
         })) : []
 
         // Solo mostrar notas reales del backend
@@ -133,7 +133,7 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
         id: `note-${savedNote.id || Date.now()}`,
         type: 'note',
         title: 'Nota agregada',
-        description: savedNote.note,
+        description: String(savedNote.note || ''),
         timestamp: new Date(savedNote.created_at).toLocaleString('es-ES', {
           day: 'numeric',
           month: 'long',
@@ -142,7 +142,7 @@ export function ContactDetailView({ contact, clientId, onClose, onUpdate }: Cont
           minute: '2-digit',
           timeZoneName: 'short'
         }),
-        user: savedNote.created_by || 'Usuario actual'
+        user: String(savedNote.created_by || 'Usuario actual')
       }
 
       setActivities(prev => [newActivity, ...prev])
