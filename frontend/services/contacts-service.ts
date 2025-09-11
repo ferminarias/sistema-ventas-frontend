@@ -117,6 +117,21 @@ class ContactsService {
     }
   }
 
+  async getImportHistory(clientId: number): Promise<Array<{ id: string; created_at: string; user: string; file_name: string; imported: number; skipped: number; updated: number; errors: number }>> {
+    const response = await apiRequest(`/api/contacts/client/${clientId}/import/history`)
+    if (!response.ok) {
+      throw new Error('Error al obtener historial de importaciones')
+    }
+    return response.json()
+  }
+
+  async getImportDetails(clientId: number, importId: string): Promise<{ id: string; created_at: string; summary: any; errors: string[] }> {
+    const response = await apiRequest(`/api/contacts/client/${clientId}/import/${importId}`)
+    if (!response.ok) {
+      throw new Error('Error al obtener detalle de importación')
+    }
+    return response.json()
+  }
   async getContacts(clientId: number, filters: ContactFilters = {}): Promise<ContactResponse> {
     
     const params = new URLSearchParams()
@@ -361,9 +376,24 @@ class ContactsService {
     return response.blob()
   }
 
-  async importContacts(clientId: number, file: File): Promise<{ message: string; imported: number; errors?: string[] }> {
+  async importContacts(
+    clientId: number, 
+    file: File, 
+    options: { skip_duplicates?: boolean; update_existing?: boolean; validate_emails?: boolean } = {}
+  ): Promise<{ message: string; imported: number; skipped: number; updated: number; errors: string[]; total_processed: number }> {
     const formData = new FormData()
     formData.append('file', file)
+    
+    // Agregar opciones como parámetros
+    if (options.skip_duplicates !== undefined) {
+      formData.append('skip_duplicates', options.skip_duplicates.toString())
+    }
+    if (options.update_existing !== undefined) {
+      formData.append('update_existing', options.update_existing.toString())
+    }
+    if (options.validate_emails !== undefined) {
+      formData.append('validate_emails', options.validate_emails.toString())
+    }
 
     // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
     const response = await apiRequest(`/api/contacts/client/${clientId}/import`, {

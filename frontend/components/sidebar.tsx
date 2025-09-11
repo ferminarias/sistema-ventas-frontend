@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart3, FileSpreadsheet, Home, Plus, Settings, Users, LogOut, UserCog, Building2, Moon, UserPlus, FileSearch, Shield, UserCheck } from "lucide-react"
+import { BarChart3, FileSpreadsheet, Home, Plus, Settings, Users, LogOut, UserCog, Building2, Moon, UserPlus, FileSearch, Shield, UserCheck, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -222,6 +222,17 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                       </Link>
                     </Button>
                   )}
+                  <Button 
+                    asChild 
+                    variant={pathname === "/contactos/importacion" ? "default" : "ghost"} 
+                    className="w-full justify-start text-sm"
+                    size="sm"
+                  >
+                    <Link href="/contactos/importacion">
+                      <Upload className="mr-2 h-3 w-3" />
+                      Importación
+                    </Link>
+                  </Button>
                 </div>
               </CollapsibleContent>
             </Collapsible>
