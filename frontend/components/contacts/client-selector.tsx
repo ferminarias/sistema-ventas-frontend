@@ -99,12 +99,14 @@ export function ClientSelector({ clients, selectedClient, onSelectClient, userIn
                     <span className="text-xs text-muted-foreground">(Sin tabla)</span>
                   )}
                 </div>
-                <Badge 
-                  variant={client.has_contacts_table ? "secondary" : "outline"} 
-                  className="ml-2 flex-shrink-0 text-xs"
-                >
-                  {client.total_contacts}
-                </Badge>
+                {client.total_contacts > 0 && (
+                  <Badge 
+                    variant={client.has_contacts_table ? "secondary" : "outline"} 
+                    className="ml-2 flex-shrink-0 text-xs"
+                  >
+                    {client.total_contacts}
+                  </Badge>
+                )}
               </div>
             </SelectItem>
           ))}
@@ -171,9 +173,11 @@ export function ClientSelector({ clients, selectedClient, onSelectClient, userIn
                     {/* Total de contactos */}
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Total Contactos:</span>
-                      <Badge variant="secondary">
-                        {client.total_contacts}
-                      </Badge>
+                      {client.total_contacts > 0 ? (
+                        <Badge variant="secondary">{client.total_contacts}</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </div>
 
                     {/* Estado de la tabla */}

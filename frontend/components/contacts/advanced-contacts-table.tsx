@@ -121,6 +121,10 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
   const [viewingContact, setViewingContact] = useState<Contact | null>(null)
   const [exporting, setExporting] = useState(false)
   
+  // Edición inline
+  const [editingCell, setEditingCell] = useState<{ contactId: number; columnId: string } | null>(null)
+  const [editingValue, setEditingValue] = useState<string>("")
+  
   // Estados de gestión de columnas
   const [manageColumnsOpen, setManageColumnsOpen] = useState(false)
   const [dynamicFieldDefs, setDynamicFieldDefs] = useState<Array<{id:string;label:string;type:string;options?:string[]}>>([])
@@ -157,6 +161,17 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
     })) : []
 
   const ALL_COLUMNS: ColumnDef[] = [...BASE_COLUMNS, ...CUSTOM_COLUMNS]
+
+  // Columnas editables inline (base)
+  const EDITABLE_COLUMNS = new Set([
+    "nombre",
+    "apellido",
+    "correo",
+    "telefono",
+    "telefono_whatsapp",
+    "estado",
+    "programa_interes",
+  ])
 
   // Gestión de preferencias de columnas
   const storageKey = `contactsTable:columns:v1:${user?.id || "anonymous"}:${clientId}`
@@ -461,6 +476,29 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
     return value || '-'
   }
 
+  const beginInlineEdit = (contact: Contact, column: ColumnDef) => {
+    if (!EDITABLE_COLUMNS.has(column.id)) return
+    setEditingCell({ contactId: contact.id, columnId: column.id })
+    setEditingValue(column.accessor(contact) || "")
+  }
+
+  const saveInlineEdit = async (contact: Contact, column: ColumnDef) => {
+    try {
+      const payload: Partial<Contact> = {}
+      ;(payload as any)[column.id] = editingValue
+      // Normalización de tipos simples
+      if (column.id === 'telefono' || column.id === 'telefono_whatsapp') {
+        ;(payload as any)[column.id] = editingValue?.trim()
+      }
+      await contactsService.updateContact(clientId, contact.id, payload)
+      // Refrescar en memoria
+      setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, ...(payload as any) } : c))
+      setEditingCell(null)
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'No se pudo guardar', variant: 'destructive' })
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Stats Cards */}
@@ -609,8 +647,61 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
                   contacts.map((contact) => (
                     <TableRow key={contact.id}>
                       {renderColumns.map((column) => (
-                        <TableCell key={column.id}>
-                          {formatCellValue(column, contact)}
+                        <TableCell 
+                          key={column.id}
+                          className={`${EDITABLE_COLUMNS.has(column.id) ? 'group/td relative' : ''}`}
+                          onClick={() => beginInlineEdit(contact, column)}
+                        >
+                          {editingCell && editingCell.contactId === contact.id && editingCell.columnId === column.id ? (
+                            column.id === 'estado' ? (
+                              <Select 
+                                value={editingValue}
+                                onValueChange={(v) => { 
+                                  setEditingValue(v);
+                                  // Guardar inmediatamente al elegir opción
+                                  setTimeout(() => saveInlineEdit(contact, column), 0)
+                                }}
+                              >
+                                <SelectTrigger className="h-8 w-[160px]" />
+                                <SelectContent>
+                                  {ESTADOS_OPTIONS.map(e => (
+                                    <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input
+                                value={editingValue}
+                                autoFocus
+                                onChange={(e) => setEditingValue(e.target.value)}
+                                onBlur={() => saveInlineEdit(contact, column)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') saveInlineEdit(contact, column)
+                                  if (e.key === 'Escape') setEditingCell(null)
+                                }}
+                                className="h-8"
+                              />
+                            )
+                          ) : (
+                            <div 
+                              className={`${EDITABLE_COLUMNS.has(column.id) ? 'pr-6' : ''}`}
+                              onMouseDown={(e) => {
+                                // Evitar seleccionar texto al intentar editar
+                                if (EDITABLE_COLUMNS.has(column.id)) e.preventDefault()
+                              }}
+                            >
+                              {formatCellValue(column, contact)}
+                              {EDITABLE_COLUMNS.has(column.id) && (
+                                <button
+                                  className="opacity-0 group-hover/td:opacity-100 transition-opacity absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                  onClick={() => beginInlineEdit(contact, column)}
+                                  title="Editar"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </TableCell>
                       ))}
                       <TableCell>

@@ -944,28 +944,35 @@ export default function ReportesPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-slate-700/30 rounded-lg relative z-20">
                   <div className="relative z-30">
                     <label className="block text-sm font-medium text-white mb-2">Cliente</label>
-                    <Select
-                      value={selectedClient}
-                      onValueChange={(value) => {
-                        setSelectedClient(String(value));
-                        setClienteFiltro(value === "all" ? undefined : String(value));
-                      }}
-                      disabled={allowedClients.length === 0}
-                    >
-                      <SelectTrigger className="bg-gray-900 border-gray-700 text-white focus:border-blue-500 relative z-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border-gray-700 z-50">
-                        {user?.role === "admin" && (
+                    {user?.role === 'admin' ? (
+                      <Select
+                        value={selectedClient}
+                        onValueChange={(value) => {
+                          setSelectedClient(String(value));
+                          setClienteFiltro(value === "all" ? undefined : String(value));
+                        }}
+                        disabled={allowedClients.length === 0}
+                      >
+                        <SelectTrigger className="bg-gray-900 border-gray-700 text-white focus:border-blue-500 relative z-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-800 border-gray-700 z-50">
                           <SelectItem value="all" className="text-white hover:bg-gray-700">Todos los clientes</SelectItem>
-                        )}
-                        {allowedClients.map((client) => (
-                          <SelectItem key={String(client.id)} value={String(client.id)} className="text-white hover:bg-gray-700">
-                            {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          {allowedClients.map((client) => (
+                            <SelectItem key={String(client.id)} value={String(client.id)} className="text-white hover:bg-gray-700">
+                              {client.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="h-10 px-3 flex items-center rounded-md bg-gray-900 border border-gray-700 text-sm text-slate-300">
+                        {(() => {
+                          const current = allowedClients.find(c => String(c.id) === selectedClient)
+                          return current ? current.name : 'Asignando cliente...'
+                        })()}
+                      </div>
+                    )}
                   </div>
                   <div className="relative z-30">
                     <label className="block text-sm font-medium text-white mb-2">Fecha Inicio</label>

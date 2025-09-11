@@ -92,7 +92,10 @@ export default function ContactosPage() {
         {selectedClient && availableClients.length > 0 && (
           <div className="flex items-center gap-4">
             <div className="text-sm text-muted-foreground">
-              <span className="font-medium">{selectedClient.name}</span> • {selectedClient.total_contacts} contactos
+              <span className="font-medium">{selectedClient.name}</span>
+              {selectedClient.total_contacts > 0 && (
+                <> • {selectedClient.total_contacts} contactos</>
+              )}
             </div>
             <ClientSelector
               clients={availableClients}
