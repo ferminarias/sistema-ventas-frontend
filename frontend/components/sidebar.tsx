@@ -60,6 +60,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(true)
   const [isAdminOpen, setIsAdminOpen] = useState(false)
+  const [isContactsOpen, setIsContactsOpen] = useState(pathname.startsWith("/contactos"))
   const [clients, setClients] = useState<Client[]>([])
 
   // Obtener clientes al montar el sidebar
@@ -181,32 +182,49 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
               </Link>
             </Button>
 
-            {/* Contactos */}
-            <Button 
-              asChild 
-              variant={pathname === "/contactos" ? "default" : "ghost"} 
-              className="w-full justify-start"
-            >
-              <Link href="/contactos">
-                <UserCheck className="mr-2 h-4 w-4" />
-                Contactos
-              </Link>
-            </Button>
-
-            {/* Configurar campos de contactos */}
-            {(user.role === "admin" || user.role === "supervisor") && (
-              <Button 
-                asChild 
-                variant={pathname === "/contactos/campos" ? "default" : "ghost"} 
-                className="w-full justify-start text-sm"
-                size="sm"
-              >
-                <Link href="/contactos/campos">
-                  <Settings className="mr-2 h-3 w-3" />
-                  Configurar campos
-                </Link>
-              </Button>
-            )}
+            {/* Contactos desplegable */}
+            <Collapsible open={isContactsOpen} onOpenChange={setIsContactsOpen} className="w-full">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between group hover:bg-accent px-3 py-2 h-auto min-h-[2.5rem]">
+                  <div className="flex items-center">
+                    <UserCheck className="mr-2 h-4 w-4" />
+                    <span>Contactos</span>
+                  </div>
+                  <ChevronDown 
+                    className={`w-5 h-5 text-muted-foreground group-hover:text-foreground transition-all duration-300 shrink-0 ${isContactsOpen ? "rotate-180" : "rotate-0"}`}
+                    style={{ width: '20px', height: '20px', minWidth: '20px', minHeight: '20px' }}
+                  />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-2 mt-1">
+                <div className="flex flex-col space-y-1">
+                  <Button 
+                    asChild 
+                    variant={pathname === "/contactos" ? "default" : "ghost"} 
+                    className="w-full justify-start text-sm"
+                    size="sm"
+                  >
+                    <Link href="/contactos">
+                      <UserCheck className="mr-2 h-3 w-3" />
+                      Ver contactos
+                    </Link>
+                  </Button>
+                  {(user.role === "admin" || user.role === "supervisor") && (
+                    <Button 
+                      asChild 
+                      variant={pathname === "/contactos/campos" ? "default" : "ghost"} 
+                      className="w-full justify-start text-sm"
+                      size="sm"
+                    >
+                      <Link href="/contactos/campos">
+                        <Settings className="mr-2 h-3 w-3" />
+                        Configurar campos
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Administrador de Ventas */}
             {(user.role === "admin" || user.role === "supervisor") && (
