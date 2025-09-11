@@ -74,6 +74,16 @@ interface ImportDetails {
   processing_errors?: string[] | null
 }
 
+interface ImportHistoryResponse {
+  imports: ImportHistoryItem[]
+  pagination?: {
+    page: number
+    per_page: number
+    total: number
+    total_pages: number
+  }
+}
+
 export default function ImportacionPage() {
   const { toast } = useToast()
   const [clients, setClients] = useState<ClientForContacts[]>([])
@@ -108,10 +118,14 @@ export default function ImportacionPage() {
     
     setHistoryLoading(true)
     try {
-      const data = await contactsService.getImportHistory(selected.id)
+      const response = await contactsService.getImportHistory(selected.id) as ImportHistoryResponse | ImportHistoryItem[]
+      // El backend puede devolver { imports: ImportHistoryItem[], pagination: {...} } o directamente ImportHistoryItem[]
+      const data = Array.isArray(response) ? response : (response?.imports || [])
       setImportHistory(data)
     } catch (error: any) {
+      console.error('Error loading import history:', error)
       toast({ title: "Error", description: error.message || "Error al cargar historial", variant: "destructive" })
+      setImportHistory([]) // Asegurar que siempre sea un array
     } finally {
       setHistoryLoading(false)
     }
@@ -504,7 +518,7 @@ export default function ImportacionPage() {
               <div className="text-center py-8 text-muted-foreground">
                 Cargando historial...
               </div>
-            ) : importHistory.length === 0 ? (
+            ) : !Array.isArray(importHistory) || importHistory.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 No hay importaciones registradas
               </div>
@@ -524,7 +538,7 @@ export default function ImportacionPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {importHistory
+                    {(Array.isArray(importHistory) ? importHistory : [])
                       .filter(item => statusFilter === 'all' || item.status === statusFilter)
                       .map((item) => (
                         <TableRow key={item.id}>
