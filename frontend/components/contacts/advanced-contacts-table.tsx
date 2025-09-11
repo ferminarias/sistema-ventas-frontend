@@ -127,6 +127,8 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
   
   // Estados de gestión de columnas
   const [manageColumnsOpen, setManageColumnsOpen] = useState(false)
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
+  const [exportColumns, setExportColumns] = useState<string[]>([])
   const [dynamicFieldDefs, setDynamicFieldDefs] = useState<Array<{id:string;label:string;type:string;options?:string[]}>>([])
   
   // Definición de columnas base
@@ -419,7 +421,8 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
       const blob = await contactsService.exportContacts(clientId, {
         ...filters,
         format: 'excel',
-        include_fields: true
+        include_fields: true,
+        columns: exportColumns.length ? exportColumns : renderColumns.map(c => c.id)
       })
 
       const url = window.URL.createObjectURL(blob)
@@ -580,7 +583,10 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleExport}
+                onClick={() => {
+                  setExportColumns(renderColumns.map(c => c.id))
+                  setExportDialogOpen(true)
+                }}
                 disabled={exporting}
                 title="Exportar contactos"
               >
@@ -789,6 +795,36 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
           )}
         </CardContent>
       </Card>
+
+      {/* Diálogo de exportación */}
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Exportar contactos</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground">Selecciona las columnas a incluir en el archivo.</div>
+            <div className="grid grid-cols-2 gap-2 max-h-60 overflow-auto border rounded-md p-2">
+              {renderColumns.map(col => (
+                <label key={col.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={exportColumns.includes(col.id)}
+                    onCheckedChange={(v: any) => {
+                      setExportColumns(prev => v ? [...new Set([...prev, col.id])] : prev.filter(id => id !== col.id))
+                    }}
+                  />
+                  <span>{col.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => { setExportDialogOpen(false); handleExport(); }} disabled={exporting}>
+              {exporting ? 'Exportando…' : 'Exportar XLSX'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de gestión de columnas */}
       <Dialog open={manageColumnsOpen} onOpenChange={setManageColumnsOpen}>

@@ -337,12 +337,19 @@ class ContactsService {
     return response.json()
   }
 
-  async exportContacts(clientId: number, filters: ContactFilters & { format?: 'excel' | 'csv'; include_fields?: boolean } = {}): Promise<Blob> {
+  async exportContacts(
+    clientId: number,
+    filters: ContactFilters & { format?: 'excel' | 'csv'; include_fields?: boolean; columns?: string[] } = {}
+  ): Promise<Blob> {
     const params = new URLSearchParams()
     
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
-        params.append(key, value.toString())
+        if (key === 'columns' && Array.isArray(value)) {
+          params.append('columns', value.join(','))
+        } else {
+          params.append(key, value.toString())
+        }
       }
     })
 
