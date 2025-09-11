@@ -193,6 +193,21 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
               </Link>
             </Button>
 
+            {/* Configurar campos de contactos */}
+            {(user.role === "admin" || user.role === "supervisor") && (
+              <Button 
+                asChild 
+                variant={pathname === "/contactos/campos" ? "default" : "ghost"} 
+                className="w-full justify-start text-sm"
+                size="sm"
+              >
+                <Link href="/contactos/campos">
+                  <Settings className="mr-2 h-3 w-3" />
+                  Configurar campos
+                </Link>
+              </Button>
+            )}
+
             {/* Administrador de Ventas */}
             {(user.role === "admin" || user.role === "supervisor") && (
               <Button 
