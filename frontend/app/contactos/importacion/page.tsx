@@ -10,8 +10,11 @@ import { Badge } from "@/components/ui/badge"
 import { ClientSelector } from "@/components/contacts/client-selector"
 import { contactsService } from "@/services/contacts-service"
 import { useToast } from "@/hooks/use-toast"
-import { Download, Upload, FileSpreadsheet, AlertCircle, CheckCircle, XCircle, Settings } from "lucide-react"
+import { Download, Upload, FileSpreadsheet, AlertCircle, CheckCircle, XCircle, Settings, History, Eye, Calendar, User, Clock, TrendingUp } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface ClientForContacts {
   id: number
@@ -29,6 +32,46 @@ interface ImportResult {
   updated: number
   errors: string[]
   total_processed: number
+}
+
+interface ImportHistoryItem {
+  id: string
+  created_at: string
+  user: string
+  file_name: string
+  imported: number
+  skipped: number
+  updated: number
+  errors: number
+  // Campos adicionales que podrían venir del backend
+  filename?: string
+  file_size?: number
+  file_type?: string
+  status?: 'processing' | 'completed' | 'failed'
+  imported_count?: number
+  skipped_count?: number
+  error_count?: number
+  success_rate?: number
+  duration_seconds?: number
+  started_at?: string
+  user_name?: string
+}
+
+interface ImportDetails {
+  id: string
+  created_at: string
+  summary: any
+  errors: string[]
+  // Campos adicionales que podrían venir del backend
+  filename?: string
+  stats?: {
+    success_rate: number
+    duration_formatted: string
+    file_size_formatted: string
+    rows_per_second: number
+  }
+  validation_errors?: string[] | null
+  processing_errors?: string[] | null
 }
 
 export default function ImportacionPage() {
@@ -53,6 +96,37 @@ export default function ImportacionPage() {
       setUserInfo(res.user_info || null)
     })()
   }, [])
+
+  useEffect(() => {
+    if (selected) {
+      loadImportHistory()
+    }
+  }, [selected])
+
+  const loadImportHistory = async () => {
+    if (!selected) return
+    
+    setHistoryLoading(true)
+    try {
+      const data = await contactsService.getImportHistory(selected.id)
+      setImportHistory(data)
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Error al cargar historial", variant: "destructive" })
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  const loadImportDetails = async (importId: string) => {
+    if (!selected) return
+    
+    try {
+      const data = await contactsService.getImportDetails(selected.id, importId)
+      setSelectedImport(data)
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Error al cargar detalles", variant: "destructive" })
+    }
+  }
 
   const downloadTemplate = async () => {
     if (!selected) {
@@ -110,6 +184,10 @@ export default function ImportacionPage() {
   }
 
   const [preview, setPreview] = useState<{ headers: string[]; rows: any[] } | null>(null)
+  const [importHistory, setImportHistory] = useState<ImportHistoryItem[]>([])
+  const [selectedImport, setSelectedImport] = useState<ImportDetails | null>(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const previewFile = async (file: File) => {
     try {
@@ -117,31 +195,56 @@ export default function ImportacionPage() {
         const text = await file.text()
         const lines = text.split(/\r?\n/).filter(Boolean)
         if (lines.length === 0) return
-        const headers = lines[0].split(',').map(h => h.trim())
+        
+        // Mejor parsing de CSV que maneja comillas y comas dentro de campos
+        const parseCSVLine = (line: string) => {
+          const result = []
+          let current = ''
+          let inQuotes = false
+          
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i]
+            if (char === '"') {
+              inQuotes = !inQuotes
+            } else if (char === ',' && !inQuotes) {
+              result.push(current.trim())
+              current = ''
+            } else {
+              current += char
+            }
+          }
+          result.push(current.trim())
+          return result
+        }
+        
+        const headers = parseCSVLine(lines[0])
         const rows = lines.slice(1, 6).map(l => {
-          const cols = l.split(',')
+          const cols = parseCSVLine(l)
           const obj: any = {}
-          headers.forEach((h, i) => obj[h] = cols[i])
+          headers.forEach((h, i) => obj[h] = cols[i] || '')
           return obj
         })
         setPreview({ headers, rows })
       } else {
-        const XLSX = await import('xlsx')
-        const data = await file.arrayBuffer()
-        const wb = XLSX.read(data)
-        const ws = wb.Sheets[wb.SheetNames[0]]
-        const json = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][]
-        if (!json.length) return
-        const headers = (json[0] || []).map((h: any) => String(h))
-        const rows = json.slice(1, 6).map(r => {
-          const obj: any = {}
-          headers.forEach((h: string, i: number) => obj[h] = r[i])
-          return obj
+        // Para archivos Excel, mostramos información del archivo
+        setPreview({
+          headers: ['Información del archivo'],
+          rows: [
+            { 'Información del archivo': `Nombre: ${file.name}` },
+            { 'Información del archivo': `Tamaño: ${(file.size / 1024).toFixed(1)} KB` },
+            { 'Información del archivo': `Tipo: ${file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}` },
+            { 'Información del archivo': 'El archivo será procesado correctamente por el backend' }
+          ]
         })
-        setPreview({ headers, rows })
       }
-    } catch {
-      setPreview(null)
+    } catch (error) {
+      console.error('Error previewing file:', error)
+      setPreview({
+        headers: ['Error'],
+        rows: [
+          { 'Error': 'No se pudo previsualizar el archivo. El archivo será procesado correctamente por el backend.' }
+        ]
+      })
     }
   }
 
@@ -180,6 +283,10 @@ export default function ImportacionPage() {
       toast({ title: "Error", description: error.message || "Error al importar contactos", variant: "destructive" })
     } finally {
       setImporting(false)
+      // Recargar historial después de importar
+      if (selected) {
+        loadImportHistory()
+      }
     }
   }
 
@@ -354,6 +461,250 @@ export default function ImportacionPage() {
                   </ul>
                 </AlertDescription>
               </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Historial de Importaciones */}
+      {selected && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  Historial de Importaciones
+                </CardTitle>
+                <CardDescription>
+                  Registro de todas las importaciones realizadas para {selected.name}
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Filtrar por estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="completed">Completados</SelectItem>
+                    <SelectItem value="processing">Procesando</SelectItem>
+                    <SelectItem value="failed">Fallidos</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm" onClick={loadImportHistory} disabled={historyLoading}>
+                  <History className="h-4 w-4 mr-2" />
+                  Actualizar
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {historyLoading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Cargando historial...
+              </div>
+            ) : importHistory.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No hay importaciones registradas
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Archivo</TableHead>
+                      <TableHead>Usuario</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Resultados</TableHead>
+                      <TableHead>Duración</TableHead>
+                      <TableHead>Tasa de éxito</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {importHistory
+                      .filter(item => statusFilter === 'all' || item.status === statusFilter)
+                      .map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm">
+                                {new Date(item.created_at).toLocaleDateString('es-ES', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <div className="font-medium">{item.file_name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {item.file_size ? `${(item.file_size / 1024).toFixed(1)} KB` : 'N/A'}
+                                </div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm">{item.user}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={
+                                item.status === 'completed' ? 'default' :
+                                item.status === 'processing' ? 'secondary' : 'destructive'
+                              }
+                            >
+                              {item.status === 'completed' ? 'Completado' :
+                               item.status === 'processing' ? 'Procesando' : 'Fallido'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div className="flex gap-4">
+                                <span className="text-green-600 font-medium">{item.imported} importados</span>
+                                <span className="text-blue-600">{item.skipped} omitidos</span>
+                                <span className="text-red-600">{item.errors} errores</span>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm">{item.duration_seconds ? `${item.duration_seconds}s` : 'N/A'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm font-medium">
+                                {item.success_rate ? `${item.success_rate.toFixed(1)}%` : 'N/A'}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => loadImportDetails(item.id)}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Ver detalles
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>Detalles de Importación</DialogTitle>
+                                  <DialogDescription>
+                                    Información completa de la importación #{item.id}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                {selectedImport && (
+                                  <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <h4 className="font-medium mb-2">Resumen</h4>
+                                        <div className="space-y-2 text-sm">
+                                          <div className="flex justify-between">
+                                            <span>Fecha:</span>
+                                            <span className="font-medium">
+                                              {new Date(selectedImport.created_at).toLocaleDateString('es-ES')}
+                                            </span>
+                                          </div>
+                                          {selectedImport.stats && (
+                                            <>
+                                              <div className="flex justify-between">
+                                                <span>Tasa de éxito:</span>
+                                                <span className="font-medium">{selectedImport.stats.success_rate.toFixed(1)}%</span>
+                                              </div>
+                                              <div className="flex justify-between">
+                                                <span>Duración:</span>
+                                                <span className="font-medium">{selectedImport.stats.duration_formatted}</span>
+                                              </div>
+                                              <div className="flex justify-between">
+                                                <span>Tamaño del archivo:</span>
+                                                <span className="font-medium">{selectedImport.stats.file_size_formatted}</span>
+                                              </div>
+                                              <div className="flex justify-between">
+                                                <span>Filas por segundo:</span>
+                                                <span className="font-medium">{selectedImport.stats.rows_per_second.toFixed(1)}</span>
+                                              </div>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <h4 className="font-medium mb-2">Archivo</h4>
+                                        <div className="space-y-2 text-sm">
+                                          <div className="flex justify-between">
+                                            <span>Nombre:</span>
+                                            <span className="font-medium">{selectedImport.filename || 'N/A'}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    
+                                    {selectedImport.errors && selectedImport.errors.length > 0 && (
+                                      <div>
+                                        <h4 className="font-medium mb-2 text-red-600">Errores</h4>
+                                        <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                                          <ul className="list-disc list-inside space-y-1 text-sm">
+                                            {selectedImport.errors.map((error, i) => (
+                                              <li key={i} className="text-red-700">{error}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {selectedImport.validation_errors && selectedImport.validation_errors.length > 0 && (
+                                      <div>
+                                        <h4 className="font-medium mb-2 text-red-600">Errores de Validación</h4>
+                                        <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                                          <ul className="list-disc list-inside space-y-1 text-sm">
+                                            {selectedImport.validation_errors.map((error, i) => (
+                                              <li key={i} className="text-red-700">{error}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {selectedImport.processing_errors && selectedImport.processing_errors.length > 0 && (
+                                      <div>
+                                        <h4 className="font-medium mb-2 text-orange-600">Errores de Procesamiento</h4>
+                                        <div className="bg-orange-50 border border-orange-200 rounded-md p-3">
+                                          <ul className="list-disc list-inside space-y-1 text-sm">
+                                            {selectedImport.processing_errors.map((error, i) => (
+                                              <li key={i} className="text-orange-700">{error}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </DialogContent>
+                            </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

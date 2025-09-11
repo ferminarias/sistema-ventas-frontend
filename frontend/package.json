@@ -74,7 +74,13 @@
     "typescript": "^5"
   },
   "rewrites": [
-    { "source": "/clientes/:id", "destination": "/frontend/clientes/:id" },
-    { "source": "/(.*)", "destination": "/frontend/$1" }
+    {
+      "source": "/clientes/:id",
+      "destination": "/frontend/clientes/:id"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/frontend/$1"
+    }
   ]
 }
