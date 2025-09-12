@@ -158,7 +158,18 @@ export default function ImportacionPage() {
       })
       
       if (!response.ok) {
-        throw new Error('Error al generar plantilla')
+        let description = 'Error al generar plantilla'
+        try {
+          const ct = response.headers.get('content-type') || ''
+          if (ct.includes('application/json')) {
+            const j = await response.json()
+            description = j?.message || JSON.stringify(j)
+          } else {
+            const t = await response.text()
+            if (t) description = t
+          }
+        } catch {}
+        throw new Error(description)
       }
       
       const blob = await response.blob()
@@ -172,8 +183,8 @@ export default function ImportacionPage() {
       window.URL.revokeObjectURL(url)
       
       toast({ title: "Plantilla descargada", description: "Usa esta plantilla para importar contactos" })
-    } catch (error) {
-      toast({ title: "Error", description: "No se pudo generar la plantilla", variant: "destructive" })
+    } catch (error: any) {
+      toast({ title: "Error", description: error?.message || "No se pudo generar la plantilla", variant: "destructive" })
     }
   }
 
