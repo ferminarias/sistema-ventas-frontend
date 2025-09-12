@@ -228,12 +228,27 @@ class ContactsService {
 
   async deleteContact(clientId: number, id: number): Promise<void> {
     // ✅ USAR ESTRUCTURA COMO /api/ventas que SÍ funciona
-    const response = await apiRequest(`/api/clientes/${clientId}/contactos/${id}`, {
+    // Intentar con el endpoint de contacts directo primero
+    const response = await apiRequest(`/api/contacts/${id}`, {
       method: 'DELETE',
     })
     
     if (!response.ok) {
-      throw new Error('Error al eliminar contacto')
+      // Obtener el mensaje de error específico del backend
+      let errorMessage = 'Error al eliminar contacto'
+      try {
+        const errorData = await response.json()
+        if (errorData.error) {
+          errorMessage = errorData.error
+        } else if (errorData.message) {
+          errorMessage = errorData.message
+        }
+      } catch (e) {
+        // Si no se puede parsear el JSON, usar el mensaje por defecto
+        console.error('Error parsing delete response:', e)
+      }
+      
+      throw new Error(errorMessage)
     }
   }
 
