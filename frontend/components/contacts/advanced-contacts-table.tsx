@@ -733,7 +733,7 @@ export function AdvancedContactsTable({ clientId, clientName }: AdvancedContacts
                               Campos
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            {contact.can_delete && (
+                            {(contact.can_delete || user?.role === 'admin' || user?.role === 'supervisor') && (
                               <DropdownMenuItem 
                                 onClick={() => setDeletingContact(contact)}
                                 className="text-destructive"
