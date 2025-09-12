@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { API_BASE } from "@/lib/api"
 
 interface ClientForContacts {
   id: number
@@ -149,8 +150,8 @@ export default function ImportacionPage() {
     }
 
     try {
-      // Descargar plantilla desde el backend
-      const response = await fetch(`/api/contacts/client/${selected.id}/import/template`, {
+      // Descargar plantilla desde el backend (URL absoluta)
+      const response = await fetch(`${API_BASE}/api/contacts/client/${selected.id}/import/template`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
