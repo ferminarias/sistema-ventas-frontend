@@ -12,6 +12,7 @@ import { RailwayLoader } from '@/components/ui/railway-loader'
 import { FileUpload } from '@/components/ui/file-upload'
 import { comprobantesService } from '@/services/comprobantes'
 import { useToast } from '@/components/ui/use-toast'
+import { clientFieldsService } from '@/services/client-fields-service'
 
 interface Props {
   venta: VentaAdmin
@@ -26,6 +27,15 @@ interface ArchivoAdjunto {
   filename: string
   original_name: string
   file_url: string
+}
+
+interface CampoDinamico {
+  id: string
+  label: string
+  type: string
+  options?: string[]
+  required: boolean
+  order: number
 }
 
 export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: Props) {
@@ -59,6 +69,11 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
   const [archivosNuevos, setArchivosNuevos] = useState<Record<string, string>>({})
   const [mostrandoArchivos, setMostrandoArchivos] = useState(false)
   const [cargandoArchivos, setCargandoArchivos] = useState(false)
+  
+  // Estados para campos dinámicos
+  const [camposDinamicos, setCamposDinamicos] = useState<CampoDinamico[]>([])
+  const [camposAdicionales, setCamposAdicionales] = useState<Record<string, any>>({})
+  const [cargandoCampos, setCargandoCampos] = useState(false)
 
   // Función reutilizable para cargar archivos
   const cargarArchivos = async (forzarRecarga = false) => {
@@ -138,10 +153,39 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
     }
   }
 
+  // Función para cargar campos dinámicos del cliente
+  const cargarCamposDinamicos = async () => {
+    setCargandoCampos(true)
+    try {
+      const campos = await clientFieldsService.getClientFields(venta.cliente)
+      setCamposDinamicos(campos)
+      
+      // Inicializar campos adicionales con valores existentes
+      const valoresExistentes = venta.campos_adicionales || {}
+      setCamposAdicionales(valoresExistentes)
+      
+      console.log("📋 Campos dinámicos cargados:", {
+        clienteId: venta.cliente,
+        camposCount: campos.length,
+        valoresExistentes: Object.keys(valoresExistentes)
+      })
+    } catch (error) {
+      console.error('Error cargando campos dinámicos:', error)
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los campos personalizados",
+        variant: "destructive"
+      })
+    } finally {
+      setCargandoCampos(false)
+    }
+  }
+
   // Cargar archivos adjuntos existentes USANDO EL SERVICIO DE COMPROBANTES
   useEffect(() => {
     cargarArchivos()
-  }, [venta.id, toast])
+    cargarCamposDinamicos()
+  }, [venta.id, venta.cliente, toast])
 
   const handleEliminarArchivo = (fieldId: string) => {
     const nuevosArchivosAEliminar = [...archivosAEliminar, fieldId]
@@ -208,6 +252,7 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
       
       const payload = {
         ...formData,
+        ...(Object.keys(camposAdicionales).length > 0 && { campos_adicionales: camposAdicionales }),
         ...(archivosAEliminar.length > 0 && { archivos_eliminar: archivosAEliminar }),
         ...(Object.keys(archivosNuevos).length > 0 && { archivos_nuevos: archivosNuevos })
       }
@@ -353,6 +398,146 @@ export function EditVentaModal({ venta, clientes, permisos, onSave, onClose }: P
                 className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500"
               />
             </div>
+
+            {/* Campos Dinámicos */}
+            {camposDinamicos.length > 0 && (
+              <div className="border-t border-gray-700 pt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <Label className="text-white text-lg">📋 Campos Personalizados</Label>
+                  {cargandoCampos && (
+                    <div className="flex items-center gap-2">
+                      <RailwayLoader size="sm" text="Cargando campos..." />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {camposDinamicos.map((campo) => (
+                    <div key={campo.id} className="space-y-2">
+                      <Label className="text-white">
+                        {campo.label}
+                        {campo.required && <span className="text-red-400 ml-1">*</span>}
+                      </Label>
+                      
+                      {campo.type === 'text' && (
+                        <Input
+                          type="text"
+                          value={camposAdicionales[campo.id] || ''}
+                          onChange={(e) => setCamposAdicionales(prev => ({
+                            ...prev,
+                            [campo.id]: e.target.value
+                          }))}
+                          className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500"
+                          required={campo.required}
+                        />
+                      )}
+                      
+                      {campo.type === 'email' && (
+                        <Input
+                          type="email"
+                          value={camposAdicionales[campo.id] || ''}
+                          onChange={(e) => setCamposAdicionales(prev => ({
+                            ...prev,
+                            [campo.id]: e.target.value
+                          }))}
+                          className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500"
+                          required={campo.required}
+                        />
+                      )}
+                      
+                      {campo.type === 'tel' && (
+                        <Input
+                          type="tel"
+                          value={camposAdicionales[campo.id] || ''}
+                          onChange={(e) => setCamposAdicionales(prev => ({
+                            ...prev,
+                            [campo.id]: e.target.value
+                          }))}
+                          className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500"
+                          required={campo.required}
+                        />
+                      )}
+                      
+                      {campo.type === 'number' && (
+                        <Input
+                          type="number"
+                          value={camposAdicionales[campo.id] || ''}
+                          onChange={(e) => setCamposAdicionales(prev => ({
+                            ...prev,
+                            [campo.id]: e.target.value
+                          }))}
+                          className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500"
+                          required={campo.required}
+                        />
+                      )}
+                      
+                      {campo.type === 'date' && (
+                        <Input
+                          type="date"
+                          value={camposAdicionales[campo.id] || ''}
+                          onChange={(e) => setCamposAdicionales(prev => ({
+                            ...prev,
+                            [campo.id]: e.target.value
+                          }))}
+                          className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500"
+                          required={campo.required}
+                        />
+                      )}
+                      
+                      {campo.type === 'textarea' && (
+                        <textarea
+                          value={camposAdicionales[campo.id] || ''}
+                          onChange={(e) => setCamposAdicionales(prev => ({
+                            ...prev,
+                            [campo.id]: e.target.value
+                          }))}
+                          className="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 rounded-md px-3 py-2 min-h-[80px]"
+                          required={campo.required}
+                        />
+                      )}
+                      
+                      {(campo.type === 'select' || campo.type === 'radio') && campo.options && (
+                        <Select
+                          value={camposAdicionales[campo.id] || ''}
+                          onValueChange={(value) => setCamposAdicionales(prev => ({
+                            ...prev,
+                            [campo.id]: value
+                          }))}
+                        >
+                          <SelectTrigger className="bg-gray-700 border-gray-600 text-white focus:border-purple-500">
+                            <SelectValue placeholder={`Seleccionar ${campo.label}`} />
+                          </SelectTrigger>
+                          <SelectContent className="bg-gray-700 border-gray-600">
+                            {campo.options.map((opcion) => (
+                              <SelectItem key={opcion} value={opcion} className="text-white hover:bg-gray-600">
+                                {opcion}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      
+                      {campo.type === 'checkbox' && (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={!!camposAdicionales[campo.id]}
+                            onChange={(e) => setCamposAdicionales(prev => ({
+                              ...prev,
+                              [campo.id]: e.target.checked
+                            }))}
+                            className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                          />
+                          <Label className="text-gray-300 text-sm">
+                            {camposAdicionales[campo.id] ? 'Sí' : 'No'}
+                          </Label>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Sección de Archivos */}
             <div className="border-t border-gray-700 pt-4">
