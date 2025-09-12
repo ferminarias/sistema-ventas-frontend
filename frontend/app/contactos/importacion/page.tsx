@@ -125,7 +125,26 @@ export default function ImportacionPage() {
       setImportHistory(data)
     } catch (error: any) {
       console.error('Error loading import history:', error)
-      toast({ title: "Error", description: error.message || "Error al cargar historial", variant: "destructive" })
+      
+      // Manejar errores específicos del backend
+      let errorMessage = "Error al cargar historial"
+      
+      if (error.message) {
+        errorMessage = error.message
+      } else if (error.error) {
+        errorMessage = error.error
+      }
+      
+      // Si es el error de 'User' object has no attribute 'name', mostrar mensaje más claro
+      if (errorMessage.includes("'User' object has no attribute 'name'")) {
+        errorMessage = "Error en el servidor: problema con la información del usuario. Contacta al administrador."
+      }
+      
+      toast({ 
+        title: "Error", 
+        description: errorMessage, 
+        variant: "destructive" 
+      })
       setImportHistory([]) // Asegurar que siempre sea un array
     } finally {
       setHistoryLoading(false)
@@ -306,7 +325,31 @@ export default function ImportacionPage() {
       }
     } catch (error: any) {
       setProgress(0)
-      toast({ title: "Error", description: error.message || "Error al importar contactos", variant: "destructive" })
+      
+      // Manejar errores específicos del backend
+      let errorMessage = "Error al importar contactos"
+      
+      if (error.message) {
+        errorMessage = error.message
+      } else if (error.error) {
+        errorMessage = error.error
+      }
+      
+      // Si es un error de columnas, mostrar información más detallada
+      if (errorMessage.includes("Faltan columnas obligatorias")) {
+        const errorData = error
+        if (errorData.found_columns && errorData.required_columns) {
+          errorMessage = `Columnas requeridas: ${errorData.required_columns.join(", ")}\nColumnas encontradas: ${errorData.found_columns.join(", ")}`
+        }
+      }
+      
+      toast({ 
+        title: "Error de importación", 
+        description: errorMessage, 
+        variant: "destructive" 
+      })
+      
+      console.error("Error completo de importación:", error)
     } finally {
       setImporting(false)
       // Recargar historial después de importar
@@ -349,6 +392,18 @@ export default function ImportacionPage() {
               <div className="text-sm text-muted-foreground">
                 La plantilla incluye todas las columnas necesarias y ejemplos de datos válidos.
               </div>
+              
+              {/* Información sobre formato de columnas */}
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">📋 Formato de columnas requeridas:</h4>
+                <ul className="text-xs text-blue-800 space-y-1">
+                  <li>• <strong>nombre</strong> - Nombre del contacto (sin asteriscos)</li>
+                  <li>• <strong>apellido</strong> - Apellido del contacto (sin asteriscos)</li>
+                  <li>• <strong>estado</strong> - Estado del contacto (sin asteriscos)</li>
+                  <li>• Otras columnas opcionales: correo, telefono, telefono_whatsapp, programa_interes, etc.</li>
+                </ul>
+              </div>
+              
               <Button onClick={downloadTemplate} className="w-full">
                 <Download className="h-4 w-4 mr-2" />
                 Descargar plantilla Excel
