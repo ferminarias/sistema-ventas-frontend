@@ -805,6 +805,58 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
                 />
               </div>
 
+              <FormField
+                control={form.control}
+                name="placeholder"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Placeholder (opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="ej: Ingrese su número de legajo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="help_text"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Texto de Ayuda (opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Texto adicional para ayudar al usuario a completar el campo"
+                        className="min-h-[60px] resize-none"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {(form.watch('type') === 'select' || form.watch('type') === 'radio') && (
+                <FormField
+                  control={form.control}
+                  name="options"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Opciones (separadas por comas)</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Opción 1, Opción 2, Opción 3"
+                          className="min-h-[60px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               {/* Nuevas propiedades */}
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
