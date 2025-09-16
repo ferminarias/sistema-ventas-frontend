@@ -33,7 +33,24 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
     )
   }
 
+  const isReadOnly = !!field.readOnly
+  const isDisabled = disabled || isReadOnly
+
   const renderFieldByType = (fieldProps: any) => {
+    // Si es readOnly, mostrar el valor como texto plano, salvo archivos que ya tienen visor propio
+    if (isReadOnly && field.type !== 'file' && field.type !== 'checkbox' && field.type !== 'radio') {
+      const displayValue = (() => {
+        const v = fieldProps.value
+        if (v === undefined || v === null || v === '') return '-'
+        return String(v)
+      })()
+      return (
+        <div className="px-3 py-2 border rounded bg-muted/40 text-sm text-muted-foreground">
+          {displayValue}
+        </div>
+      )
+    }
+
     switch (field.type) {
       case 'text':
       case 'email':
@@ -43,7 +60,7 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
           <Input
             type={field.type}
             placeholder={field.placeholder}
-            disabled={disabled}
+            disabled={isDisabled}
             {...fieldProps}
           />
         );
@@ -52,7 +69,7 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
         return (
           <Textarea
             placeholder={field.placeholder}
-            disabled={disabled}
+            disabled={isDisabled}
             className="min-h-[100px]"
             {...fieldProps}
           />
@@ -62,8 +79,16 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
         return (
           <Select
             value={fieldProps.value}
-            onValueChange={fieldProps.onChange}
-            disabled={disabled}
+            onValueChange={(val) => {
+              // Convertir a número si el valueType lo indica
+              if (field.valueType === 'number') {
+                const num = Number(val)
+                fieldProps.onChange(Number.isFinite(num) ? num : 0)
+              } else {
+                fieldProps.onChange(val)
+              }
+            }}
+            disabled={isDisabled}
           >
             <SelectTrigger>
               <SelectValue placeholder={field.placeholder || `Seleccionar ${typeof field.label === 'string' ? field.label.toLowerCase() : 'opción'}`} />
@@ -81,27 +106,21 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
       case 'date':
         // Función mejorada para manejar cambios de fecha con RailwayCalendar
         const handleDateChange = (date: Date | undefined) => {
-          // Log silencioso para debugging en producción si es necesario
-          // console.log("DynamicField - Fecha seleccionada:", date)
-          
-          // Convertir Date a string para el formulario de manera más precisa
           if (date) {
             const year = date.getFullYear()
             const month = String(date.getMonth() + 1).padStart(2, '0')
             const day = String(date.getDate()).padStart(2, '0')
             const dateString = `${year}-${month}-${day}`
-            // console.log("DynamicField - Fecha convertida a string:", dateString)
             fieldProps.onChange(dateString)
           } else {
             fieldProps.onChange('')
           }
         }
 
-        // Convertir string a Date para RailwayCalendar de manera más precisa
+        // Convertir string a Date para RailwayCalendar
         let currentDate: Date | undefined = undefined
         if (fieldProps.value) {
           try {
-            // Si es un string ISO (YYYY-MM-DD)
             if (typeof fieldProps.value === 'string' && fieldProps.value.includes('-')) {
               const [year, month, day] = fieldProps.value.split('-').map(Number)
               currentDate = new Date()
@@ -110,12 +129,9 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
               currentDate.setDate(day)
               currentDate.setHours(0, 0, 0, 0)
             } else {
-              // Si es un Date object
               currentDate = new Date(fieldProps.value)
             }
-            // console.log("DynamicField - Fecha convertida a Date:", currentDate)
-          } catch (error) {
-            console.error("DynamicField - Error convirtiendo fecha:", error)
+          } catch {
             currentDate = undefined
           }
         }
@@ -125,7 +141,7 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
             date={currentDate}
             onDateChange={handleDateChange}
             placeholder={field.placeholder || "Seleccionar fecha"}
-            disabled={disabled}
+            disabled={isDisabled}
           />
         );
 
@@ -135,7 +151,7 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
             field={field}
             value={fieldProps.value}
             onChange={fieldProps.onChange}
-            disabled={disabled}
+            disabled={isDisabled}
           />
         );
 
@@ -146,7 +162,7 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
               id={field.id}
               checked={fieldProps.value || false}
               onCheckedChange={fieldProps.onChange}
-              disabled={disabled}
+              disabled={isDisabled}
             />
             <label
               htmlFor={field.id}
@@ -162,7 +178,7 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
           <RadioGroup
             value={fieldProps.value}
             onValueChange={fieldProps.onChange}
-            disabled={disabled}
+            disabled={isDisabled}
             className="flex flex-col space-y-2"
           >
             {field.options?.map((option) => (
@@ -184,7 +200,7 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
           <Input
             type="text"
             placeholder={field.placeholder}
-            disabled={disabled}
+            disabled={isDisabled}
             {...fieldProps}
           />
         );
@@ -201,16 +217,14 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
             <FormLabel className="flex items-center gap-1">
               {typeof field.label === 'string' ? field.label : JSON.stringify(field.label)}
               {field.required && <span className="text-red-500">*</span>}
+              {isReadOnly && <span className="ml-2 text-[11px] uppercase tracking-wide text-muted-foreground">Solo lectura</span>}
             </FormLabel>
-            
             {field.help_text && field.type !== 'file' && (
               <p className="text-sm text-muted-foreground">{field.help_text}</p>
             )}
-            
             <FormControl>
               {renderFieldByType(fieldProps)}
             </FormControl>
-            
             <FormMessage />
           </FormItem>
         )}

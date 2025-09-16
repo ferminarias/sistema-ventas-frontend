@@ -25,13 +25,23 @@ function getAuthHeaders(includeContentType: boolean = true): HeadersInit {
 export interface ClientField {
   id: string;
   label: string;
-  type: 'text' | 'number' | 'email' | 'tel' | 'date' | 'file' | 'textarea' | 'select' | 'checkbox' | 'radio';
+  type: 'text' | 'number' | 'email' | 'tel' | 'date' | 'file' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'group';
   required: boolean;
   default: boolean;
   order: number;
   placeholder?: string;
   help_text?: string;
   options?: string[]; // Para campos tipo select
+  // Extensiones nuevas
+  valueType?: 'number' | 'string' | 'date';
+  groupId?: string; // id del grupo padre
+  readOnly?: boolean; // bloquear edición en UI
+  computed?: {
+    inputs: string[];
+    formula: string;
+    mode?: 'auto' | 'manualOverride';
+    precision?: number;
+  };
 }
 
 export interface ClientFieldsResponse {

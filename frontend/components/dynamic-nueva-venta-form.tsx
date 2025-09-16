@@ -238,28 +238,146 @@ export function DynamicNuevaVentaForm() {
     return () => subscription.unsubscribe()
   }, [form])
 
+  // Utilidades para números tolerantes ("10%", "$1,234.50" => 1234.5)
+  const parseTolerantNumber = (value: any): number => {
+    if (value === null || value === undefined) return 0
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+    const str = String(value).trim()
+    if (!str) return 0
+    const cleaned = str
+      .replace(/%/g, '')
+      .replace(/\$/g, '')
+      .replace(/,/g, '')
+    const num = Number(cleaned)
+    return Number.isFinite(num) ? num : 0
+  }
+
+  const roundToPrecision = (num: number, precision: number = 2): number => {
+    const factor = Math.pow(10, precision)
+    return Math.round((num + Number.EPSILON) * factor) / factor
+  }
+
+  // Evaluar fórmulas simples con + - * / y paréntesis
+  const evaluateFormula = (formula: string, variables: Record<string, number>): number => {
+    try {
+      let expr = formula
+      // Reemplazar variables por sus valores numéricos
+      Object.entries(variables).forEach(([key, val]) => {
+        const safeVal = Number.isFinite(val) ? val : 0
+        const re = new RegExp(`\\b${key}\\b`, 'g')
+        expr = expr.replace(re, String(safeVal))
+      })
+      // Solo permitir dígitos, operadores básicos, puntos y paréntesis
+      if (/[^0-9+\-*/().\s]/.test(expr)) {
+        return 0
+      }
+      // Evaluación controlada
+      // eslint-disable-next-line no-new-func
+      const fn = new Function(`return (${expr})`)
+      const result = fn()
+      const num = typeof result === 'number' && Number.isFinite(result) ? result : 0
+      return num
+    } catch {
+      return 0
+    }
+  }
+
+  // Recalcular campos computed cuando cambian inputs declarados
+  useEffect(() => {
+    if (clientFields.length === 0) return
+
+    const computedFields = clientFields.filter(f => !!f.computed)
+    if (computedFields.length === 0) return
+
+    const subscription = form.watch((_allValues, info) => {
+      // Cuando cualquier campo cambie, intentamos recalcular los computados que dependan
+      const values = form.getValues()
+
+      computedFields.forEach(cf => {
+        const cfg = cf.computed!
+        const inputs = Array.isArray(cfg.inputs) ? cfg.inputs : []
+        // Construir variables desde los valores actuales
+        const vars: Record<string, number> = {}
+        inputs.forEach(id => {
+          const v = (values as any)[id]
+          vars[id] = parseTolerantNumber(v)
+        })
+        const raw = evaluateFormula(cfg.formula || '', vars)
+        const precision = cfg.precision ?? 2
+        const computedValue = roundToPrecision(raw, precision)
+
+        const currentValue = (values as any)[cf.id]
+        const mode = cfg.mode || 'auto'
+
+        const shouldAssign = mode === 'auto' || (mode === 'manualOverride' && (currentValue === undefined || currentValue === null || currentValue === ''))
+        if (shouldAssign) {
+          // Evitar loops: solo setear si cambia
+          if (parseTolerantNumber(currentValue) !== computedValue) {
+            form.setValue(cf.id, cf.valueType === 'number' || cf.type === 'number' ? computedValue : String(computedValue), { shouldValidate: false, shouldDirty: true, shouldTouch: false })
+          }
+        }
+      })
+    })
+
+    // Inicializar una vez con valores por defecto
+    const initValues = form.getValues()
+    computedFields.forEach(cf => {
+      const cfg = cf.computed!
+      const inputs = Array.isArray(cfg.inputs) ? cfg.inputs : []
+      const vars: Record<string, number> = {}
+      inputs.forEach(id => {
+        const v = (initValues as any)[id]
+        vars[id] = parseTolerantNumber(v)
+      })
+      const raw = evaluateFormula(cfg.formula || '', vars)
+      const precision = cfg.precision ?? 2
+      const computedValue = roundToPrecision(raw, precision)
+      form.setValue(cf.id, cf.valueType === 'number' || cf.type === 'number' ? computedValue : String(computedValue), { shouldValidate: false })
+    })
+
+    return () => subscription.unsubscribe()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientFields, form])
+
   const onSubmit = async (values: any) => {
     if (!selectedCliente) return
 
     setIsSubmitting(true)
     try {
-      // Log silencioso para debugging en producción si es necesario
-      // console.log("DynamicNuevaVentaForm - onSubmit - fecha_venta:", values.fecha_venta)
-      
-      const ventaData = {
-        ...values,
+      // Preparar payload respetando valueType y tipos
+      const payload: Record<string, any> = {
+        nombre: values.nombre,
+        apellido: values.apellido,
+        email: values.email,
+        telefono: values.telefono,
+        asesor: values.asesor,
+        fecha_venta: values.fecha_venta,
         cliente: selectedCliente,
       }
 
-      console.log("Enviando venta dinámica:", ventaData)
-      
-      const response = await clientFieldsService.createDynamicVenta(ventaData)
-      
+      clientFields.forEach(f => {
+        let v = (values as any)[f.id]
+        if (f.type === 'checkbox') {
+          payload[f.id] = !!v
+          return
+        }
+        if (f.valueType === 'number' || f.type === 'number') {
+          payload[f.id] = parseTolerantNumber(v)
+          return
+        }
+        // date ya viene string YYYY-MM-DD
+        payload[f.id] = v
+      })
+
+      console.log("Enviando venta dinámica:", payload)
+
+      const response = await clientFieldsService.createDynamicVenta(payload)
+
       toast({
         title: "Venta registrada",
         description: "La venta ha sido registrada exitosamente con todos los campos personalizados.",
       })
-      
+
       router.push(`/clientes/${selectedCliente}`)
     } catch (error) {
       console.error("Error al crear venta:", error)
@@ -273,55 +391,79 @@ export function DynamicNuevaVentaForm() {
     }
   }
 
-  // Agrupar campos en grillas de 2 columnas, excepto textarea y file que van solos
+  // Agrupar y ordenar campos por 'order' y por grupos
   const renderFields = () => {
     console.log(`🎨 Renderizando campos - Total: ${clientFields.length}`)
-    console.log(`🎨 Campos a renderizar:`, clientFields.map(f => `${f.id}(${f.type})`))
-    
-    const fields = [...clientFields]
-    const fieldRows = []
-    let i = 0
+    const ordered = [...clientFields].sort((a, b) => a.order - b.order)
 
-    while (i < fields.length) {
-      const currentField = fields[i]
-      
-      if (currentField.type === 'textarea' || currentField.type === 'file') {
-        // Campos que van solos en su fila
-        fieldRows.push([currentField])
-        i++
+    // Construir índices de grupos y sus hijos
+    const groups = ordered.filter(f => f.type === 'group')
+    const nonGroupFields = ordered.filter(f => f.type !== 'group')
+
+    const groupIdToChildren: Record<string, typeof nonGroupFields> = {}
+    groups.forEach(g => { groupIdToChildren[g.id] = [] })
+
+    const rootFields: typeof nonGroupFields = []
+    nonGroupFields.forEach(f => {
+      if (f.groupId && groupIdToChildren[f.groupId]) {
+        groupIdToChildren[f.groupId].push(f)
       } else {
-        // Campos que pueden ir en pares
-        const nextField = fields[i + 1]
-        if (nextField && nextField.type !== 'textarea' && nextField.type !== 'file') {
-          fieldRows.push([currentField, nextField])
-          i += 2
+        rootFields.push(f)
+      }
+    })
+
+    // Helper para renderizar una fila de campos (2-col cuando aplique)
+    const renderRows = (fields: typeof nonGroupFields) => {
+      const rows: typeof nonGroupFields[] = []
+      let i = 0
+      while (i < fields.length) {
+        const current = fields[i]
+        if (current.type === 'textarea' || current.type === 'file') {
+          rows.push([current])
+          i += 1
         } else {
-          fieldRows.push([currentField])
-          i++
+          const next = fields[i + 1]
+          if (next && next.type !== 'textarea' && next.type !== 'file') {
+            rows.push([current, next])
+            i += 2
+          } else {
+            rows.push([current])
+            i += 1
+          }
         }
       }
+
+      return rows.map((row, idx) => (
+        <div key={idx} className={`grid gap-6 ${row.length === 2 ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
+          {row.map(field => (
+            <DynamicField key={field.id} field={field} control={form.control} disabled={isSubmitting} />
+          ))}
+        </div>
+      ))
     }
 
-    console.log(`🎨 Filas de campos creadas: ${fieldRows.length}`)
+    // Render principal: primero grupos con sus hijos, luego campos raíz no agrupados
+    return (
+      <div className="space-y-6">
+        {groups.map(group => (
+          <div key={group.id} className="border rounded-md p-4">
+            <div className="mb-3">
+              <h3 className="text-lg font-semibold">{typeof group.label === 'string' ? group.label : JSON.stringify(group.label)}</h3>
+              {group.help_text && (
+                <p className="text-sm text-muted-foreground">{group.help_text}</p>
+              )}
+            </div>
+            {renderRows(groupIdToChildren[group.id] || [])}
+          </div>
+        ))}
 
-    return fieldRows.map((row, rowIndex) => (
-      <div 
-        key={rowIndex} 
-        className={`grid gap-6 ${row.length === 2 ? 'sm:grid-cols-2' : 'grid-cols-1'}`}
-      >
-        {row.map(field => {
-          console.log(`🎨 Renderizando campo individual: ${field.id}`)
-          return (
-            <DynamicField
-              key={field.id}
-              field={field}
-              control={form.control}
-              disabled={isSubmitting}
-            />
-          )
-        })}
+        {rootFields.length > 0 && (
+          <div className="space-y-4">
+            {renderRows(rootFields)}
+          </div>
+        )}
       </div>
-    ))
+    )
   }
 
   return (

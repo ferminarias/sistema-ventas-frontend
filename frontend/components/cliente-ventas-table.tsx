@@ -86,11 +86,12 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
       id: `campos_adicionales.${def.id}`,
       label: def.label || def.id,
       accessor: v => {
-        const raw = (v.campos_adicionales || {})[def.id]
+        const top = v?.[def.id]
+        const raw = top != null ? top : (v.campos_adicionales || {})[def.id]
         if (raw == null) return ""
         if (def.type === 'date') return String(raw)
         if (def.type === 'select' && def.options && def.options.length) return String(raw)
-        return typeof raw === 'string' ? raw : JSON.stringify(raw)
+        return typeof raw === 'string' ? raw : String(raw)
       },
       isCustom: true,
     }))
