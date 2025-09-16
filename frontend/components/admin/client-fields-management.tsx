@@ -41,11 +41,20 @@ interface ClientFieldsManagementProps {
 const fieldSchema = z.object({
   id: z.string().min(1, "ID es requerido").regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, "ID debe comenzar con letra y contener solo letras, números y _"),
   label: z.string().min(1, "Label es requerido"),
-  type: z.enum(['text', 'number', 'email', 'tel', 'date', 'file', 'textarea', 'select', 'checkbox', 'radio']),
+  type: z.enum(['text', 'number', 'email', 'tel', 'date', 'file', 'textarea', 'select', 'checkbox', 'radio', 'group']),
   required: z.boolean(),
   placeholder: z.string().optional(),
   help_text: z.string().optional(),
   options: z.string().optional(), // Para campos select, separados por comas
+  // Nuevas props
+  groupId: z.string().optional(),
+  readOnly: z.boolean().optional(),
+  valueType: z.enum(['number','string','date']).optional(),
+  // Editor simple de computed
+  computed_inputs: z.string().optional(), // comma-separated ids
+  computed_formula: z.string().optional(),
+  computed_mode: z.enum(['auto','manualOverride']).optional(),
+  computed_precision: z.string().optional(),
 })
 
 type FieldFormData = z.infer<typeof fieldSchema>
@@ -61,6 +70,7 @@ const fieldTypeIcons = {
   select: List,
   checkbox: Type,
   radio: List,
+  group: FileText,
 }
 
 const fieldTypeLabels = {
@@ -74,6 +84,7 @@ const fieldTypeLabels = {
   select: 'Lista desplegable',
   checkbox: 'Casilla de verificación',
   radio: 'Botones de radio',
+  group: 'Sección (group)',
 }
 
 export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsManagementProps) {
@@ -100,6 +111,13 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
       placeholder: '',
       help_text: '',
       options: '',
+      groupId: '',
+      readOnly: false,
+      valueType: undefined,
+      computed_inputs: '',
+      computed_formula: '',
+      computed_mode: 'auto',
+      computed_precision: '2',
     }
   })
 
@@ -148,6 +166,13 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
       placeholder: '',
       help_text: '',
       options: '',
+      groupId: '',
+      readOnly: false,
+      valueType: undefined,
+      computed_inputs: '',
+      computed_formula: '',
+      computed_mode: 'auto',
+      computed_precision: '2',
     })
     setIsDialogOpen(true)
   }
@@ -166,11 +191,18 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
     form.reset({
       id: field.id,
       label: field.label,
-      type: field.type,
+      type: field.type as any,
       required: field.required,
       placeholder: field.placeholder || '',
       help_text: field.help_text || '',
       options: field.options?.join(', ') || '',
+      groupId: field.groupId || '',
+      readOnly: !!field.readOnly,
+      valueType: field.valueType as any,
+      computed_inputs: field.computed?.inputs?.join(', ') || '',
+      computed_formula: field.computed?.formula || '',
+      computed_mode: (field.computed?.mode as any) || 'auto',
+      computed_precision: String(field.computed?.precision ?? '2'),
     })
     setIsDialogOpen(true)
   }
@@ -263,11 +295,42 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
         return
       }
 
-      const fieldData = {
-        ...data,
-        options: (data.type === 'select' || data.type === 'radio') && data.options 
+      const fieldData: any = {
+        id: data.id,
+        label: data.label,
+        type: data.type,
+        required: data.required,
+        placeholder: data.placeholder || undefined,
+        help_text: data.help_text || undefined,
+      }
+
+      if (data.type === 'select' || data.type === 'radio') {
+        fieldData.options = data.options 
           ? data.options.split(',').map(opt => opt.trim()).filter(opt => opt.length > 0)
           : undefined
+      }
+
+      if (data.groupId) fieldData.groupId = data.groupId
+      if (typeof data.readOnly === 'boolean') fieldData.readOnly = data.readOnly
+      if (data.valueType) fieldData.valueType = data.valueType
+
+      // Computed
+      if ((data.computed_inputs && data.computed_formula) || editingField?.computed) {
+        const inputs = (data.computed_inputs || '')
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+        if (inputs.length > 0 && data.computed_formula) {
+          fieldData.computed = {
+            inputs,
+            formula: data.computed_formula,
+            mode: data.computed_mode || 'auto',
+            precision: Number(data.computed_precision || '2') || 2,
+          }
+        } else if (!data.computed_inputs && !data.computed_formula) {
+          // Dejar computed undefined si se borró
+          fieldData.computed = undefined
+        }
       }
 
       console.log('📝 Datos procesados para enviar:', fieldData)
@@ -305,7 +368,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
       const watchedValues = form.watch()
       if (!watchedValues.id || !watchedValues.label) return null
 
-      const previewField: ClientField = {
+      const previewField: any = {
         id: watchedValues.id,
         label: watchedValues.label,
         type: watchedValues.type,
@@ -316,7 +379,16 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
         help_text: watchedValues.help_text,
         options: watchedValues.type === 'select' && watchedValues.options 
           ? watchedValues.options.split(',').map(opt => opt.trim()).filter(opt => opt.length > 0)
-          : undefined
+          : undefined,
+        groupId: watchedValues.groupId || undefined,
+        readOnly: watchedValues.readOnly || false,
+        valueType: watchedValues.valueType || undefined,
+        computed: (watchedValues.computed_inputs && watchedValues.computed_formula) ? {
+          inputs: watchedValues.computed_inputs.split(',').map((s: string) => s.trim()).filter(Boolean),
+          formula: watchedValues.computed_formula,
+          mode: watchedValues.computed_mode || 'auto',
+          precision: Number(watchedValues.computed_precision || '2') || 2,
+        } : undefined,
       }
 
       return (
@@ -328,10 +400,19 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
               {previewField.required && (
                 <Badge variant="destructive" className="text-xs">Requerido</Badge>
               )}
+              {previewField.readOnly && (
+                <Badge variant="secondary" className="text-xs">Solo lectura</Badge>
+              )}
             </div>
             <div className="text-sm text-muted-foreground">
-              Tipo: {fieldTypeLabels[previewField.type]} • ID: {previewField.id}
+              Tipo: {fieldTypeLabels[previewField.type as keyof typeof fieldTypeLabels] || previewField.type} • ID: {previewField.id}
             </div>
+            {previewField.groupId && (
+              <div className="text-xs text-muted-foreground">Grupo: {previewField.groupId}</div>
+            )}
+            {previewField.valueType && (
+              <div className="text-xs text-muted-foreground">ValueType: {previewField.valueType}</div>
+            )}
             {previewField.placeholder && (
               <div className="text-xs text-muted-foreground">
                 Placeholder: {previewField.placeholder}
@@ -345,6 +426,11 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
             {previewField.options && previewField.options.length > 0 && (
               <div className="text-xs text-muted-foreground">
                 Opciones: {previewField.options.join(', ')}
+              </div>
+            )}
+            {previewField.computed && (
+              <div className="text-xs text-muted-foreground">
+                Computed: inputs=[{previewField.computed.inputs.join(', ')}], mode={previewField.computed.mode}, precision={previewField.computed.precision}
               </div>
             )}
           </div>
@@ -454,7 +540,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
               Imagen
             </Button>
             <Button
-              variant="outline" 
+              variant="outline"
               size="sm"
               onClick={() => handleQuickAddField('documento')}
               className="text-xs"
@@ -689,6 +775,7 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
                               {label}
                             </SelectItem>
                           ))}
+                          <SelectItem value="group">Sección (group)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -718,57 +805,134 @@ export function ClientFieldsManagement({ clientId, clientName }: ClientFieldsMan
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="placeholder"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Placeholder (opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ej: Ingrese su número de legajo" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="help_text"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Texto de Ayuda (opcional)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Texto adicional para ayudar al usuario a completar el campo"
-                        className="min-h-[60px] resize-none"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {(form.watch('type') === 'select' || form.watch('type') === 'radio') && (
+              {/* Nuevas propiedades */}
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="options"
+                  name="groupId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Opciones (separadas por comas)</FormLabel>
+                      <FormLabel>ID de Grupo (groupId)</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Opción 1, Opción 2, Opción 3"
-                          className="min-h-[60px]"
-                          {...field} 
-                        />
+                        <Input placeholder="ej: precio_section" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              )}
+
+                <FormField
+                  control={form.control}
+                  name="readOnly"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border p-3 space-y-2 sm:space-y-0">
+                      <div className="space-y-0.5">
+                        <FormLabel>Solo lectura</FormLabel>
+                        <div className="text-sm text-muted-foreground">Bloquea edición en la UI</div>
+                      </div>
+                      <FormControl>
+                        <Switch checked={!!field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="valueType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Value Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="(opcional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="number">number</SelectItem>
+                          <SelectItem value="string">string</SelectItem>
+                          <SelectItem value="date">date</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Computed */}
+              <Separator />
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Configuración Computada (opcional)</div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="computed_inputs"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Inputs (IDs separados por coma)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ej: precio_full, descuento" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="computed_mode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Modo</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="auto">auto</SelectItem>
+                            <SelectItem value="manualOverride">manualOverride</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="computed_precision"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Precisión (decimales)</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} step={1} placeholder="2" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="computed_formula"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fórmula</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="ej: (precio_full) * (1 - (descuento/100))" className="min-h-[60px] resize-none" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               {renderFieldPreview()}
 
