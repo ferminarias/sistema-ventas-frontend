@@ -29,6 +29,11 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const [tooltip, setTooltip] = useState<{x: number, y: number, label: string, value: number} | null>(null)
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 500, height: 300 });
+  
+  // Estados para el nuevo gráfico de programas
+  const programaChartRef = useRef<HTMLCanvasElement>(null)
+  const [hoveredProgramaIndex, setHoveredProgramaIndex] = useState<number | null>(null)
+  const [programaTooltip, setProgramaTooltip] = useState<{x: number, y: number, label: string, value: number} | null>(null)
 
   useEffect(() => {
     const updateSize = () => {
@@ -136,6 +141,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const procesarDatos = () => {
     const ventasPorMes = Array(12).fill(0)
     const ventasPorAsesor: Record<string, number> = {}
+    const ventasPorPrograma: Record<string, number> = {}
     
     if (activeTab === "mensual") {
       // Datos mensuales del año seleccionado
@@ -148,12 +154,17 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         if (v.asesor) {
           ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
         }
+        
+        // Procesar programa de interés
+        const programa = v.campos_adicionales?.programa_interes || 'Sin programa especificado'
+        ventasPorPrograma[programa] = (ventasPorPrograma[programa] || 0) + 1
       })
       
       return {
         datos: ventasPorMes,
         labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
-        asesores: ventasPorAsesor
+        asesores: ventasPorAsesor,
+        programas: ventasPorPrograma
       }
     } else {
       // Datos semanales ISO del año seleccionado (filtrado por rango)
@@ -176,6 +187,10 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           if (v.asesor) {
             ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
           }
+          
+          // Procesar programa de interés
+          const programa = v.campos_adicionales?.programa_interes || 'Sin programa especificado'
+          ventasPorPrograma[programa] = (ventasPorPrograma[programa] || 0) + 1
         }
       })
       
@@ -185,12 +200,13 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       return {
         datos: ventasPorSemana,
         labels: labels,
-        asesores: ventasPorAsesor
+        asesores: ventasPorAsesor,
+        programas: ventasPorPrograma
       }
     }
   }
 
-  const { datos, labels, asesores: ventasPorAsesor } = procesarDatos()
+  const { datos, labels, asesores: ventasPorAsesor, programas: ventasPorPrograma = {} } = procesarDatos()
 
   // Calcular estadísticas para mostrar
   const estadisticas = {
@@ -239,9 +255,35 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     return asesoresArray
   }
 
+  // Procesar datos de programas para optimizar visualización
+  const procesarDatosProgramas = () => {
+    const programasArray = Object.entries(ventasPorPrograma)
+      .map(([nombre, ventas]) => ({ nombre, ventas }))
+      .sort((a, b) => b.ventas - a.ventas)
+
+    // Si hay más de 8 programas, agrupa los menores en "Otros"
+    if (programasArray.length > 8) {
+      const topProgramas = programasArray.slice(0, 7)
+      const otrosProgramas = programasArray.slice(7)
+      const totalOtros = otrosProgramas.reduce((sum, programa) => sum + programa.ventas, 0)
+      
+      if (totalOtros > 0) {
+        topProgramas.push({ nombre: `Otros (${otrosProgramas.length})`, ventas: totalOtros })
+      }
+      
+      return topProgramas
+    }
+    
+    return programasArray
+  }
+
   const asesoresProcesados = procesarDatosAsesores()
   const asesoresNombres = asesoresProcesados.map(a => a.nombre)
   const asesoresValores = asesoresProcesados.map(a => a.ventas)
+
+  const programasProcesados = procesarDatosProgramas()
+  const programasNombres = programasProcesados.map(p => p.nombre)
+  const programasValores = programasProcesados.map(p => p.ventas)
 
   // Obtener años disponibles en los datos
   const getYearsAvailable = () => {
@@ -304,7 +346,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   ]
 
   useEffect(() => {
-    if (!chartRef.current || !pieChartRef.current) return;
+    if (!chartRef.current || !pieChartRef.current || !programaChartRef.current) return;
     const { width, height } = dimensions;
     const dpr = window.devicePixelRatio || 1;
     chartRef.current.width = width * dpr;
@@ -315,15 +357,22 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     pieChartRef.current.height = height * dpr;
     pieChartRef.current.style.width = width + "px";
     pieChartRef.current.style.height = height + "px";
+    programaChartRef.current.width = width * dpr;
+    programaChartRef.current.height = height * dpr;
+    programaChartRef.current.style.width = width + "px";
+    programaChartRef.current.style.height = height + "px";
     const ctx = chartRef.current.getContext("2d");
     const pieCtx = pieChartRef.current.getContext("2d");
-    if (!ctx || !pieCtx) return;
+    const programaCtx = programaChartRef.current.getContext("2d");
+    if (!ctx || !pieCtx || !programaCtx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     pieCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    programaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // Limpiar canvas
     ctx.clearRect(0, 0, width, height)
     pieCtx.clearRect(0, 0, width, height)
+    programaCtx.clearRect(0, 0, width, height)
 
     // Mejorar visualización de barras según cantidad de datos
     const isManySemanas = datos.length > 24
@@ -506,7 +555,137 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         pieCtx.font = "italic 11px Inter, sans-serif"
         pieCtx.fillText(`+${asesoresNombres.length - maxLegendItems} más asesores`, legendStartX + 18, y + 4)
       }
-  }, [activeTab, selectedYear, semanaInicio, semanaFin, ventas, datos, labels, asesoresProcesados, hoveredPieIndex])
+
+    // GRÁFICO DE PROGRAMAS CON HOVER
+    programaCtx.clearRect(0, 0, width, height)
+    const programaCenterX = width * 0.52  // Mismo centrado que asesores
+    const programaCenterY = height / 2
+    const programaRadius = Math.min(programaCenterX - 25, programaCenterY - 25)
+    let programaStartAngle = 0
+    const programaTotal = programasValores.reduce((acc, val) => acc + val, 0) || 1
+    
+    // Colores específicos para programas (diferentes de asesores)
+    const programaColors = [
+      "#ef4444", // Rojo vibrante
+      "#f97316", // Naranja energético
+      "#eab308", // Amarillo dorado
+      "#22c55e", // Verde vibrante
+      "#06b6d4", // Cyan brillante
+      "#3b82f6", // Azul tech
+      "#8b5cf6", // Violeta
+      "#ec4899", // Rosa magenta
+      "#6366f1", // Índigo profundo
+      "#84cc16", // Lima fresco
+      "#f59e0b", // Ámbar
+      "#10b981", // Esmeralda
+      "#d946ef", // Fucsia moderno
+    ]
+    
+    programasValores.forEach((value, index) => {
+      const sliceAngle = (value / programaTotal) * 2 * Math.PI
+      // Efecto hover: si está sobre este sector, agrandar y sombra
+      const isHovered = hoveredProgramaIndex === index
+      const r = isHovered ? programaRadius + 10 : programaRadius
+      const cx = isHovered ? programaCenterX + Math.cos(programaStartAngle + sliceAngle/2) * 8 : programaCenterX
+      const cy = isHovered ? programaCenterY + Math.sin(programaStartAngle + sliceAngle/2) * 8 : programaCenterY
+      
+      // Sombra
+      if (isHovered) {
+        programaCtx.save()
+        programaCtx.shadowColor = "rgba(0,0,0,0.25)"
+        programaCtx.shadowBlur = 16
+      }
+      
+      // Sector principal
+      programaCtx.beginPath()
+      programaCtx.moveTo(cx, cy)
+      programaCtx.arc(cx, cy, r, programaStartAngle, programaStartAngle + sliceAngle)
+      programaCtx.closePath()
+      programaCtx.fillStyle = programaColors[index % programaColors.length]
+      programaCtx.fill()
+      
+      // Borde mejorado con glow effect
+      programaCtx.strokeStyle = isHovered ? "#ef4444" : "#374151"
+      programaCtx.lineWidth = isHovered ? 3 : 2
+      programaCtx.stroke()
+      
+      // Efecto glow para sector hover
+      if (isHovered) {
+        programaCtx.save()
+        programaCtx.shadowColor = programaColors[index % programaColors.length]
+        programaCtx.shadowBlur = 20
+        programaCtx.strokeStyle = programaColors[index % programaColors.length]
+        programaCtx.lineWidth = 1
+        programaCtx.stroke()
+        programaCtx.restore()
+      }
+      
+      if (isHovered) programaCtx.restore()
+      programaStartAngle += sliceAngle
+    })
+    
+    // Leyenda de programas MODERNIZADA
+    const programaLegendStartX = 15
+    const programaLegendStartY = 25
+    const programaLegendItemHeight = 24
+    const maxProgramaLegendItems = Math.min(programasNombres.length, 9)
+    
+    programasNombres.slice(0, maxProgramaLegendItems).forEach((programa, index) => {
+      const y = programaLegendStartY + index * programaLegendItemHeight
+      
+      // Círculo con borde moderno
+      programaCtx.beginPath()
+      programaCtx.arc(programaLegendStartX + 6, y, 6, 0, 2 * Math.PI)
+      programaCtx.fillStyle = programaColors[index % programaColors.length]
+      programaCtx.fill()
+      
+      // Borde con glow sutil
+      programaCtx.strokeStyle = "#1f2937"
+      programaCtx.lineWidth = 2
+      programaCtx.stroke()
+      
+      // Shadow sutil para depth
+      programaCtx.save()
+      programaCtx.shadowColor = programaColors[index % programaColors.length]
+      programaCtx.shadowBlur = 8
+      programaCtx.shadowOffsetX = 1
+      programaCtx.shadowOffsetY = 1
+      programaCtx.stroke()
+      programaCtx.restore()
+      
+      // Texto del programa - más legible y moderno
+      programaCtx.fillStyle = "#f8fafc"
+      programaCtx.font = "bold 12px Inter, sans-serif"
+      programaCtx.textAlign = "left"
+      const maxProgramaNameLength = 16
+      const displayProgramaName = programa.length > maxProgramaNameLength 
+        ? programa.substring(0, maxProgramaNameLength) + "..." 
+        : programa
+      programaCtx.fillText(displayProgramaName, programaLegendStartX + 18, y + 2)
+      
+      // Subtexto con mejor contraste
+      programaCtx.fillStyle = "#94a3b8"
+      programaCtx.font = "11px Inter, sans-serif"
+      programaCtx.fillText(`${programasValores[index]} ventas`, programaLegendStartX + 18, y + 15)
+    })
+    
+    if (programasNombres.length > maxProgramaLegendItems) {
+      const y = programaLegendStartY + maxProgramaLegendItems * programaLegendItemHeight
+      
+      // Indicador moderno para más programas
+      programaCtx.beginPath()
+      programaCtx.arc(programaLegendStartX + 6, y, 4, 0, 2 * Math.PI)
+      programaCtx.fillStyle = "#6b7280"
+      programaCtx.fill()
+      programaCtx.strokeStyle = "#374151"
+      programaCtx.lineWidth = 1
+      programaCtx.stroke()
+      
+      programaCtx.fillStyle = "#e2e8f0"
+      programaCtx.font = "italic 11px Inter, sans-serif"
+      programaCtx.fillText(`+${programasNombres.length - maxProgramaLegendItems} más programas`, programaLegendStartX + 18, y + 4)
+    }
+  }, [activeTab, selectedYear, semanaInicio, semanaFin, ventas, datos, labels, asesoresProcesados, hoveredPieIndex, programasProcesados, hoveredProgramaIndex])
 
   // Efecto hover: detectar sector con mouse
   useEffect(() => {
@@ -556,6 +735,55 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       canvas.removeEventListener("mouseleave", handleMouseLeave)
     }
   }, [asesoresNombres, asesoresValores])
+
+  // Efecto hover para gráfico de programas: detectar sector con mouse
+  useEffect(() => {
+    if (!programaChartRef.current) return
+    const canvas = programaChartRef.current
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+      const centerX = canvas.width * 0.6
+      const centerY = canvas.height / 2
+      const radius = Math.min(centerX - 30, centerY - 30)
+      let startAngle = 0
+      const total = programasValores.reduce((acc, val) => acc + val, 0) || 1
+      let found = null
+      for (let i = 0; i < programasValores.length; i++) {
+        const value = programasValores[i]
+        const sliceAngle = (value / total) * 2 * Math.PI
+        const dx = x - centerX
+        const dy = y - centerY
+        const dist = Math.sqrt(dx*dx + dy*dy)
+        const angle = Math.atan2(dy, dx)
+        let a = angle >= 0 ? angle : (2 * Math.PI + angle)
+        if (dist <= radius + 12 && a >= startAngle && a < startAngle + sliceAngle) {
+          found = i
+          setProgramaTooltip({
+            x: e.clientX,
+            y: e.clientY,
+            label: programasNombres[i],
+            value: programasValores[i]
+          })
+          break
+        }
+        startAngle += sliceAngle
+      }
+      setHoveredProgramaIndex(found)
+      if (found === null) setProgramaTooltip(null)
+    }
+    const handleMouseLeave = () => {
+      setHoveredProgramaIndex(null)
+      setProgramaTooltip(null)
+    }
+    canvas.addEventListener("mousemove", handleMouseMove)
+    canvas.addEventListener("mouseleave", handleMouseLeave)
+    return () => {
+      canvas.removeEventListener("mousemove", handleMouseMove)
+      canvas.removeEventListener("mouseleave", handleMouseLeave)
+    }
+  }, [programasNombres, programasValores])
 
   // Utilidad para mostrar el nombre real del cliente
   const getNombreCliente = () => {
@@ -663,7 +891,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         </div>
 
         {/* Gráficos principales - Responsive al tema */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
@@ -828,6 +1056,54 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                       {tooltip.value} ventas realizadas
                     </div>
                     <div className="w-full h-px bg-gradient-to-r from-purple-500 to-cyan-500 mt-2 opacity-50"></div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-foreground">Distribución por Programa</CardTitle>
+              <CardDescription className="text-muted-foreground">{programasProcesados.length > 8 
+                ? `Top 7 programas + otros (${programasProcesados.length - 1} total)`
+                : `${programasProcesados.length} programa${programasProcesados.length !== 1 ? 's' : ''} de interés`
+              } - {getNombreCliente()}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-10">
+              <div className="relative w-full h-[320px]" ref={containerRef}>
+                {programasProcesados.length > 0 ? (
+                  <>
+                    <canvas ref={programaChartRef} className="w-full h-full rounded-lg cursor-pointer" />
+                    {programaTooltip && (
+                      <div 
+                        style={{
+                          position: 'fixed', 
+                          left: programaTooltip.x + 15, 
+                          top: programaTooltip.y + 15, 
+                          zIndex: 50, 
+                          pointerEvents: 'none'
+                        }} 
+                        className="bg-gradient-to-br from-slate-900/95 to-slate-800/95 text-white px-4 py-3 rounded-xl shadow-2xl border border-red-500/30 backdrop-blur-md animate-fade-in"
+                      >
+                        <div className="font-bold text-red-300 text-sm">{programaTooltip.label}</div>
+                        <div className="text-cyan-100 text-xs mt-1">
+                          {programaTooltip.value} ventas realizadas
+                        </div>
+                        <div className="w-full h-px bg-gradient-to-r from-red-500 to-cyan-500 mt-2 opacity-50"></div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center space-y-2">
+                      <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto">
+                        📚
+                      </div>
+                      <p className="text-muted-foreground text-sm">No hay datos de programas disponibles</p>
+                      <p className="text-muted-foreground text-xs">Los programas se mostrarán cuando haya ventas con campo "programa_interes"</p>
+                    </div>
                   </div>
                 )}
               </div>

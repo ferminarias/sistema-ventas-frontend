@@ -21,6 +21,7 @@ import {
 } from "chart.js"
 import { Line, Bar, Scatter } from "react-chartjs-2"
 import { analyticsService } from "@/services/analytics-service"
+import { asesoresService } from "@/services/asesores-service"
 import { Loader2, ArrowLeft } from "lucide-react"
 import { RailwayLoader } from "@/components/ui/railway-loader"
 import {
@@ -184,6 +185,15 @@ export default function ReportesPage() {
   const [clientIdToName, setClientIdToName] = useState<Record<string, string>>({})
   const [allowedClients, setAllowedClients] = useState<any[]>([])
   const [clienteFiltro, setClienteFiltro] = useState<string | undefined>(undefined)
+  
+  // Estados para el filtro mensual de Top Asesores
+  const currentDate = new Date()
+  const [selectedMonth, setSelectedMonth] = useState<string>(String(currentDate.getMonth() + 1).padStart(2, '0'))
+  const [selectedReportYear, setSelectedReportYear] = useState<string>(String(currentDate.getFullYear()))
+  
+  // Estados para manejo de iconos de asesores
+  const [uploadingIcon, setUploadingIcon] = useState<string | null>(null)
+  const [showIconUpload, setShowIconUpload] = useState<string | null>(null)
 
   const lineChartRef = useRef<any>(null);
   const barChartRef = useRef<any>(null);
@@ -228,9 +238,9 @@ export default function ReportesPage() {
       try {
         setLoading(true)
         setError(null)
-        const [metricsData, advisorsData, clientsData, salesTrendData, hourlyData, pipelineData, heatmapData] = await Promise.all([
+        const [metricsData, advisorsWithIconsData, clientsData, salesTrendData, hourlyData, pipelineData, heatmapData] = await Promise.all([
           analyticsService.getMetrics(clienteFiltro),
-          analyticsService.getTopAdvisors(clienteFiltro),
+          asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear),
           analyticsService.getTopClients(clienteFiltro),
           analyticsService.getSalesTrend(selectedPeriod, clienteFiltro),
           analyticsService.getHourlyDistribution(clienteFiltro),
@@ -238,8 +248,8 @@ export default function ReportesPage() {
           analyticsService.getHeatmap(clienteFiltro),
         ])
         setMetrics(metricsData)
-        setTopAdvisorsGeneral(advisorsData.general)
-        setTopAdvisorsByClient(advisorsData.byClient)
+        setTopAdvisorsGeneral(advisorsWithIconsData.general)
+        setTopAdvisorsByClient(advisorsWithIconsData.byClient)
         setTopClients(clientsData)
         setSalesTrend(salesTrendData)
         setHourlyDistribution(hourlyData)
@@ -252,7 +262,7 @@ export default function ReportesPage() {
       }
     }
     loadData()
-  }, [selectedPeriod, clienteFiltro])
+  }, [selectedPeriod, clienteFiltro, selectedMonth, selectedReportYear])
 
   useEffect(() => {
     setFadeIn(true)
@@ -281,6 +291,80 @@ export default function ReportesPage() {
       link.click();
       document.body.removeChild(link);
     }
+  };
+
+  // Funciones para manejo de iconos de asesores
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, asesorNombre: string) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor selecciona un archivo de imagen válido');
+      return;
+    }
+
+    // Validar tamaño (máximo 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('La imagen debe ser menor a 2MB');
+      return;
+    }
+
+    try {
+      setUploadingIcon(asesorNombre);
+      
+      // Convertir a base64
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      // Subir el icono
+      await asesoresService.uploadAsesorIcon(asesorNombre, base64);
+      
+      // Recargar datos para mostrar el nuevo icono
+      const advisorsWithIconsData = await asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear);
+      setTopAdvisorsGeneral(advisorsWithIconsData.general);
+      setTopAdvisorsByClient(advisorsWithIconsData.byClient);
+      
+      setShowIconUpload(null);
+      alert('Icono subido exitosamente');
+    } catch (error) {
+      console.error('Error subiendo icono:', error);
+      alert('Error al subir el icono');
+    } finally {
+      setUploadingIcon(null);
+    }
+  };
+
+  const handleDeleteIcon = async (asesorNombre: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar el icono de ${asesorNombre}?`)) {
+      return;
+    }
+
+    try {
+      await asesoresService.deleteAsesorIcon(asesorNombre);
+      
+      // Recargar datos
+      const advisorsWithIconsData = await asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear);
+      setTopAdvisorsGeneral(advisorsWithIconsData.general);
+      setTopAdvisorsByClient(advisorsWithIconsData.byClient);
+      
+      alert('Icono eliminado exitosamente');
+    } catch (error) {
+      console.error('Error eliminando icono:', error);
+      alert('Error al eliminar el icono');
+    }
+  };
+
+  // Función para obtener los meses disponibles
+  const getMonthName = (monthNumber: string) => {
+    const months = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return months[parseInt(monthNumber) - 1] || 'Mes inválido';
   };
 
   if (error) {
@@ -598,8 +682,43 @@ export default function ReportesPage() {
                   </div>
                 )}
                 <CardHeader>
-                  <CardTitle className="text-white">🏆 Top Asesores General</CardTitle>
-                  <div className="text-slate-400">Mejores vendedores del mes</div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <CardTitle className="text-white">🏆 Top Asesores General</CardTitle>
+                      <div className="text-slate-400">
+                        {getMonthName(selectedMonth)} {selectedReportYear} - Ranking mensual
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <select 
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                        className="bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 text-sm"
+                      >
+                        <option value="01">Enero</option>
+                        <option value="02">Febrero</option>
+                        <option value="03">Marzo</option>
+                        <option value="04">Abril</option>
+                        <option value="05">Mayo</option>
+                        <option value="06">Junio</option>
+                        <option value="07">Julio</option>
+                        <option value="08">Agosto</option>
+                        <option value="09">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                      </select>
+                      <select 
+                        value={selectedReportYear}
+                        onChange={(e) => setSelectedReportYear(e.target.value)}
+                        className="bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 text-sm"
+                      >
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                      </select>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -615,15 +734,53 @@ export default function ReportesPage() {
                           
                           <div className="flex items-center gap-5 z-10">
                             <div className="relative">
-                              {/* Avatar con animación 3D */}
-                              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-blue-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20">
-                                <span className="drop-shadow-lg">
-                              {advisor.name
-                                .split(" ")
-                                .map((n: string) => n[0])
-                                .join("")}
-                                </span>
-                            </div>
+                              {/* Avatar con imagen o iniciales */}
+                              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-blue-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20 overflow-hidden">
+                                {(advisor as any).icon_url ? (
+                                  <img 
+                                    src={(advisor as any).icon_url} 
+                                    alt={`Icono de ${advisor.name}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="drop-shadow-lg">
+                                    {advisor.name
+                                      .split(" ")
+                                      .map((n: string) => n[0])
+                                      .join("")}
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {/* Botones de icono - visible en hover */}
+                              <div className="absolute -top-1 -right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                {(advisor as any).icon_url ? (
+                                  <button
+                                    onClick={() => handleDeleteIcon(advisor.name)}
+                                    className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 transition-colors"
+                                    title="Eliminar icono"
+                                  >
+                                    🗑️
+                                  </button>
+                                ) : (
+                                  <div className="relative">
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => handleFileUpload(e, advisor.name)}
+                                      className="absolute inset-0 opacity-0 cursor-pointer w-5 h-5"
+                                      disabled={uploadingIcon === advisor.name}
+                                    />
+                                    <button
+                                      className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-green-600 transition-colors"
+                                      title="Subir icono"
+                                      disabled={uploadingIcon === advisor.name}
+                                    >
+                                      {uploadingIcon === advisor.name ? '⏳' : '📷'}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                               
                               {/* Badge animado para el primer lugar */}
                               {index === 0 && (
