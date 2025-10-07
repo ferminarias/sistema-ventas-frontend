@@ -31,6 +31,7 @@ export const analyticsService = {
     
     const data = await response.json();
     console.log('✅ Metrics data received:', data);
+    console.log('📊 Metrics details:', JSON.stringify(data, null, 2));
     return data;
   },
 

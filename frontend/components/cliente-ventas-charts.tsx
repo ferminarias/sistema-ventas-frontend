@@ -451,22 +451,39 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           pie: !!pieChartRef.current, 
           programa: !!programaChartRef.current
         });
-        return;
+        console.log('🔍 Referencias de canvas:', {
+          chartRef: chartRef.current,
+          pieChartRef: pieChartRef.current,
+          programaChartRef: programaChartRef.current
+        });
+        
+        // Intentar solo con los canvas disponibles
+        if (chartRef.current && pieChartRef.current) {
+          console.log('⚠️ Continuando solo con chart y pie (sin programa)...');
+        } else {
+          return;
+        }
       }
       
       // Verificar contextos 2D
-      const ctx = chartRef.current.getContext("2d");
-      const pieCtx = pieChartRef.current.getContext("2d");
-      const programaCtx = programaChartRef.current.getContext("2d");
+      const ctx = chartRef.current?.getContext("2d");
+      const pieCtx = pieChartRef.current?.getContext("2d");
+      const programaCtx = programaChartRef.current?.getContext("2d");
       
-      if (!ctx || !pieCtx || !programaCtx) {
-        console.log('❌ Contextos 2D no disponibles:', {
+      if (!ctx || !pieCtx) {
+        console.log('❌ Contextos 2D principales no disponibles:', {
           ctx: !!ctx,
           pieCtx: !!pieCtx,
           programaCtx: !!programaCtx
         });
         return;
       }
+      
+      console.log('✅ Contextos principales disponibles:', {
+        ctx: !!ctx,
+        pieCtx: !!pieCtx,
+        programaCtx: !!programaCtx
+      });
       
       console.log('✅ Canvas y contextos disponibles, procediendo con el dibujo...');
       
@@ -480,20 +497,27 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       pieChartRef.current.height = height * dpr;
       pieChartRef.current.style.width = width + "px";
       pieChartRef.current.style.height = height + "px";
-      programaChartRef.current.width = width * dpr;
-      programaChartRef.current.height = height * dpr;
-      programaChartRef.current.style.width = width + "px";
-      programaChartRef.current.style.height = height + "px";
+      
+      if (programaChartRef.current && programaCtx) {
+        programaChartRef.current.width = width * dpr;
+        programaChartRef.current.height = height * dpr;
+        programaChartRef.current.style.width = width + "px";
+        programaChartRef.current.style.height = height + "px";
+      }
       
       // Los contextos ya fueron verificados arriba
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       pieCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      programaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (programaCtx) {
+        programaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
 
     // Limpiar canvas
     ctx.clearRect(0, 0, width, height)
     pieCtx.clearRect(0, 0, width, height)
-    programaCtx.clearRect(0, 0, width, height)
+    if (programaCtx) {
+      programaCtx.clearRect(0, 0, width, height)
+    }
 
     // Mejorar visualización de barras según cantidad de datos
     const isManySemanas = datos.length > 24
@@ -678,7 +702,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       }
 
     // GRÁFICO DE PROGRAMAS CON HOVER
-    programaCtx.clearRect(0, 0, width, height)
+    if (programaCtx) {
+      programaCtx.clearRect(0, 0, width, height)
     const programaCenterX = width * 0.52  // Mismo centrado que asesores
     const programaCenterY = height / 2
     const programaRadius = Math.min(programaCenterX - 25, programaCenterY - 25)
@@ -789,6 +814,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       programaCtx.font = "italic 11px Inter, sans-serif"
       programaCtx.fillText(`+${programasNombres.length - maxProgramaLegendItems} más programas`, programaLegendStartX + 18, y + 4)
     }
+    } // Fin del if (programaCtx)
       
       console.log('🎨 Gráficos dibujados exitosamente!', {
         ventasTotal: ventas.length,
