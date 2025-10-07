@@ -222,12 +222,6 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
   const { datos, labels, asesores: ventasPorAsesor, programas: ventasPorPrograma = {} } = procesarDatos()
 
-  console.log('📈 Datos procesados:', datos);
-  console.log('📈 Total en datos:', datos.reduce((a, b) => a + b, 0));
-  console.log('📈 Labels:', labels);
-  console.log('📈 Asesores:', ventasPorAsesor);
-  console.log('📈 Programas:', ventasPorPrograma);
-
   // Calcular estadísticas para mostrar
   const estadisticas = {
     totalVentas: datos.reduce((sum, val) => sum + val, 0),
@@ -389,26 +383,18 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   ]
 
   useEffect(() => {
-    console.log('🎨 useEffect de dibujo ejecutado');
-    console.log('🎨 loadingVentas:', loadingVentas);
-    console.log('🎨 ventas:', ventas?.length);
-    console.log('🎨 datos:', datos);
-    console.log('🎨 labels:', labels);
-    console.log('🎨 asesoresProcesados:', asesoresProcesados);
-    console.log('🎨 programasProcesados:', programasProcesados);
-    
     // No dibujar si está cargando o si no hay datos
     if (loadingVentas || !ventas || ventas.length === 0) {
-      console.log('🎨 Retornando: loadingVentas o no hay ventas');
-      return;
-    }
-    if (!chartRef.current || !pieChartRef.current || !programaChartRef.current) {
-      console.log('🎨 Retornando: refs no disponibles');
       return;
     }
     
-    console.log('🎨 ✅ Iniciando dibujo de gráficos...');
-    const { width, height } = dimensions;
+    // Dar tiempo a que los canvas se monten en el DOM
+    const timeoutId = setTimeout(() => {
+      if (!chartRef.current || !pieChartRef.current || !programaChartRef.current) {
+        return;
+      }
+      
+      const { width, height } = dimensions;
     const dpr = window.devicePixelRatio || 1;
     chartRef.current.width = width * dpr;
     chartRef.current.height = height * dpr;
@@ -729,6 +715,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       programaCtx.font = "italic 11px Inter, sans-serif"
       programaCtx.fillText(`+${programasNombres.length - maxProgramaLegendItems} más programas`, programaLegendStartX + 18, y + 4)
     }
+    }, 100) // Esperar 100ms a que los canvas se monten
+    
+    return () => clearTimeout(timeoutId)
   }, [activeTab, selectedYear, semanaInicio, semanaFin, ventas, datos, labels, asesoresProcesados, hoveredPieIndex, programasProcesados, hoveredProgramaIndex, dimensions, loadingVentas])
 
   // Efecto hover: detectar sector con mouse

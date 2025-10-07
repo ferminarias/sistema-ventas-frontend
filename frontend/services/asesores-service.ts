@@ -47,14 +47,14 @@ export const asesoresService = {
   },
 
   // Subir icono para un asesor
-  async uploadAsesorIcon(asesorNombre: string, imageBase64: string): Promise<{message: string; icon_url: string}> {
-    const response = await fetch(`${API_BASE}/api/asesores/upload-icon`, {
+  async uploadAsesorIcon(asesorNombre: string, imageBase64: string): Promise<{message: string; url: string; publicId: string}> {
+    const response = await fetch(`${API_BASE}/api/advisors/upload-icon`, {
       method: 'POST',
       headers: getAuthHeaders(),
       credentials: 'include',
       body: JSON.stringify({
-        asesor_nombre: asesorNombre,
-        image_data: imageBase64
+        name: asesorNombre,
+        imageBase64: imageBase64
       })
     });
     
@@ -66,15 +66,18 @@ export const asesoresService = {
   },
 
   // Obtener icono de un asesor
-  async getAsesorIcon(asesorNombre: string): Promise<{icon_url?: string}> {
-    const params = `?asesor=${encodeURIComponent(asesorNombre)}`;
-    const response = await fetch(`${API_BASE}/api/asesores/icon${params}`, { 
+  async getAsesorIcon(asesorNombre: string, size: number = 64): Promise<{url?: string; publicId?: string}> {
+    const params = new URLSearchParams({
+      asesor: asesorNombre,
+      size: size.toString()
+    });
+    const response = await fetch(`${API_BASE}/api/advisors/icon?${params.toString()}`, { 
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
     
     if (!response.ok) {
-      return { icon_url: undefined };
+      return { url: undefined };
     }
     
     return response.json();
@@ -82,12 +85,12 @@ export const asesoresService = {
 
   // Eliminar icono de un asesor
   async deleteAsesorIcon(asesorNombre: string): Promise<{message: string}> {
-    const response = await fetch(`${API_BASE}/api/asesores/icon`, {
+    const response = await fetch(`${API_BASE}/api/advisors/icon`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
       credentials: 'include',
       body: JSON.stringify({
-        asesor_nombre: asesorNombre
+        name: asesorNombre
       })
     });
     

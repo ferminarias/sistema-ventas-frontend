@@ -190,9 +190,9 @@ export default function ReportesPage() {
   const [globalFilterMonth, setGlobalFilterMonth] = useState<string>('all') // 'all' para mostrar acumulativo
   const [globalFilterYear, setGlobalFilterYear] = useState<string>(String(currentDate.getFullYear()))
   
-  // Calcular mes/año para la API (undefined si es 'all')
+  // Calcular mes/año para la API (undefined si es 'all', sino enviar los valores)
   const selectedMonth = globalFilterMonth === 'all' ? undefined : globalFilterMonth
-  const selectedReportYear = globalFilterMonth === 'all' ? undefined : globalFilterYear
+  const selectedReportYear = globalFilterMonth === 'all' ? undefined : String(globalFilterYear)
   
   // Estados para manejo de iconos de asesores
   const [uploadingIcon, setUploadingIcon] = useState<string | null>(null)
@@ -241,6 +241,14 @@ export default function ReportesPage() {
       try {
         setLoading(true)
         setError(null)
+        console.log('🔍 Parámetros para API:', {
+          clienteFiltro,
+          selectedMonth,
+          selectedReportYear,
+          globalFilterMonth,
+          globalFilterYear
+        })
+        
         const [metricsData, advisorsWithIconsData, clientsData, salesTrendData, hourlyData, pipelineData, heatmapData] = await Promise.all([
           analyticsService.getMetrics(clienteFiltro),
           asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear),
@@ -250,13 +258,23 @@ export default function ReportesPage() {
           analyticsService.getPipeline(clienteFiltro),
           analyticsService.getHeatmap(clienteFiltro),
         ])
-        console.log('📊 Datos recibidos de asesores:', advisorsWithIconsData)
-        console.log('📊 General:', advisorsWithIconsData?.general)
-        console.log('📊 Por cliente:', advisorsWithIconsData?.byClient)
+        
+        console.log('📊 Respuesta completa de asesores:', advisorsWithIconsData)
+        console.log('📊 general:', advisorsWithIconsData?.general)
+        console.log('📊 byClient:', advisorsWithIconsData?.byClient)
+        console.log('📊 items:', (advisorsWithIconsData as any)?.items)
+        console.log('📊 period:', (advisorsWithIconsData as any)?.period)
         
         setMetrics(metricsData)
-        setTopAdvisorsGeneral(Array.isArray(advisorsWithIconsData?.general) ? advisorsWithIconsData.general : [])
-        setTopAdvisorsByClient(Array.isArray(advisorsWithIconsData?.byClient) ? advisorsWithIconsData.byClient : [])
+        // La API puede devolver {general, byClient} O {items, period}
+        const generalData = advisorsWithIconsData?.general || (advisorsWithIconsData as any)?.items || []
+        const byClientData = advisorsWithIconsData?.byClient || []
+        
+        console.log('✅ generalData final:', generalData)
+        console.log('✅ byClientData final:', byClientData)
+        
+        setTopAdvisorsGeneral(Array.isArray(generalData) ? generalData : [])
+        setTopAdvisorsByClient(Array.isArray(byClientData) ? byClientData : [])
         setTopClients(Array.isArray(clientsData) ? clientsData : [])
         setSalesTrend(salesTrendData)
         setHourlyDistribution(hourlyData)
@@ -338,8 +356,11 @@ export default function ReportesPage() {
       
       // Recargar datos para mostrar el nuevo icono
       const advisorsWithIconsData = await asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear);
-      setTopAdvisorsGeneral(advisorsWithIconsData.general);
-      setTopAdvisorsByClient(advisorsWithIconsData.byClient);
+      const generalData = advisorsWithIconsData?.general || (advisorsWithIconsData as any)?.items || []
+      const byClientData = advisorsWithIconsData?.byClient || []
+      
+      setTopAdvisorsGeneral(Array.isArray(generalData) ? generalData : []);
+      setTopAdvisorsByClient(Array.isArray(byClientData) ? byClientData : []);
       
       setShowIconUpload(null);
       alert('Icono subido exitosamente');
@@ -361,8 +382,11 @@ export default function ReportesPage() {
       
       // Recargar datos
       const advisorsWithIconsData = await asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear);
-      setTopAdvisorsGeneral(advisorsWithIconsData.general);
-      setTopAdvisorsByClient(advisorsWithIconsData.byClient);
+      const generalData = advisorsWithIconsData?.general || (advisorsWithIconsData as any)?.items || []
+      const byClientData = advisorsWithIconsData?.byClient || []
+      
+      setTopAdvisorsGeneral(Array.isArray(generalData) ? generalData : []);
+      setTopAdvisorsByClient(Array.isArray(byClientData) ? byClientData : []);
       
       alert('Icono eliminado exitosamente');
     } catch (error) {
@@ -760,11 +784,22 @@ export default function ReportesPage() {
                             <div className="relative">
                               {/* Avatar con imagen o iniciales */}
                               <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-blue-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20 overflow-hidden">
-                                {(advisor as any).icon_url ? (
+                                {(advisor as any).iconUrl || (advisor as any).icon_url ? (
                                   <img 
-                                    src={(advisor as any).icon_url} 
+                                    src={(advisor as any).iconUrl || (advisor as any).icon_url} 
                                     alt={`Icono de ${advisor.name}`}
                                     className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      // Si la imagen falla, mostrar iniciales
+                                      e.currentTarget.style.display = 'none';
+                                      const parent = e.currentTarget.parentElement;
+                                      if (parent && !parent.querySelector('.initials-fallback')) {
+                                        const span = document.createElement('span');
+                                        span.className = 'initials-fallback drop-shadow-lg';
+                                        span.textContent = advisor.name.split(" ").map((n: string) => n[0]).join("");
+                                        parent.appendChild(span);
+                                      }
+                                    }}
                                   />
                                 ) : (
                                 <span className="drop-shadow-lg">
@@ -778,7 +813,7 @@ export default function ReportesPage() {
                               
                               {/* Botones de icono - visible en hover */}
                               <div className="absolute -top-1 -right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                {(advisor as any).icon_url ? (
+                                {(advisor as any).iconUrl || (advisor as any).icon_url ? (
                                   <button
                                     onClick={() => handleDeleteIcon(advisor.name)}
                                     className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 transition-colors"
