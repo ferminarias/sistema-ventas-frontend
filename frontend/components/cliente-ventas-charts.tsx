@@ -34,6 +34,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const programaChartRef = useRef<HTMLCanvasElement>(null)
   const [hoveredProgramaIndex, setHoveredProgramaIndex] = useState<number | null>(null)
   const [programaTooltip, setProgramaTooltip] = useState<{x: number, y: number, label: string, value: number} | null>(null)
+  
+  // Estado para programa seleccionado y sus ventas
+  const [programaSeleccionado, setProgramaSeleccionado] = useState<string | null>(null)
 
   useEffect(() => {
     const updateSize = () => {
@@ -72,17 +75,50 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     )
   }
 
-  const { ventas } = useVentas(cliente.toLowerCase())
+  const { ventas, loading: loadingVentas } = useVentas(cliente.toLowerCase())
   
   // Debug: Log para verificar que se están cargando todas las ventas para "general"
   useEffect(() => {
     console.log(`📊 ClienteVentasCharts - Cliente: "${cliente}"`);
     console.log(`📊 Total ventas cargadas: ${ventas?.length || 0}`);
+    console.log(`📊 Loading: ${loadingVentas}`);
     if (cliente.toLowerCase() === 'general') {
       console.log('🌍 Modo GENERAL activado - deberían mostrarse TODAS las ventas');
       console.log('📋 Primeras 3 ventas:', ventas?.slice(0, 3));
     }
-  }, [cliente, ventas?.length])
+  }, [cliente, ventas?.length, loadingVentas])
+
+  // Si está cargando, mostrar estado de carga
+  if (loadingVentas) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="border-2 border-dashed border-border bg-card/50">
+          <CardContent className="flex items-center justify-center h-96">
+            <div className="text-center space-y-2">
+              <CalendarDays className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
+              <p className="text-muted-foreground">Cargando datos de ventas...</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-2 border-dashed border-border bg-card/50">
+          <CardContent className="flex items-center justify-center h-96">
+            <div className="text-center space-y-2">
+              <Users className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
+              <p className="text-muted-foreground">Cargando distribución...</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-2 border-dashed border-border bg-card/50">
+          <CardContent className="flex items-center justify-center h-96">
+            <div className="text-center space-y-2">
+              <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
+              <p className="text-muted-foreground">Cargando programas...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   // Función para obtener la semana ISO del año según estándar ISO 8601
   const getSemanaISO = (fecha: Date) => {
@@ -142,6 +178,16 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     const ventasPorMes = Array(12).fill(0)
     const ventasPorAsesor: Record<string, number> = {}
     const ventasPorPrograma: Record<string, number> = {}
+    
+    // Verificación defensiva: si ventas no está definido o no es un array, retornar valores por defecto
+    if (!ventas || !Array.isArray(ventas)) {
+      return {
+        datos: ventasPorMes,
+        labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+        asesores: ventasPorAsesor,
+        programas: ventasPorPrograma
+      }
+    }
     
     if (activeTab === "mensual") {
       // Datos mensuales del año seleccionado
@@ -288,6 +334,12 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   // Obtener años disponibles en los datos
   const getYearsAvailable = () => {
     const years = new Set<number>()
+    
+    // Verificación defensiva: si ventas no está definido o no es un array, retornar año actual
+    if (!ventas || !Array.isArray(ventas)) {
+      return [new Date().getFullYear()]
+    }
+    
     ventas.forEach(v => {
       const fecha = new Date(v.fecha_venta)
       if (!isNaN(fecha.getTime())) {
@@ -343,6 +395,23 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     "linear-gradient(135deg, #3b82f6, #60a5fa)", // Azul
     "linear-gradient(135deg, #ec4899, #f472b6)", // Rosa
     "linear-gradient(135deg, #6366f1, #818cf8)", // Índigo
+  ]
+
+  // Colores específicos para programas (diferentes de asesores)
+  const programaColors = [
+    "#ef4444", // Rojo vibrante
+    "#f97316", // Naranja energético
+    "#eab308", // Amarillo dorado
+    "#22c55e", // Verde vibrante
+    "#06b6d4", // Cyan brillante
+    "#3b82f6", // Azul tech
+    "#8b5cf6", // Violeta
+    "#ec4899", // Rosa magenta
+    "#6366f1", // Índigo profundo
+    "#84cc16", // Lima fresco
+    "#f59e0b", // Ámbar
+    "#10b981", // Esmeralda
+    "#d946ef", // Fucsia moderno
   ]
 
   useEffect(() => {
@@ -564,23 +633,6 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     let programaStartAngle = 0
     const programaTotal = programasValores.reduce((acc, val) => acc + val, 0) || 1
     
-    // Colores específicos para programas (diferentes de asesores)
-    const programaColors = [
-      "#ef4444", // Rojo vibrante
-      "#f97316", // Naranja energético
-      "#eab308", // Amarillo dorado
-      "#22c55e", // Verde vibrante
-      "#06b6d4", // Cyan brillante
-      "#3b82f6", // Azul tech
-      "#8b5cf6", // Violeta
-      "#ec4899", // Rosa magenta
-      "#6366f1", // Índigo profundo
-      "#84cc16", // Lima fresco
-      "#f59e0b", // Ámbar
-      "#10b981", // Esmeralda
-      "#d946ef", // Fucsia moderno
-    ]
-    
     programasValores.forEach((value, index) => {
       const sliceAngle = (value / programaTotal) * 2 * Math.PI
       // Efecto hover: si está sobre este sector, agrandar y sombra
@@ -792,6 +844,29 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     return ""
   }
 
+  // Obtener ventas filtradas por programa
+  const getVentasPorPrograma = (programa: string) => {
+    if (!ventas || !Array.isArray(ventas)) return []
+    
+    return ventas.filter(v => {
+      const fecha = new Date(v.fecha_venta)
+      if (isNaN(fecha.getTime())) return false
+      
+      // Aplicar filtros de año y período según el tab activo
+      if (activeTab === "mensual") {
+        if (fecha.getFullYear() !== selectedYear) return false
+      } else {
+        const semanaInfo = getSemanaISO(fecha)
+        if (semanaInfo.year !== selectedYear || 
+            semanaInfo.week < semanaInicio || 
+            semanaInfo.week > semanaFin) return false
+      }
+      
+      const programaVenta = v.campos_adicionales?.programa_interes || 'Sin programa especificado'
+      return programaVenta === programa
+    })
+  }
+
   // Obtener descripción del período seleccionado
   const getDescripcionPeriodo = () => {
     if (activeTab === "mensual") {
@@ -890,8 +965,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           </Card>
         </div>
 
-        {/* Gráficos principales - Responsive al tema */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Gráficos principales - Layout vertical */}
+        <div className="grid gap-6 grid-cols-1">
           <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
@@ -1064,49 +1139,144 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
           <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
             <CardHeader>
-              <CardTitle className="text-foreground">Distribución por Programa</CardTitle>
-              <CardDescription className="text-muted-foreground">{programasProcesados.length > 8 
-                ? `Top 7 programas + otros (${programasProcesados.length - 1} total)`
-                : `${programasProcesados.length} programa${programasProcesados.length !== 1 ? 's' : ''} de interés`
-              } - {getNombreCliente()}
+              <CardTitle className="text-foreground flex items-center gap-2">
+                📚 Distribución por Programa
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">
+                {programasProcesados.length} programa{programasProcesados.length !== 1 ? 's' : ''} de interés - {getNombreCliente()}
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-10">
-              <div className="relative w-full h-[320px]" ref={containerRef}>
-                {programasProcesados.length > 0 ? (
-                  <>
-                    <canvas ref={programaChartRef} className="w-full h-full rounded-lg cursor-pointer" />
-                    {programaTooltip && (
-                      <div 
-                        style={{
-                          position: 'fixed', 
-                          left: programaTooltip.x + 15, 
-                          top: programaTooltip.y + 15, 
-                          zIndex: 50, 
-                          pointerEvents: 'none'
-                        }} 
-                        className="bg-gradient-to-br from-slate-900/95 to-slate-800/95 text-white px-4 py-3 rounded-xl shadow-2xl border border-red-500/30 backdrop-blur-md animate-fade-in"
-                      >
-                        <div className="font-bold text-red-300 text-sm">{programaTooltip.label}</div>
-                        <div className="text-cyan-100 text-xs mt-1">
-                          {programaTooltip.value} ventas realizadas
-                        </div>
-                        <div className="w-full h-px bg-gradient-to-r from-red-500 to-cyan-500 mt-2 opacity-50"></div>
+            <CardContent className="pb-4">
+              {programasProcesados.length > 0 ? (
+                <div className="space-y-3">
+                  {programasProcesados.map((programa, index) => {
+                    const ventasPrograma = getVentasPorPrograma(programa.nombre)
+                    const isExpanded = programaSeleccionado === programa.nombre
+                    const porcentaje = ((programa.ventas / estadisticas.totalVentas) * 100).toFixed(1)
+                    
+                    return (
+                      <div key={index} className="border border-border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-md">
+                        <button
+                          onClick={() => setProgramaSeleccionado(isExpanded ? null : programa.nombre)}
+                          className="w-full p-4 text-left transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                              <div 
+                                className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md"
+                                style={{ backgroundColor: programaColors[index % programaColors.length] }}
+                              >
+                                {index + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-foreground truncate">
+                                  {programa.nombre}
+                                </h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {programa.ventas} venta{programa.ventas !== 1 ? 's' : ''} • {porcentaje}% del total
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="text-right">
+                                <div className="text-2xl font-bold text-foreground">
+                                  {programa.ventas}
+                                </div>
+                              </div>
+                              <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Barra de progreso */}
+                          <div className="mt-3 w-full bg-muted rounded-full h-2 overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ 
+                                backgroundColor: programaColors[index % programaColors.length],
+                                width: `${porcentaje}%` 
+                              }}
+                            />
+                          </div>
+                        </button>
+                        
+                        {/* Panel expandible con detalles de ventas */}
+                        {isExpanded && (
+                          <div className="border-t border-border bg-muted/30 p-4 animate-in slide-in-from-top-2 duration-300">
+                            <h5 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: programaColors[index % programaColors.length] }}></span>
+                              Detalles de ventas ({ventasPrograma.length})
+                            </h5>
+                            
+                            {ventasPrograma.length > 0 ? (
+                              <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+                                {ventasPrograma.map((venta, ventaIndex) => (
+                                  <div 
+                                    key={ventaIndex}
+                                    className="bg-card p-3 rounded-lg border border-border hover:border-primary/50 transition-colors"
+                                  >
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                      <div>
+                                        <span className="text-muted-foreground">Cliente:</span>
+                                        <p className="font-medium text-foreground">{venta.nombre} {venta.apellido}</p>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">Email:</span>
+                                        <p className="font-medium text-foreground truncate">{venta.email || 'N/A'}</p>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">Asesor:</span>
+                                        <p className="font-medium text-foreground">{venta.asesor}</p>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">Fecha:</span>
+                                        <p className="font-medium text-foreground">
+                                          {new Date(venta.fecha_venta).toLocaleDateString('es-ES', {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric'
+                                          })}
+                                        </p>
+                                      </div>
+                                      {venta.campos_adicionales?.modalidad && (
+                                        <div>
+                                          <span className="text-muted-foreground">Modalidad:</span>
+                                          <p className="font-medium text-foreground">{venta.campos_adicionales.modalidad}</p>
+                                        </div>
+                                      )}
+                                      {venta.campos_adicionales?.turno && (
+                                        <div>
+                                          <span className="text-muted-foreground">Turno:</span>
+                                          <p className="font-medium text-foreground">{venta.campos_adicionales.turno}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground italic">No hay ventas para este programa</p>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center space-y-2">
-                      <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto">
-                        📚
-                      </div>
-                      <p className="text-muted-foreground text-sm">No hay datos de programas disponibles</p>
-                      <p className="text-muted-foreground text-xs">Los programas se mostrarán cuando haya ventas con campo "programa_interes"</p>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-48">
+                  <div className="text-center space-y-2">
+                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto">
+                      📚
                     </div>
+                    <p className="text-muted-foreground text-sm">No hay datos de programas disponibles</p>
+                    <p className="text-muted-foreground text-xs">Los programas se mostrarán cuando haya ventas con campo "programa_interes"</p>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
