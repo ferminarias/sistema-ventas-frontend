@@ -35,9 +35,16 @@ export const analyticsService = {
     return response.json();
   },
 
-  async getTopAdvisors(cliente?: string) {
-    const params = cliente ? `?cliente=${encodeURIComponent(cliente)}` : '';
-    const response = await fetch(`${API_BASE}/api/analytics/top-advisors${params}`, { 
+  async getTopAdvisors(cliente?: string, month?: string, year?: string) {
+    const params = new URLSearchParams();
+    if (cliente) params.append('cliente', cliente);
+    if (month) params.append('month', month);
+    if (year) params.append('year', year);
+    
+    const queryString = params.toString();
+    const url = `${API_BASE}/api/analytics/top-advisors${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await fetch(url, { 
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
@@ -74,6 +81,15 @@ export const analyticsService = {
   async getHeatmap(cliente?: string) {
     const params = cliente ? `?cliente=${encodeURIComponent(cliente)}` : '';
     const response = await fetch(`${API_BASE}/api/analytics/heatmap${params}`, { 
+      headers: getAuthHeaders(),
+      credentials: 'include' 
+    });
+    return response.json();
+  },
+
+  async getProgramaDistribution(cliente?: string) {
+    const params = cliente ? `?cliente=${encodeURIComponent(cliente)}` : '';
+    const response = await fetch(`${API_BASE}/api/analytics/programa-distribution${params}`, { 
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
