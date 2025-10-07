@@ -16,10 +16,19 @@ function getAuthHeaders(): HeadersInit {
 }
 
 export const analyticsService = {
-  async getMetrics(cliente?: string) {
-    const params = cliente ? `?cliente=${encodeURIComponent(cliente)}` : '';
-    console.log('📊 Calling metrics API:', `${API_BASE}/api/analytics/metrics${params}`);
-    const response = await fetch(`${API_BASE}/api/analytics/metrics${params}`, {
+  async getMetrics(cliente?: string, month?: string, year?: string) {
+    const params = new URLSearchParams();
+    if (cliente) params.append('cliente', cliente);
+    if (month) params.append('month', month);
+    if (year) params.append('year', year);
+    
+    const queryString = params.toString();
+    const url = `${API_BASE}/api/analytics/metrics${queryString ? `?${queryString}` : ''}`;
+    
+    console.log('📊 Calling metrics API:', url);
+    console.log('🔍 Parámetros para API:', { cliente, month, year });
+    
+    const response = await fetch(url, {
       headers: getAuthHeaders(),
       credentials: 'include' 
     });

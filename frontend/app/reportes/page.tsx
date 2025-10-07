@@ -250,7 +250,7 @@ export default function ReportesPage() {
         })
         
         const [metricsData, advisorsWithIconsData, clientsData, salesTrendData, hourlyData, pipelineData, heatmapData] = await Promise.all([
-          analyticsService.getMetrics(clienteFiltro),
+          analyticsService.getMetrics(clienteFiltro, selectedMonth, selectedReportYear),
           asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear),
           analyticsService.getTopClients(clienteFiltro),
           analyticsService.getSalesTrend(selectedPeriod, clienteFiltro),
@@ -585,7 +585,7 @@ export default function ReportesPage() {
               {[0,1,2,3].map(i => {
                 const metricData = [
                   { 
-                    value: metrics?.totalAllTime ?? metrics?.totalSales ?? '-', 
+                    value: metrics?.totalSales ?? '-', 
                     label: 'Total de Ventas', 
                     icon: '📈', 
                     trend: metrics?.totalSalesTrend ? (metrics.totalSalesTrend > 0 ? `+${metrics.totalSalesTrend}%` : `${metrics.totalSalesTrend}%`) : '+12%', 
