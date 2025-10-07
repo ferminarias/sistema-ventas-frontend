@@ -585,8 +585,8 @@ export default function ReportesPage() {
               {[0,1,2,3].map(i => {
                 const metricData = [
                   { 
-                    value: metrics?.totalSales ?? '-', 
-                    label: 'Ventas del Mes', 
+                    value: metrics?.totalAllTime ?? metrics?.totalSales ?? '-', 
+                    label: 'Total de Ventas', 
                     icon: '📈', 
                     trend: metrics?.totalSalesTrend ? (metrics.totalSalesTrend > 0 ? `+${metrics.totalSalesTrend}%` : `${metrics.totalSalesTrend}%`) : '+12%', 
                     isPositive: metrics?.totalSalesTrend ? metrics.totalSalesTrend > 0 : true 
@@ -845,10 +845,15 @@ export default function ReportesPage() {
                                         type="file"
                                         accept="image/*"
                                         onChange={(e) => handleFileUpload(e, advisor.name)}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6"
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6 z-10"
                                         disabled={uploadingIcon === advisor.name}
+                                        id={`file-input-${advisor.name.replace(/\s+/g, '-')}`}
                                       />
                                       <button
+                                        onClick={() => {
+                                          const input = document.getElementById(`file-input-${advisor.name.replace(/\s+/g, '-')}`) as HTMLInputElement;
+                                          if (input) input.click();
+                                        }}
                                         className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-blue-600 transition-colors shadow-lg border-2 border-white/20"
                                         title="Cambiar foto de perfil"
                                         disabled={uploadingIcon === advisor.name}
@@ -871,10 +876,15 @@ export default function ReportesPage() {
                                       type="file"
                                       accept="image/*"
                                       onChange={(e) => handleFileUpload(e, advisor.name)}
-                                      className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6"
+                                      className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6 z-10"
                                       disabled={uploadingIcon === advisor.name}
+                                      id={`file-input-add-${advisor.name.replace(/\s+/g, '-')}`}
                                     />
                                     <button
+                                      onClick={() => {
+                                        const input = document.getElementById(`file-input-add-${advisor.name.replace(/\s+/g, '-')}`) as HTMLInputElement;
+                                        if (input) input.click();
+                                      }}
                                       className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-green-600 transition-colors shadow-lg border-2 border-white/20 animate-pulse"
                                       title="Agregar foto de perfil"
                                       disabled={uploadingIcon === advisor.name}
@@ -995,10 +1005,15 @@ export default function ReportesPage() {
                                         type="file"
                                         accept="image/*"
                                         onChange={(e) => handleFileUpload(e, advisor.name)}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6"
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6 z-10"
                                         disabled={uploadingIcon === advisor.name}
+                                        id={`file-input-client-${advisor.name.replace(/\s+/g, '-')}`}
                                       />
                                       <button
+                                        onClick={() => {
+                                          const input = document.getElementById(`file-input-client-${advisor.name.replace(/\s+/g, '-')}`) as HTMLInputElement;
+                                          if (input) input.click();
+                                        }}
                                         className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-purple-600 transition-colors shadow-lg border-2 border-white/20"
                                         title="Cambiar foto de perfil"
                                         disabled={uploadingIcon === advisor.name}
@@ -1021,10 +1036,15 @@ export default function ReportesPage() {
                                       type="file"
                                       accept="image/*"
                                       onChange={(e) => handleFileUpload(e, advisor.name)}
-                                      className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6"
+                                      className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6 z-10"
                                       disabled={uploadingIcon === advisor.name}
+                                      id={`file-input-client-add-${advisor.name.replace(/\s+/g, '-')}`}
                                     />
                                     <button
+                                      onClick={() => {
+                                        const input = document.getElementById(`file-input-client-add-${advisor.name.replace(/\s+/g, '-')}`) as HTMLInputElement;
+                                        if (input) input.click();
+                                      }}
                                       className="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-pink-600 transition-colors shadow-lg border-2 border-white/20 animate-pulse"
                                       title="Agregar foto de perfil"
                                       disabled={uploadingIcon === advisor.name}

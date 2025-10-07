@@ -318,7 +318,13 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       const totalOtros = otrosProgramas.reduce((sum, programa) => sum + programa.ventas, 0)
       
       if (totalOtros > 0) {
-        topProgramas.push({ nombre: `Otros (${otrosProgramas.length})`, ventas: totalOtros })
+        // Guardar información de los programas agrupados para uso posterior
+        const otrosInfo = {
+          nombre: `Otros (${otrosProgramas.length})`,
+          ventas: totalOtros,
+          programasAgrupados: otrosProgramas.map(p => p.nombre) // Guardar nombres de programas agrupados
+        }
+        topProgramas.push(otrosInfo)
       }
       
       return topProgramas
@@ -937,6 +943,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const getVentasPorPrograma = (programa: string) => {
     if (!ventas || !Array.isArray(ventas)) return []
     
+    console.log('🔍 Buscando ventas para programa:', programa);
+    
     return ventas.filter(v => {
       const fecha = new Date(v.fecha_venta)
       if (isNaN(fecha.getTime())) return false
@@ -952,7 +960,29 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       }
       
       const programaVenta = v.campos_adicionales?.programa_interes || 'Sin programa especificado'
-      return programaVenta === programa
+      
+      // Manejar el caso especial de "Otros"
+      if (programa.includes('Otros')) {
+        // Para "Otros", necesitamos obtener todos los programas que están en el grupo "Otros"
+        // Buscar el programa "Otros" en los datos procesados para obtener los programas agrupados
+        const otrosPrograma = programasProcesados.find(p => p.nombre === programa)
+        if (otrosPrograma && otrosPrograma.programasAgrupados) {
+          // Verificar si esta venta pertenece a alguno de los programas agrupados
+          const perteneceAOtros = otrosPrograma.programasAgrupados.includes(programaVenta)
+          if (perteneceAOtros) {
+            console.log('✅ Venta encontrada en grupo Otros para programa:', programaVenta);
+          }
+          return perteneceAOtros
+        }
+        console.log('📦 Programa es "Otros" pero no se encontró información de programas agrupados');
+        return false
+      }
+      
+      const matches = programaVenta === programa
+      if (matches) {
+        console.log('✅ Venta encontrada para programa:', programa, 'venta:', v.id);
+      }
+      return matches
     })
   }
 
