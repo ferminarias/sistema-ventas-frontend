@@ -88,38 +88,6 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     }
   }, [cliente, ventas?.length, loadingVentas])
 
-  // Si está cargando, mostrar estado de carga
-  if (loadingVentas) {
-    return (
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-2 border-dashed border-border bg-card/50">
-          <CardContent className="flex items-center justify-center h-96">
-            <div className="text-center space-y-2">
-              <CalendarDays className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
-              <p className="text-muted-foreground">Cargando datos de ventas...</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-2 border-dashed border-border bg-card/50">
-          <CardContent className="flex items-center justify-center h-96">
-            <div className="text-center space-y-2">
-              <Users className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
-              <p className="text-muted-foreground">Cargando distribución...</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-2 border-dashed border-border bg-card/50">
-          <CardContent className="flex items-center justify-center h-96">
-            <div className="text-center space-y-2">
-              <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
-              <p className="text-muted-foreground">Cargando programas...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   // Función para obtener la semana ISO del año según estándar ISO 8601
   const getSemanaISO = (fecha: Date) => {
     // Crear una copia en UTC para evitar problemas de zona horaria
@@ -882,8 +850,38 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        {/* Estadísticas destacadas - Responsive al tema */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Mostrar estado de carga si está cargando */}
+        {loadingVentas ? (
+          <div className="grid gap-6 grid-cols-1">
+            <Card className="border-2 border-dashed border-border bg-card/50">
+              <CardContent className="flex items-center justify-center h-96">
+                <div className="text-center space-y-2">
+                  <CalendarDays className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
+                  <p className="text-muted-foreground">Cargando datos de ventas...</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-dashed border-border bg-card/50">
+              <CardContent className="flex items-center justify-center h-96">
+                <div className="text-center space-y-2">
+                  <Users className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
+                  <p className="text-muted-foreground">Cargando distribución por asesor...</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-dashed border-border bg-card/50">
+              <CardContent className="flex items-center justify-center h-96">
+                <div className="text-center space-y-2">
+                  <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
+                  <p className="text-muted-foreground">Cargando distribución por programa...</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <>
+            {/* Estadísticas destacadas - Responsive al tema */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-500/30 backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -1280,6 +1278,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             </CardContent>
           </Card>
         </div>
+          </>
+        )}
       </div>
     </TooltipProvider>
   )
