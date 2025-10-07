@@ -1114,8 +1114,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           </Card>
         </div>
 
-        {/* Gráficos principales - Layout vertical */}
-        <div className="grid gap-6 grid-cols-1">
+        {/* Gráficos principales - Layout horizontal */}
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
           <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
@@ -1246,23 +1246,23 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               </div>
             </CardHeader>
             <CardContent className="pb-10">
-              <div ref={containerRef} className="w-full h-[320px] relative">
+              <div ref={containerRef} className="w-full h-[400px] relative">
                 <canvas ref={chartRef} className="w-full h-full rounded-lg" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-foreground">Distribución por Asesor</CardTitle>
+          <Card className="bg-card border-border backdrop-blur-sm shadow-lg lg:col-span-2">
+            <CardHeader className="text-center">
+              <CardTitle className="text-foreground text-2xl">Distribución por Asesor</CardTitle>
               <CardDescription className="text-muted-foreground">{asesoresProcesados.length > 8 
                 ? `Top 7 asesores + otros (${asesoresProcesados.length - 1} total)`
                 : `${asesoresProcesados.length} asesores activos`
               } - {getNombreCliente()}
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-10">
-              <div className="relative w-full h-[320px]" ref={containerRef}>
+            <CardContent className="pb-10 flex justify-center">
+              <div className="relative w-full max-w-2xl h-[400px]" ref={containerRef}>
                 <canvas ref={pieChartRef} className="w-full h-full rounded-lg cursor-pointer" />
                 {tooltip && (
                   <div 
@@ -1286,9 +1286,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-foreground flex items-center gap-2">
+          <Card className="bg-card border-border backdrop-blur-sm shadow-lg lg:col-span-2">
+            <CardHeader className="text-center">
+              <CardTitle className="text-foreground text-2xl flex items-center justify-center gap-2">
                 📚 Distribución por Programa
               </CardTitle>
               <CardDescription className="text-muted-foreground">
