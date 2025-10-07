@@ -267,14 +267,41 @@ export default function ReportesPage() {
         
         setMetrics(metricsData)
         // La API puede devolver {general, byClient} O {items, period}
-        const generalData = advisorsWithIconsData?.general || (advisorsWithIconsData as any)?.items || []
+        // Combinar datos de general con iconos de items
+        const generalData = advisorsWithIconsData?.general || []
+        const itemsData = advisorsWithIconsData?.items || []
         const byClientData = advisorsWithIconsData?.byClient || []
         
-        console.log('✅ generalData final:', generalData)
-        console.log('✅ byClientData final:', byClientData)
+        // Crear map de iconos por nombre
+        const iconMap = new Map()
+        itemsData.forEach(item => {
+          iconMap.set(item.name, {
+            iconUrl: item.iconUrl || item.icon_url,
+            publicId: item.publicId
+          })
+        })
         
-        setTopAdvisorsGeneral(Array.isArray(generalData) ? generalData : [])
-        setTopAdvisorsByClient(Array.isArray(byClientData) ? byClientData : [])
+        // Combinar general con iconos
+        const generalWithIcons = generalData.map(advisor => ({
+          ...advisor,
+          iconUrl: iconMap.get(advisor.name)?.iconUrl,
+          icon_url: iconMap.get(advisor.name)?.iconUrl,
+          publicId: iconMap.get(advisor.name)?.publicId
+        }))
+        
+        // Combinar byClient con iconos
+        const byClientWithIcons = byClientData.map(advisor => ({
+          ...advisor,
+          iconUrl: iconMap.get(advisor.name)?.iconUrl,
+          icon_url: iconMap.get(advisor.name)?.iconUrl,
+          publicId: iconMap.get(advisor.name)?.publicId
+        }))
+        
+        console.log('✅ generalData final:', generalWithIcons)
+        console.log('✅ byClientData final:', byClientWithIcons)
+        
+        setTopAdvisorsGeneral(Array.isArray(generalWithIcons) ? generalWithIcons : [])
+        setTopAdvisorsByClient(Array.isArray(byClientWithIcons) ? byClientWithIcons : [])
         setTopClients(Array.isArray(clientsData) ? clientsData : [])
         setSalesTrend(salesTrendData)
         setHourlyDistribution(hourlyData)
@@ -356,11 +383,39 @@ export default function ReportesPage() {
       
       // Recargar datos para mostrar el nuevo icono
       const advisorsWithIconsData = await asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear);
-      const generalData = advisorsWithIconsData?.general || (advisorsWithIconsData as any)?.items || []
+      
+      // Combinar datos de general con iconos de items
+      const generalData = advisorsWithIconsData?.general || []
+      const itemsData = advisorsWithIconsData?.items || []
       const byClientData = advisorsWithIconsData?.byClient || []
       
-      setTopAdvisorsGeneral(Array.isArray(generalData) ? generalData : []);
-      setTopAdvisorsByClient(Array.isArray(byClientData) ? byClientData : []);
+      // Crear map de iconos por nombre
+      const iconMap = new Map()
+      itemsData.forEach(item => {
+        iconMap.set(item.name, {
+          iconUrl: item.iconUrl || item.icon_url,
+          publicId: item.publicId
+        })
+      })
+      
+      // Combinar general con iconos
+      const generalWithIcons = generalData.map(advisor => ({
+        ...advisor,
+        iconUrl: iconMap.get(advisor.name)?.iconUrl,
+        icon_url: iconMap.get(advisor.name)?.iconUrl,
+        publicId: iconMap.get(advisor.name)?.publicId
+      }))
+      
+      // Combinar byClient con iconos
+      const byClientWithIcons = byClientData.map(advisor => ({
+        ...advisor,
+        iconUrl: iconMap.get(advisor.name)?.iconUrl,
+        icon_url: iconMap.get(advisor.name)?.iconUrl,
+        publicId: iconMap.get(advisor.name)?.publicId
+      }))
+      
+      setTopAdvisorsGeneral(Array.isArray(generalWithIcons) ? generalWithIcons : []);
+      setTopAdvisorsByClient(Array.isArray(byClientWithIcons) ? byClientWithIcons : []);
       
       setShowIconUpload(null);
       alert('Icono subido exitosamente');
@@ -382,11 +437,39 @@ export default function ReportesPage() {
       
       // Recargar datos
       const advisorsWithIconsData = await asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear);
-      const generalData = advisorsWithIconsData?.general || (advisorsWithIconsData as any)?.items || []
+      
+      // Combinar datos de general con iconos de items
+      const generalData = advisorsWithIconsData?.general || []
+      const itemsData = advisorsWithIconsData?.items || []
       const byClientData = advisorsWithIconsData?.byClient || []
       
-      setTopAdvisorsGeneral(Array.isArray(generalData) ? generalData : []);
-      setTopAdvisorsByClient(Array.isArray(byClientData) ? byClientData : []);
+      // Crear map de iconos por nombre
+      const iconMap = new Map()
+      itemsData.forEach(item => {
+        iconMap.set(item.name, {
+          iconUrl: item.iconUrl || item.icon_url,
+          publicId: item.publicId
+        })
+      })
+      
+      // Combinar general con iconos
+      const generalWithIcons = generalData.map(advisor => ({
+        ...advisor,
+        iconUrl: iconMap.get(advisor.name)?.iconUrl,
+        icon_url: iconMap.get(advisor.name)?.iconUrl,
+        publicId: iconMap.get(advisor.name)?.publicId
+      }))
+      
+      // Combinar byClient con iconos
+      const byClientWithIcons = byClientData.map(advisor => ({
+        ...advisor,
+        iconUrl: iconMap.get(advisor.name)?.iconUrl,
+        icon_url: iconMap.get(advisor.name)?.iconUrl,
+        publicId: iconMap.get(advisor.name)?.publicId
+      }))
+      
+      setTopAdvisorsGeneral(Array.isArray(generalWithIcons) ? generalWithIcons : []);
+      setTopAdvisorsByClient(Array.isArray(byClientWithIcons) ? byClientWithIcons : []);
       
       alert('Icono eliminado exitosamente');
     } catch (error) {
