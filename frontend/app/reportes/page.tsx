@@ -917,9 +917,10 @@ export default function ReportesPage() {
                                 </span>
                                 )}
                               </div>
-                              
-                              {/* Botones de icono - siempre visibles con mejor diseño */}
-                              <div className="absolute bottom-2 right-2 flex gap-1 transition-all duration-200">
+                            </div>
+                            
+                            {/* Botones de icono - fuera del avatar */}
+                            <div className="flex gap-1 transition-all duration-200">
                                 {(advisor as any).iconUrl || (advisor as any).icon_url ? (
                                   <>
                                     {/* Botón para cambiar foto */}
@@ -1077,9 +1078,9 @@ export default function ReportesPage() {
                                   </span>
                                 )}
                             </div>
-                              
-                              {/* Botones de icono para Top Asesores por Cliente */}
-                              <div className="absolute bottom-2 right-2 flex gap-1 transition-all duration-200">
+                            
+                            {/* Botones de icono para Top Asesores por Cliente - fuera del avatar */}
+                            <div className="flex gap-1 transition-all duration-200">
                                 {(advisor as any).iconUrl || (advisor as any).icon_url ? (
                                   <>
                                     {/* Botón para cambiar foto */}

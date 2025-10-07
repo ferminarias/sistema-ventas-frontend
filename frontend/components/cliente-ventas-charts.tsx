@@ -305,31 +305,14 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     return asesoresArray
   }
 
-  // Procesar datos de programas para optimizar visualización
+  // Procesar datos de programas - MOSTRAR TODOS LOS PROGRAMAS
   const procesarDatosProgramas = () => {
     const programasArray = Object.entries(ventasPorPrograma)
       .map(([nombre, ventas]) => ({ nombre, ventas }))
       .sort((a, b) => b.ventas - a.ventas)
 
-    // Si hay más de 8 programas, agrupa los menores en "Otros"
-    if (programasArray.length > 8) {
-      const topProgramas = programasArray.slice(0, 7)
-      const otrosProgramas = programasArray.slice(7)
-      const totalOtros = otrosProgramas.reduce((sum, programa) => sum + programa.ventas, 0)
-      
-      if (totalOtros > 0) {
-        // Guardar información de los programas agrupados para uso posterior
-        const otrosInfo = {
-          nombre: `Otros (${otrosProgramas.length})`,
-          ventas: totalOtros,
-          programasAgrupados: otrosProgramas.map(p => p.nombre) // Guardar nombres de programas agrupados
-        }
-        topProgramas.push(otrosInfo)
-      }
-      
-      return topProgramas
-    }
-    
+    // Mostrar TODOS los programas sin agrupar en "Otros"
+    // Esto permite ver cada programa individualmente sin pérdida de información
     return programasArray
   }
 
@@ -961,23 +944,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       
       const programaVenta = v.campos_adicionales?.programa_interes || 'Sin programa especificado'
       
-      // Manejar el caso especial de "Otros"
-      if (programa.includes('Otros')) {
-        // Para "Otros", necesitamos obtener todos los programas que están en el grupo "Otros"
-        // Buscar el programa "Otros" en los datos procesados para obtener los programas agrupados
-        const otrosPrograma = programasProcesados.find(p => p.nombre === programa)
-        if (otrosPrograma && otrosPrograma.programasAgrupados) {
-          // Verificar si esta venta pertenece a alguno de los programas agrupados
-          const perteneceAOtros = otrosPrograma.programasAgrupados.includes(programaVenta)
-          if (perteneceAOtros) {
-            console.log('✅ Venta encontrada en grupo Otros para programa:', programaVenta);
-          }
-          return perteneceAOtros
-        }
-        console.log('📦 Programa es "Otros" pero no se encontró información de programas agrupados');
-        return false
-      }
-      
+      // Comparación directa - ya no hay agrupación en "Otros"
       const matches = programaVenta === programa
       if (matches) {
         console.log('✅ Venta encontrada para programa:', programa, 'venta:', v.id);
@@ -1031,8 +998,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           </div>
         ) : (
           <>
-        {/* Estadísticas destacadas - Responsive al tema */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Estadísticas destacadas - Responsive al tema */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-500/30 backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -1114,8 +1081,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           </Card>
         </div>
 
-        {/* Gráficos principales - Layout horizontal */}
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        {/* Gráfico principal de ventas - Ancho completo */}
+        <div className="grid gap-6 grid-cols-1">
           <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
@@ -1246,13 +1213,15 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               </div>
             </CardHeader>
             <CardContent className="pb-10">
-              <div ref={containerRef} className="w-full h-[400px] relative">
+              <div ref={containerRef} className="w-full h-[500px] relative">
                 <canvas ref={chartRef} className="w-full h-full rounded-lg" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border backdrop-blur-sm shadow-lg lg:col-span-2">
+        {/* Gráficos secundarios - Layout horizontal */}
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+          <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
             <CardHeader className="text-center">
               <CardTitle className="text-foreground text-2xl">Distribución por Asesor</CardTitle>
               <CardDescription className="text-muted-foreground">{asesoresProcesados.length > 8 
@@ -1286,13 +1255,16 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border backdrop-blur-sm shadow-lg lg:col-span-2">
+          <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
             <CardHeader className="text-center">
               <CardTitle className="text-foreground text-2xl flex items-center justify-center gap-2">
                 📚 Distribución por Programa
               </CardTitle>
               <CardDescription className="text-muted-foreground">
                 {programasProcesados.length} programa{programasProcesados.length !== 1 ? 's' : ''} de interés - {getNombreCliente()}
+                <span className="text-xs text-green-400 ml-2">
+                  (Todos los programas)
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent className="pb-4">
