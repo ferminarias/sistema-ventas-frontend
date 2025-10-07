@@ -143,15 +143,33 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
   // Procesar datos según el filtro seleccionado
   const procesarDatos = () => {
+    console.log('📊 Procesando datos con ventas:', ventas?.length || 0);
+    
     const ventasPorMes = Array(12).fill(0)
     const ventasPorAsesor: Record<string, number> = {}
     const ventasPorPrograma: Record<string, number> = {}
     
     // Verificación defensiva: si ventas no está definido o no es un array, retornar valores por defecto
     if (!ventas || !Array.isArray(ventas)) {
+      console.log('⚠️ Ventas no disponibles, usando datos por defecto');
       return {
         datos: ventasPorMes,
         labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+        asesores: ventasPorAsesor,
+        programas: ventasPorPrograma
+      }
+    }
+    
+    // Caso especial: si no hay ventas pero es un array válido, aún crear estructura
+    if (ventas.length === 0) {
+      console.log('📭 Array de ventas vacío, creando estructura vacía');
+      const labels = activeTab === "mensual" 
+        ? ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+        : Array.from({ length: semanaFin - semanaInicio + 1 }, (_, i) => `S${semanaInicio + i}`);
+        
+      return {
+        datos: activeTab === "mensual" ? Array(12).fill(0) : Array(semanaFin - semanaInicio + 1).fill(0),
+        labels,
         asesores: ventasPorAsesor,
         programas: ventasPorPrograma
       }
@@ -383,16 +401,35 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   ]
 
   useEffect(() => {
-    // No dibujar si está cargando o si no hay datos
-    if (loadingVentas || !ventas || ventas.length === 0) {
+    // Debug: Log estados para diagnóstico
+    console.log('🎨 useEffect draw - loadingVentas:', loadingVentas, 'ventas length:', ventas?.length || 0);
+    
+    // No dibujar si está cargando
+    if (loadingVentas) {
+      console.log('⏳ Esperando a que terminen de cargar las ventas...');
       return;
     }
     
-    // Dar tiempo a que los canvas se monten en el DOM
+    // Verificación mejorada: permitir dibujar aunque no haya datos (mostrar gráficos vacíos)
+    if (!ventas || !Array.isArray(ventas)) {
+      console.log('❌ Ventas no es un array válido:', ventas);
+      return;
+    }
+    
+    // Dar más tiempo a que los canvas se monten en el DOM 
     const timeoutId = setTimeout(() => {
+      console.log('🖼️ Iniciando dibujo de gráficos...');
+      
       if (!chartRef.current || !pieChartRef.current || !programaChartRef.current) {
+        console.log('❌ Canvas no disponibles:', {
+          chart: !!chartRef.current,
+          pie: !!pieChartRef.current, 
+          programa: !!programaChartRef.current
+        });
         return;
       }
+      
+      console.log('✅ Canvas disponibles, procediendo con el dibujo...');
       
       const { width, height } = dimensions;
     const dpr = window.devicePixelRatio || 1;
@@ -715,7 +752,15 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       programaCtx.font = "italic 11px Inter, sans-serif"
       programaCtx.fillText(`+${programasNombres.length - maxProgramaLegendItems} más programas`, programaLegendStartX + 18, y + 4)
     }
-    }, 100) // Esperar 100ms a que los canvas se monten
+      
+      console.log('🎨 Gráficos dibujados exitosamente!', {
+        ventasTotal: ventas.length,
+        datosLength: datos.length,
+        asesoresCount: asesoresProcesados.length,
+        programasCount: programasProcesados.length
+      });
+      
+    }, 300) // Esperar 300ms a que los canvas se monten y los datos se procesen
     
     return () => clearTimeout(timeoutId)
   }, [activeTab, selectedYear, semanaInicio, semanaFin, ventas, datos, labels, asesoresProcesados, hoveredPieIndex, programasProcesados, hoveredProgramaIndex, dimensions, loadingVentas])
