@@ -584,10 +584,34 @@ export default function ReportesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               {[0,1,2,3].map(i => {
                 const metricData = [
-                  { value: metrics?.totalSales ?? '-', label: 'Ventas del Mes', icon: '📈', trend: '+12%', isPositive: true },
-                  { value: metrics?.avgCloseTime ?? '-', label: 'Tiempo Promedio de Cierre', icon: '⏱️', trend: '-5%', isPositive: true },
-                  { value: metrics?.dailyAverage ?? '-', label: 'Ventas por Día Promedio', icon: '📊', trend: '+8%', isPositive: true },
-                  { value: metrics?.conversionRate ?? '-', label: 'Tasa de Conversión', icon: '🎯', trend: '+3%', isPositive: true }
+                  { 
+                    value: metrics?.totalSales ?? '-', 
+                    label: 'Ventas del Mes', 
+                    icon: '📈', 
+                    trend: metrics?.totalSalesTrend ? (metrics.totalSalesTrend > 0 ? `+${metrics.totalSalesTrend}%` : `${metrics.totalSalesTrend}%`) : '+12%', 
+                    isPositive: metrics?.totalSalesTrend ? metrics.totalSalesTrend > 0 : true 
+                  },
+                  { 
+                    value: metrics?.avgCloseTime ?? '-', 
+                    label: 'Tiempo Promedio de Cierre', 
+                    icon: '⏱️', 
+                    trend: metrics?.avgCloseTimeTrend ? (metrics.avgCloseTimeTrend > 0 ? `+${metrics.avgCloseTimeTrend}%` : `${metrics.avgCloseTimeTrend}%`) : '-5%', 
+                    isPositive: metrics?.avgCloseTimeTrend ? metrics.avgCloseTimeTrend < 0 : true  // Negativo es bueno para tiempo de cierre
+                  },
+                  { 
+                    value: metrics?.dailyAverage ?? '-', 
+                    label: 'Ventas por Día Promedio', 
+                    icon: '📊', 
+                    trend: metrics?.dailyAverageTrend ? (metrics.dailyAverageTrend > 0 ? `+${metrics.dailyAverageTrend}%` : `${metrics.dailyAverageTrend}%`) : '+8%', 
+                    isPositive: metrics?.dailyAverageTrend ? metrics.dailyAverageTrend > 0 : true 
+                  },
+                  { 
+                    value: metrics?.conversionRate ?? '-', 
+                    label: 'Tasa de Conversión', 
+                    icon: '🎯', 
+                    trend: metrics?.conversionRateTrend ? (metrics.conversionRateTrend > 0 ? `+${metrics.conversionRateTrend}%` : `${metrics.conversionRateTrend}%`) : '+3%', 
+                    isPositive: metrics?.conversionRateTrend ? metrics.conversionRateTrend > 0 : true 
+                  }
                 ][i];
                 
                 return (
@@ -811,28 +835,48 @@ export default function ReportesPage() {
                                 )}
                               </div>
                               
-                              {/* Botones de icono - visible en hover */}
-                              <div className="absolute -top-1 -right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              {/* Botones de icono - siempre visibles con mejor diseño */}
+                              <div className="absolute -top-1 -right-1 flex gap-1 transition-all duration-200">
                                 {(advisor as any).iconUrl || (advisor as any).icon_url ? (
-                                  <button
-                                    onClick={() => handleDeleteIcon(advisor.name)}
-                                    className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 transition-colors"
-                                    title="Eliminar icono"
-                                  >
-                                    🗑️
-                                  </button>
+                                  <>
+                                    {/* Botón para cambiar foto */}
+                                    <div className="relative">
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleFileUpload(e, advisor.name)}
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6"
+                                        disabled={uploadingIcon === advisor.name}
+                                      />
+                                      <button
+                                        className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-blue-600 transition-colors shadow-lg border-2 border-white/20"
+                                        title="Cambiar foto de perfil"
+                                        disabled={uploadingIcon === advisor.name}
+                                      >
+                                        {uploadingIcon === advisor.name ? '⏳' : '📷'}
+                                      </button>
+                                    </div>
+                                    {/* Botón para eliminar foto */}
+                                    <button
+                                      onClick={() => handleDeleteIcon(advisor.name)}
+                                      className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 transition-colors shadow-lg border-2 border-white/20"
+                                      title="Eliminar foto de perfil"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </>
                                 ) : (
                                   <div className="relative">
                                     <input
                                       type="file"
                                       accept="image/*"
                                       onChange={(e) => handleFileUpload(e, advisor.name)}
-                                      className="absolute inset-0 opacity-0 cursor-pointer w-5 h-5"
+                                      className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6"
                                       disabled={uploadingIcon === advisor.name}
                                     />
                                     <button
-                                      className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-green-600 transition-colors"
-                                      title="Subir icono"
+                                      className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-green-600 transition-colors shadow-lg border-2 border-white/20 animate-pulse"
+                                      title="Agregar foto de perfil"
                                       disabled={uploadingIcon === advisor.name}
                                     >
                                       {uploadingIcon === advisor.name ? '⏳' : '📷'}
@@ -916,11 +960,80 @@ export default function ReportesPage() {
                           <div className="flex items-center gap-5 z-10">
                             <div className="relative">
                               {/* Avatar con animación 3D */}
-                              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-purple-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20">
-                                <span className="drop-shadow-lg">
-                              {advisor.name.split(" ").map((n: string) => n[0]).join("")}
-                                </span>
+                              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-purple-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20 overflow-hidden">
+                                {(advisor as any).iconUrl || (advisor as any).icon_url ? (
+                                  <img 
+                                    src={(advisor as any).iconUrl || (advisor as any).icon_url} 
+                                    alt={`Icono de ${advisor.name}`}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      // Si la imagen falla, mostrar iniciales
+                                      e.currentTarget.style.display = 'none';
+                                      const parent = e.currentTarget.parentElement;
+                                      if (parent && !parent.querySelector('.initials-fallback')) {
+                                        const span = document.createElement('span');
+                                        span.className = 'initials-fallback drop-shadow-lg';
+                                        span.textContent = advisor.name.split(" ").map((n: string) => n[0]).join("");
+                                        parent.appendChild(span);
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  <span className="drop-shadow-lg">
+                                {advisor.name.split(" ").map((n: string) => n[0]).join("")}
+                                  </span>
+                                )}
                             </div>
+                              
+                              {/* Botones de icono para Top Asesores por Cliente */}
+                              <div className="absolute -top-1 -right-1 flex gap-1 transition-all duration-200">
+                                {(advisor as any).iconUrl || (advisor as any).icon_url ? (
+                                  <>
+                                    {/* Botón para cambiar foto */}
+                                    <div className="relative">
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleFileUpload(e, advisor.name)}
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6"
+                                        disabled={uploadingIcon === advisor.name}
+                                      />
+                                      <button
+                                        className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-purple-600 transition-colors shadow-lg border-2 border-white/20"
+                                        title="Cambiar foto de perfil"
+                                        disabled={uploadingIcon === advisor.name}
+                                      >
+                                        {uploadingIcon === advisor.name ? '⏳' : '📷'}
+                                      </button>
+                                    </div>
+                                    {/* Botón para eliminar foto */}
+                                    <button
+                                      onClick={() => handleDeleteIcon(advisor.name)}
+                                      className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 transition-colors shadow-lg border-2 border-white/20"
+                                      title="Eliminar foto de perfil"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </>
+                                ) : (
+                                  <div className="relative">
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => handleFileUpload(e, advisor.name)}
+                                      className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6"
+                                      disabled={uploadingIcon === advisor.name}
+                                    />
+                                    <button
+                                      className="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-pink-600 transition-colors shadow-lg border-2 border-white/20 animate-pulse"
+                                      title="Agregar foto de perfil"
+                                      disabled={uploadingIcon === advisor.name}
+                                    >
+                                      {uploadingIcon === advisor.name ? '⏳' : '📷'}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                               
                               {/* Badge animado para el primer lugar */}
                               {index === 0 && (

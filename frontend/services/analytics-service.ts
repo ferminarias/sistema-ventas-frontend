@@ -18,21 +18,39 @@ function getAuthHeaders(): HeadersInit {
 export const analyticsService = {
   async getMetrics(cliente?: string) {
     const params = cliente ? `?cliente=${encodeURIComponent(cliente)}` : '';
+    console.log('📊 Calling metrics API:', `${API_BASE}/api/analytics/metrics${params}`);
     const response = await fetch(`${API_BASE}/api/analytics/metrics${params}`, {
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
-    return response.json();
+    
+    if (!response.ok) {
+      console.error('❌ Metrics API failed:', response.status, response.statusText);
+      throw new Error(`Metrics API failed: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Metrics data received:', data);
+    return data;
   },
 
   async getSalesTrend(period: string, cliente?: string) {
     const params = new URLSearchParams({ period });
     if (cliente) params.append('cliente', cliente);
+    console.log('📈 Calling sales-trend API:', `${API_BASE}/api/analytics/sales-trend?${params.toString()}`);
     const response = await fetch(`${API_BASE}/api/analytics/sales-trend?${params.toString()}`, { 
       headers: getAuthHeaders(),
       credentials: 'include' 
     });
-    return response.json();
+    
+    if (!response.ok) {
+      console.error('❌ Sales-trend API failed:', response.status, response.statusText);
+      throw new Error(`Sales-trend API failed: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Sales-trend data received:', data);
+    return data;
   },
 
   async getTopAdvisors(cliente?: string, month?: string, year?: string) {

@@ -42,13 +42,31 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     const updateSize = () => {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        setDimensions({ width: rect.width, height: rect.height });
+        const newDimensions = { 
+          width: Math.max(rect.width, 300), // Mínimo 300px
+          height: Math.max(rect.height, 200) // Mínimo 200px
+        };
+        console.log('📐 Actualizando dimensiones:', newDimensions);
+        setDimensions(newDimensions);
       }
     };
-    updateSize();
-    const observer = new ResizeObserver(updateSize);
-    if (containerRef.current) observer.observe(containerRef.current);
-    return () => observer.disconnect();
+    
+    // Esperar un poco antes de la primera medición
+    const initialTimeout = setTimeout(updateSize, 100);
+    
+    const observer = new ResizeObserver(() => {
+      // Debounce para evitar múltiples actualizaciones
+      setTimeout(updateSize, 50);
+    });
+    
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    
+    return () => {
+      clearTimeout(initialTimeout);
+      observer.disconnect();
+    };
   }, []);
 
   // Validación defensiva para cliente
@@ -143,15 +161,33 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
   // Procesar datos según el filtro seleccionado
   const procesarDatos = () => {
+    console.log('📊 Procesando datos con ventas:', ventas?.length || 0);
+    
     const ventasPorMes = Array(12).fill(0)
     const ventasPorAsesor: Record<string, number> = {}
     const ventasPorPrograma: Record<string, number> = {}
     
     // Verificación defensiva: si ventas no está definido o no es un array, retornar valores por defecto
     if (!ventas || !Array.isArray(ventas)) {
+      console.log('⚠️ Ventas no disponibles, usando datos por defecto');
       return {
         datos: ventasPorMes,
         labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+        asesores: ventasPorAsesor,
+        programas: ventasPorPrograma
+      }
+    }
+    
+    // Caso especial: si no hay ventas pero es un array válido, aún crear estructura
+    if (ventas.length === 0) {
+      console.log('📭 Array de ventas vacío, creando estructura vacía');
+      const labels = activeTab === "mensual" 
+        ? ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+        : Array.from({ length: semanaFin - semanaInicio + 1 }, (_, i) => `S${semanaInicio + i}`);
+        
+      return {
+        datos: activeTab === "mensual" ? Array(12).fill(0) : Array(semanaFin - semanaInicio + 1).fill(0),
+        labels,
         asesores: ventasPorAsesor,
         programas: ventasPorPrograma
       }
@@ -383,38 +419,76 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   ]
 
   useEffect(() => {
-    // No dibujar si está cargando o si no hay datos
-    if (loadingVentas || !ventas || ventas.length === 0) {
+    // Debug: Log estados para diagnóstico
+    console.log('🎨 useEffect draw - loadingVentas:', loadingVentas, 'ventas length:', ventas?.length || 0);
+    console.log('📐 Dimensions:', dimensions);
+    
+    // No dibujar si está cargando
+    if (loadingVentas) {
+      console.log('⏳ Esperando a que terminen de cargar las ventas...');
       return;
     }
     
-    // Dar tiempo a que los canvas se monten en el DOM
+    // Verificar dimensiones válidas
+    if (dimensions.width <= 0 || dimensions.height <= 0) {
+      console.log('📐 Dimensiones inválidas, esperando...', dimensions);
+      return;
+    }
+    
+    // Verificación mejorada: permitir dibujar aunque no haya datos (mostrar gráficos vacíos)
+    if (!ventas || !Array.isArray(ventas)) {
+      console.log('❌ Ventas no es un array válido:', ventas);
+      return;
+    }
+    
+    // Dar más tiempo a que los canvas se monten en el DOM 
     const timeoutId = setTimeout(() => {
+      console.log('🖼️ Iniciando dibujo de gráficos...');
+      
       if (!chartRef.current || !pieChartRef.current || !programaChartRef.current) {
+        console.log('❌ Canvas no disponibles:', {
+          chart: !!chartRef.current,
+          pie: !!pieChartRef.current, 
+          programa: !!programaChartRef.current
+        });
         return;
       }
+      
+      // Verificar contextos 2D
+      const ctx = chartRef.current.getContext("2d");
+      const pieCtx = pieChartRef.current.getContext("2d");
+      const programaCtx = programaChartRef.current.getContext("2d");
+      
+      if (!ctx || !pieCtx || !programaCtx) {
+        console.log('❌ Contextos 2D no disponibles:', {
+          ctx: !!ctx,
+          pieCtx: !!pieCtx,
+          programaCtx: !!programaCtx
+        });
+        return;
+      }
+      
+      console.log('✅ Canvas y contextos disponibles, procediendo con el dibujo...');
       
       const { width, height } = dimensions;
     const dpr = window.devicePixelRatio || 1;
     chartRef.current.width = width * dpr;
     chartRef.current.height = height * dpr;
-    chartRef.current.style.width = width + "px";
-    chartRef.current.style.height = height + "px";
-    pieChartRef.current.width = width * dpr;
-    pieChartRef.current.height = height * dpr;
-    pieChartRef.current.style.width = width + "px";
-    pieChartRef.current.style.height = height + "px";
-    programaChartRef.current.width = width * dpr;
-    programaChartRef.current.height = height * dpr;
-    programaChartRef.current.style.width = width + "px";
-    programaChartRef.current.style.height = height + "px";
-    const ctx = chartRef.current.getContext("2d");
-    const pieCtx = pieChartRef.current.getContext("2d");
-    const programaCtx = programaChartRef.current.getContext("2d");
-    if (!ctx || !pieCtx || !programaCtx) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    pieCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    programaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      chartRef.current.style.width = width + "px";
+      chartRef.current.style.height = height + "px";
+      pieChartRef.current.width = width * dpr;
+      pieChartRef.current.height = height * dpr;
+      pieChartRef.current.style.width = width + "px";
+      pieChartRef.current.style.height = height + "px";
+      programaChartRef.current.width = width * dpr;
+      programaChartRef.current.height = height * dpr;
+      programaChartRef.current.style.width = width + "px";
+      programaChartRef.current.style.height = height + "px";
+      
+      // Los contextos ya fueron verificados arriba
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      pieCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      programaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // Limpiar canvas
     ctx.clearRect(0, 0, width, height)
@@ -715,7 +789,15 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       programaCtx.font = "italic 11px Inter, sans-serif"
       programaCtx.fillText(`+${programasNombres.length - maxProgramaLegendItems} más programas`, programaLegendStartX + 18, y + 4)
     }
-    }, 100) // Esperar 100ms a que los canvas se monten
+      
+      console.log('🎨 Gráficos dibujados exitosamente!', {
+        ventasTotal: ventas.length,
+        datosLength: datos.length,
+        asesoresCount: asesoresProcesados.length,
+        programasCount: programasProcesados.length
+      });
+      
+    }, 500) // Esperar 500ms a que los canvas se monten y los datos se procesen
     
     return () => clearTimeout(timeoutId)
   }, [activeTab, selectedYear, semanaInicio, semanaFin, ventas, datos, labels, asesoresProcesados, hoveredPieIndex, programasProcesados, hoveredProgramaIndex, dimensions, loadingVentas])
