@@ -1000,86 +1000,86 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           <>
             {/* Estadísticas destacadas - Responsive al tema */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-500/30 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Ventas</p>
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-4 w-4 text-blue-600/70 dark:text-blue-400/70 hover:text-blue-700 dark:hover:text-blue-300 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    <p className="text-sm">{tooltips.totalVentas}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <p className="text-2xl font-bold text-blue-800 dark:text-blue-100">{estadisticas.totalVentas}</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-br from-green-500/20 to-green-600/20 border-green-500/30 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <CalendarDays className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <p className="text-sm font-medium text-green-700 dark:text-green-300">Promedio</p>
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-4 w-4 text-green-600/70 dark:text-green-400/70 hover:text-green-700 dark:hover:text-green-300 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    <p className="text-sm">{tooltips.promedio}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <p className="text-2xl font-bold text-green-800 dark:text-green-100">{estadisticas.promedioVentas}</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-purple-500/30 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Máximo</p>
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-4 w-4 text-purple-600/70 dark:text-purple-400/70 hover:text-purple-700 dark:hover:text-purple-300 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    <p className="text-sm">{tooltips.maximo}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <p className="text-2xl font-bold text-purple-800 dark:text-purple-100">{estadisticas.maxVentas}</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border-orange-500/30 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <Users className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                  <p className="text-sm font-medium text-orange-700 dark:text-orange-300">Asesores</p>
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-4 w-4 text-orange-600/70 dark:text-orange-400/70 hover:text-orange-700 dark:hover:text-orange-300 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    <p className="text-sm">{tooltips.asesores}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <p className="text-2xl font-bold text-orange-800 dark:text-orange-100">{estadisticas.totalAsesores}</p>
-            </CardContent>
-          </Card>
-        </div>
+              <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-500/30 backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Ventas</p>
+                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-4 w-4 text-blue-600/70 dark:text-blue-400/70 hover:text-blue-700 dark:hover:text-blue-300 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p className="text-sm">{tooltips.totalVentas}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-800 dark:text-blue-100">{estadisticas.totalVentas}</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-green-500/20 to-green-600/20 border-green-500/30 backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <CalendarDays className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <p className="text-sm font-medium text-green-700 dark:text-green-300">Promedio</p>
+                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-4 w-4 text-green-600/70 dark:text-green-400/70 hover:text-green-700 dark:hover:text-green-300 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p className="text-sm">{tooltips.promedio}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-2xl font-bold text-green-800 dark:text-green-100">{estadisticas.promedioVentas}</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-purple-500/30 backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Máximo</p>
+                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-4 w-4 text-purple-600/70 dark:text-purple-400/70 hover:text-purple-700 dark:hover:text-purple-300 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p className="text-sm">{tooltips.maximo}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-2xl font-bold text-purple-800 dark:text-purple-100">{estadisticas.maxVentas}</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border-orange-500/30 backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <Users className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                      <p className="text-sm font-medium text-orange-700 dark:text-orange-300">Asesores</p>
+                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-4 w-4 text-orange-600/70 dark:text-orange-400/70 hover:text-orange-700 dark:hover:text-orange-300 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p className="text-sm">{tooltips.asesores}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-2xl font-bold text-orange-800 dark:text-orange-100">{estadisticas.totalAsesores}</p>
+                </CardContent>
+              </Card>
+            </div>
 
         {/* Gráfico principal de ventas - Ancho completo */}
         <div className="grid gap-6 grid-cols-1">

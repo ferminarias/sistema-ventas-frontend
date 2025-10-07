@@ -269,7 +269,7 @@ export default function ReportesPage() {
         // La API puede devolver {general, byClient} O {items, period}
         // Combinar datos de general con iconos de items
         const generalData = advisorsWithIconsData?.general || []
-        const itemsData = advisorsWithIconsData?.items || []
+        const itemsData = (advisorsWithIconsData as any)?.items || []
         const byClientData = advisorsWithIconsData?.byClient || []
         
         // Crear map de iconos por nombre
@@ -386,7 +386,7 @@ export default function ReportesPage() {
       
       // Combinar datos de general con iconos de items
       const generalData = advisorsWithIconsData?.general || []
-      const itemsData = advisorsWithIconsData?.items || []
+      const itemsData = (advisorsWithIconsData as any)?.items || []
       const byClientData = advisorsWithIconsData?.byClient || []
       
       // Crear map de iconos por nombre
@@ -440,7 +440,7 @@ export default function ReportesPage() {
       
       // Combinar datos de general con iconos de items
       const generalData = advisorsWithIconsData?.general || []
-      const itemsData = advisorsWithIconsData?.items || []
+      const itemsData = (advisorsWithIconsData as any)?.items || []
       const byClientData = advisorsWithIconsData?.byClient || []
       
       // Crear map de iconos por nombre
