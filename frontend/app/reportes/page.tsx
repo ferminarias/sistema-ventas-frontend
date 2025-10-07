@@ -248,15 +248,21 @@ export default function ReportesPage() {
           analyticsService.getHeatmap(clienteFiltro),
         ])
         setMetrics(metricsData)
-        setTopAdvisorsGeneral(advisorsWithIconsData.general)
-        setTopAdvisorsByClient(advisorsWithIconsData.byClient)
-        setTopClients(clientsData)
+        setTopAdvisorsGeneral(Array.isArray(advisorsWithIconsData?.general) ? advisorsWithIconsData.general : [])
+        setTopAdvisorsByClient(Array.isArray(advisorsWithIconsData?.byClient) ? advisorsWithIconsData.byClient : [])
+        setTopClients(Array.isArray(clientsData) ? clientsData : [])
         setSalesTrend(salesTrendData)
         setHourlyDistribution(hourlyData)
         setPipeline(pipelineData)
-        setHeatmap(heatmapData)
+        setHeatmap(Array.isArray(heatmapData) ? heatmapData : [])
       } catch (err: any) {
+        console.error('Error al cargar datos de reportes:', err)
         setError(err.message || "Error al cargar los datos")
+        // Asegurar que los estados sean arrays vacíos en caso de error
+        setTopAdvisorsGeneral([])
+        setTopAdvisorsByClient([])
+        setTopClients([])
+        setHeatmap([])
       } finally {
         setLoading(false)
       }
@@ -722,7 +728,7 @@ export default function ReportesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {topAdvisorsGeneral.length > 0 ? (
+                    {Array.isArray(topAdvisorsGeneral) && topAdvisorsGeneral.length > 0 ? (
                       topAdvisorsGeneral.map((advisor, index) => (
                         <div 
                           key={index} 
@@ -844,7 +850,7 @@ export default function ReportesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {topAdvisorsByClient.length > 0 ? (
+                    {Array.isArray(topAdvisorsByClient) && topAdvisorsByClient.length > 0 ? (
                       topAdvisorsByClient.map((advisor, index) => (
                         <div 
                           key={index} 
@@ -927,7 +933,7 @@ export default function ReportesPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {topClients.length > 0 ? (
+                  {Array.isArray(topClients) && topClients.length > 0 ? (
                     topClients.map((client, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
                         <div className="flex items-center gap-3">

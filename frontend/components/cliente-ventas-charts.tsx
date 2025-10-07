@@ -383,7 +383,10 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   ]
 
   useEffect(() => {
+    // No dibujar si está cargando o si no hay datos
+    if (loadingVentas || !ventas || ventas.length === 0) return;
     if (!chartRef.current || !pieChartRef.current || !programaChartRef.current) return;
+    
     const { width, height } = dimensions;
     const dpr = window.devicePixelRatio || 1;
     chartRef.current.width = width * dpr;
@@ -705,7 +708,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       programaCtx.font = "italic 11px Inter, sans-serif"
       programaCtx.fillText(`+${programasNombres.length - maxProgramaLegendItems} más programas`, programaLegendStartX + 18, y + 4)
     }
-  }, [activeTab, selectedYear, semanaInicio, semanaFin, ventas, datos, labels, asesoresProcesados, hoveredPieIndex, programasProcesados, hoveredProgramaIndex])
+  }, [activeTab, selectedYear, semanaInicio, semanaFin, ventas, datos, labels, asesoresProcesados, hoveredPieIndex, programasProcesados, hoveredProgramaIndex, dimensions, loadingVentas])
 
   // Efecto hover: detectar sector con mouse
   useEffect(() => {
