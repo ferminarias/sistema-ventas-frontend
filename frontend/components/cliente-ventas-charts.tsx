@@ -34,7 +34,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const programaChartRef = useRef<HTMLCanvasElement>(null)
   const [hoveredProgramaIndex, setHoveredProgramaIndex] = useState<number | null>(null)
   const [programaTooltip, setProgramaTooltip] = useState<{x: number, y: number, label: string, value: number} | null>(null)
-  
+
   // Estado para programa seleccionado y sus ventas
   const [programaSeleccionado, setProgramaSeleccionado] = useState<string | null>(null)
 
@@ -222,6 +222,12 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
   const { datos, labels, asesores: ventasPorAsesor, programas: ventasPorPrograma = {} } = procesarDatos()
 
+  console.log('📈 Datos procesados:', datos);
+  console.log('📈 Total en datos:', datos.reduce((a, b) => a + b, 0));
+  console.log('📈 Labels:', labels);
+  console.log('📈 Asesores:', ventasPorAsesor);
+  console.log('📈 Programas:', ventasPorPrograma);
+
   // Calcular estadísticas para mostrar
   const estadisticas = {
     totalVentas: datos.reduce((sum, val) => sum + val, 0),
@@ -383,10 +389,25 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   ]
 
   useEffect(() => {
-    // No dibujar si está cargando o si no hay datos
-    if (loadingVentas || !ventas || ventas.length === 0) return;
-    if (!chartRef.current || !pieChartRef.current || !programaChartRef.current) return;
+    console.log('🎨 useEffect de dibujo ejecutado');
+    console.log('🎨 loadingVentas:', loadingVentas);
+    console.log('🎨 ventas:', ventas?.length);
+    console.log('🎨 datos:', datos);
+    console.log('🎨 labels:', labels);
+    console.log('🎨 asesoresProcesados:', asesoresProcesados);
+    console.log('🎨 programasProcesados:', programasProcesados);
     
+    // No dibujar si está cargando o si no hay datos
+    if (loadingVentas || !ventas || ventas.length === 0) {
+      console.log('🎨 Retornando: loadingVentas o no hay ventas');
+      return;
+    }
+    if (!chartRef.current || !pieChartRef.current || !programaChartRef.current) {
+      console.log('🎨 Retornando: refs no disponibles');
+      return;
+    }
+    
+    console.log('🎨 ✅ Iniciando dibujo de gráficos...');
     const { width, height } = dimensions;
     const dpr = window.devicePixelRatio || 1;
     chartRef.current.width = width * dpr;
@@ -883,8 +904,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           </div>
         ) : (
           <>
-            {/* Estadísticas destacadas - Responsive al tema */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Estadísticas destacadas - Responsive al tema */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-500/30 backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -1148,7 +1169,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               </CardDescription>
             </CardHeader>
             <CardContent className="pb-4">
-              {programasProcesados.length > 0 ? (
+                {programasProcesados.length > 0 ? (
                 <div className="space-y-3">
                   {programasProcesados.map((programa, index) => {
                     const ventasPrograma = getVentasPorPrograma(programa.nombre)
@@ -1196,7 +1217,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                           <div className="mt-3 w-full bg-muted rounded-full h-2 overflow-hidden">
                             <div 
                               className="h-full rounded-full transition-all duration-500"
-                              style={{ 
+                        style={{
                                 backgroundColor: programaColors[index % programaColors.length],
                                 width: `${porcentaje}%` 
                               }}
@@ -1223,7 +1244,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                                       <div>
                                         <span className="text-muted-foreground">Cliente:</span>
                                         <p className="font-medium text-foreground">{venta.nombre} {venta.apellido}</p>
-                                      </div>
+                        </div>
                                       <div>
                                         <span className="text-muted-foreground">Email:</span>
                                         <p className="font-medium text-foreground truncate">{venta.email || 'N/A'}</p>
@@ -1246,8 +1267,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                                         <div>
                                           <span className="text-muted-foreground">Modalidad:</span>
                                           <p className="font-medium text-foreground">{venta.campos_adicionales.modalidad}</p>
-                                        </div>
-                                      )}
+                      </div>
+                    )}
                                       {venta.campos_adicionales?.turno && (
                                         <div>
                                           <span className="text-muted-foreground">Turno:</span>
@@ -1269,15 +1290,15 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-48">
-                  <div className="text-center space-y-2">
-                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto">
-                      📚
+                    <div className="text-center space-y-2">
+                      <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto">
+                        📚
+                      </div>
+                      <p className="text-muted-foreground text-sm">No hay datos de programas disponibles</p>
+                      <p className="text-muted-foreground text-xs">Los programas se mostrarán cuando haya ventas con campo "programa_interes"</p>
                     </div>
-                    <p className="text-muted-foreground text-sm">No hay datos de programas disponibles</p>
-                    <p className="text-muted-foreground text-xs">Los programas se mostrarán cuando haya ventas con campo "programa_interes"</p>
                   </div>
-                </div>
-              )}
+                )}
             </CardContent>
           </Card>
         </div>

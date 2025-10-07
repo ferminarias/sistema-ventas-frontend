@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/tooltip"
 import { Info } from "lucide-react"
 import { clientService } from '@/services/client-service'
-import { ClienteVentasCharts } from '@/components/cliente-ventas-charts'
 import { useAuth } from "@/contexts/auth-context"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
@@ -186,10 +185,14 @@ export default function ReportesPage() {
   const [allowedClients, setAllowedClients] = useState<any[]>([])
   const [clienteFiltro, setClienteFiltro] = useState<string | undefined>(undefined)
   
-  // Estados para el filtro mensual de Top Asesores
+  // Estados para el filtro mensual GLOBAL de la página
   const currentDate = new Date()
-  const [selectedMonth, setSelectedMonth] = useState<string>(String(currentDate.getMonth() + 1).padStart(2, '0'))
-  const [selectedReportYear, setSelectedReportYear] = useState<string>(String(currentDate.getFullYear()))
+  const [globalFilterMonth, setGlobalFilterMonth] = useState<string>('all') // 'all' para mostrar acumulativo
+  const [globalFilterYear, setGlobalFilterYear] = useState<string>(String(currentDate.getFullYear()))
+  
+  // Calcular mes/año para la API (undefined si es 'all')
+  const selectedMonth = globalFilterMonth === 'all' ? undefined : globalFilterMonth
+  const selectedReportYear = globalFilterMonth === 'all' ? undefined : globalFilterYear
   
   // Estados para manejo de iconos de asesores
   const [uploadingIcon, setUploadingIcon] = useState<string | null>(null)
@@ -247,6 +250,10 @@ export default function ReportesPage() {
           analyticsService.getPipeline(clienteFiltro),
           analyticsService.getHeatmap(clienteFiltro),
         ])
+        console.log('📊 Datos recibidos de asesores:', advisorsWithIconsData)
+        console.log('📊 General:', advisorsWithIconsData?.general)
+        console.log('📊 Por cliente:', advisorsWithIconsData?.byClient)
+        
         setMetrics(metricsData)
         setTopAdvisorsGeneral(Array.isArray(advisorsWithIconsData?.general) ? advisorsWithIconsData.general : [])
         setTopAdvisorsByClient(Array.isArray(advisorsWithIconsData?.byClient) ? advisorsWithIconsData.byClient : [])
@@ -268,7 +275,7 @@ export default function ReportesPage() {
       }
     }
     loadData()
-  }, [selectedPeriod, clienteFiltro, selectedMonth, selectedReportYear])
+  }, [selectedPeriod, clienteFiltro, globalFilterMonth, globalFilterYear])
 
   useEffect(() => {
     setFadeIn(true)
@@ -483,20 +490,12 @@ export default function ReportesPage() {
     ],
   }
 
-  const nombreClienteSeleccionado = selectedClient === "all"
-    ? "Todos los clientes"
-    : clientIdToName[String(selectedClient)] || "(Nombre no disponible)"
-
-  console.log("selectedClient:", selectedClient);
-  console.log("clientIdToName:", clientIdToName);
-  console.log("Nombre calculado:", nombreClienteSeleccionado);
-
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-10">
       <TooltipProvider>
         <div className={`transition-opacity duration-500 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
           <div className="p-6 max-w-7xl mx-auto">
-            {/* Botón de volver atrás */}
+            {/* Botón de volver atrás y título */}
             <div className="flex items-center gap-4 mb-6">
               <Button 
                 variant="outline" 
@@ -508,6 +507,55 @@ export default function ReportesPage() {
               </Button>
               <h1 className="text-4xl font-bold text-white">📊 Reportes y Análisis</h1>
             </div>
+
+            {/* Filtro mensual global */}
+            <Card className="mb-6 border-blue-500/30 bg-gradient-to-r from-blue-900/20 to-purple-900/20">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-blue-300">📅 Período de Análisis:</span>
+                    <div className="flex items-center gap-2">
+                      <select 
+                        value={globalFilterMonth}
+                        onChange={(e) => setGlobalFilterMonth(e.target.value)}
+                        className="bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-2 text-sm font-medium hover:border-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="all">📊 Todo el período (Acumulado)</option>
+                        <option value="01">Enero</option>
+                        <option value="02">Febrero</option>
+                        <option value="03">Marzo</option>
+                        <option value="04">Abril</option>
+                        <option value="05">Mayo</option>
+                        <option value="06">Junio</option>
+                        <option value="07">Julio</option>
+                        <option value="08">Agosto</option>
+                        <option value="09">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                      </select>
+                      {globalFilterMonth !== 'all' && (
+                        <select 
+                          value={globalFilterYear}
+                          onChange={(e) => setGlobalFilterYear(e.target.value)}
+                          className="bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-2 text-sm font-medium hover:border-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="2024">2024</option>
+                          <option value="2025">2025</option>
+                          <option value="2026">2026</option>
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    {globalFilterMonth === 'all' 
+                      ? '📈 Mostrando datos acumulados de todo el historial'
+                      : `📅 Mostrando datos de ${getMonthName(globalFilterMonth)} ${globalFilterYear}`
+                    }
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
             {/* Métricas principales con data storytelling mejorado */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               {[0,1,2,3].map(i => {
@@ -688,42 +736,12 @@ export default function ReportesPage() {
                   </div>
                 )}
                 <CardHeader>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
                   <CardTitle className="text-white">🏆 Top Asesores General</CardTitle>
-                      <div className="text-slate-400">
-                        {getMonthName(selectedMonth)} {selectedReportYear} - Ranking mensual
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <select 
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 text-sm"
-                      >
-                        <option value="01">Enero</option>
-                        <option value="02">Febrero</option>
-                        <option value="03">Marzo</option>
-                        <option value="04">Abril</option>
-                        <option value="05">Mayo</option>
-                        <option value="06">Junio</option>
-                        <option value="07">Julio</option>
-                        <option value="08">Agosto</option>
-                        <option value="09">Septiembre</option>
-                        <option value="10">Octubre</option>
-                        <option value="11">Noviembre</option>
-                        <option value="12">Diciembre</option>
-                      </select>
-                      <select 
-                        value={selectedReportYear}
-                        onChange={(e) => setSelectedReportYear(e.target.value)}
-                        className="bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 text-sm"
-                      >
-                        <option value="2024">2024</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                      </select>
-                    </div>
+                  <div className="text-slate-400">
+                    {globalFilterMonth === 'all' 
+                      ? 'Ranking acumulado de todo el período' 
+                      : `${getMonthName(globalFilterMonth)} ${globalFilterYear} - Ranking mensual`
+                    }
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -1211,16 +1229,6 @@ export default function ReportesPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Renderizar ClienteVentasCharts solo cuando el mapeo ya está completamente cargado y el nombre está disponible */}
-            {Object.keys(clientIdToName).length > 0 && 
-              (selectedClient === "all" || clientIdToName[String(selectedClient)] !== undefined) && (
-              <ClienteVentasCharts
-                cliente={selectedClient}
-                clientIdToName={clientIdToName}
-                nombreCliente={nombreClienteSeleccionado}
-              />
-            )}
           </div>
         </div>
       </TooltipProvider>
