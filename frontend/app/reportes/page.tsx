@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,10 +19,10 @@ import {
   Legend,
   Filler,
 } from "chart.js"
-import { Line, Bar, Scatter } from "react-chartjs-2"
+import { Line, Bar } from "react-chartjs-2"
 import { analyticsService } from "@/services/analytics-service"
 import { asesoresService } from "@/services/asesores-service"
-import { Loader2, ArrowLeft } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { RailwayLoader } from "@/components/ui/railway-loader"
 import {
   Tooltip as UiTooltip,
@@ -39,7 +39,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-
 // Registrar componentes de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler)
 
-// 1. Clases base optimizadas para mejor rendimientoimage.png
+// Clases base optimizadas
 const cardBase = `
   transition-all duration-300 ease-out
   border border-gray-700/50 shadow-xl rounded-2xl 
@@ -48,7 +48,7 @@ const cardBase = `
   group relative
 `
 
-// 2. Clases optimizadas para métricas principales
+// Clases optimizadas para métricas principales
 const metricHighlights = [
   "bg-gray-800/90 border-t-4 border-blue-500/80 shadow-lg",
   "bg-gray-800/90 border-t-4 border-purple-500/80 shadow-lg", 
@@ -56,42 +56,17 @@ const metricHighlights = [
   "bg-gray-800/90 border-t-4 border-pink-500/80 shadow-lg"
 ]
 
-// Componente HeatmapCell con mejoras UX/UI avanzadas
+// Componente HeatmapCell
 const HeatmapCell = ({ day, intensity, week, date, sales, avg, isActive, onHover, onClick }: {
   day: string, intensity: number, week: number, date?: string, sales?: number, avg?: number, isActive?: boolean, onHover?: () => void, onClick?: () => void
 }) => {
-  // Colores optimizados para mejor rendimiento
   const intensityStyles = [
-    { 
-      bg: "bg-slate-600", 
-      text: "text-slate-200", 
-      shadow: "shadow-sm"
-    }, // 0 ventas
-    { 
-      bg: "bg-blue-900", 
-      text: "text-white", 
-      shadow: "shadow-md"
-    }, // pocas ventas
-    { 
-      bg: "bg-blue-700", 
-      text: "text-white", 
-      shadow: "shadow-lg"
-    },
-    { 
-      bg: "bg-blue-500", 
-      text: "text-white", 
-      shadow: "shadow-xl"
-    },
-    { 
-      bg: "bg-blue-400", 
-      text: "text-white", 
-      shadow: "shadow-2xl"
-    },
-    { 
-      bg: "bg-blue-300", 
-      text: "text-slate-900", 
-      shadow: "shadow-2xl"
-    } // muchas ventas
+    { bg: "bg-slate-600", text: "text-slate-200", shadow: "shadow-sm" },
+    { bg: "bg-blue-900", text: "text-white", shadow: "shadow-md" },
+    { bg: "bg-blue-700", text: "text-white", shadow: "shadow-lg" },
+    { bg: "bg-blue-500", text: "text-white", shadow: "shadow-xl" },
+    { bg: "bg-blue-400", text: "text-white", shadow: "shadow-2xl" },
+    { bg: "bg-blue-300", text: "text-slate-900", shadow: "shadow-2xl" }
   ];
   
   const currentStyle = intensityStyles[intensity] || intensityStyles[0];
@@ -135,26 +110,6 @@ const HeatmapCell = ({ day, intensity, week, date, sales, avg, isActive, onHover
   );
 };
 
-// Función para generar heatmap simulado si no hay datos reales
-const generateHeatmap = () => {
-  const days = ["L", "M", "X", "J", "V", "S", "D"];
-  const heatmapData = [];
-  for (let week = 0; week < 4; week++) {
-    for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-      // Generar intensidad (simulada)
-      const intensity = dayIndex < 5
-        ? Math.floor(Math.random() * 4) + 2 // Días laborables (más actividad)
-        : Math.floor(Math.random() * 2) + 1; // Fin de semana (menos actividad)
-      heatmapData.push({
-        day: days[dayIndex],
-        intensity,
-        week,
-      });
-    }
-  }
-  return heatmapData;
-};
-
 export default function ReportesPage() {
   console.log("=== REPORTES PAGE RENDER ===");
   const router = useRouter()
@@ -187,16 +142,15 @@ export default function ReportesPage() {
   
   // Estados para el filtro mensual GLOBAL de la página
   const currentDate = new Date()
-  const [globalFilterMonth, setGlobalFilterMonth] = useState<string>('all') // 'all' para mostrar acumulativo
+  const [globalFilterMonth, setGlobalFilterMonth] = useState<string>('all')
   const [globalFilterYear, setGlobalFilterYear] = useState<string>(String(currentDate.getFullYear()))
   
-  // Calcular mes/año para la API (undefined si es 'all', sino enviar los valores)
+  // Calcular mes/año para la API
   const selectedMonth = globalFilterMonth === 'all' ? undefined : globalFilterMonth
   const selectedReportYear = globalFilterMonth === 'all' ? undefined : String(globalFilterYear)
   
   // Estados para manejo de iconos de asesores
   const [uploadingIcon, setUploadingIcon] = useState<string | null>(null)
-  const [showIconUpload, setShowIconUpload] = useState<string | null>(null)
 
   const lineChartRef = useRef<any>(null);
   const barChartRef = useRef<any>(null);
@@ -204,19 +158,16 @@ export default function ReportesPage() {
   // Configurar clientes permitidos basado en el rol del usuario
   useEffect(() => {
     if (user?.role === "supervisor" && user.allowedClients) {
-      // Para supervisores, filtrar solo clientes permitidos
       const filtered = allClients.filter(client => 
         user.allowedClients?.includes(String(client.id)) || 
         user.allowedClients?.includes(client.name)
       );
       setAllowedClients(filtered);
       
-      // Si solo tiene un cliente permitido, seleccionarlo automáticamente
       if (filtered.length === 1) {
         setSelectedClient(String(filtered[0].id));
         setClienteFiltro(String(filtered[0].id));
       } else if (filtered.length > 0) {
-        // Si tiene múltiples, pero selectedClient no está permitido, tomar el primero
         const isCurrentAllowed = filtered.some(c => String(c.id) === selectedClient);
         if (!isCurrentAllowed) {
           setSelectedClient(String(filtered[0].id));
@@ -226,11 +177,9 @@ export default function ReportesPage() {
         }
       }
     } else if (user?.role === "admin") {
-      // Para admins, todos los clientes están permitidos
       setAllowedClients(allClients);
       setClienteFiltro(selectedClient === "all" ? undefined : selectedClient);
     } else {
-      // Para otros roles, no hay clientes permitidos
       setAllowedClients([]);
       setClienteFiltro(undefined);
     }
@@ -260,21 +209,15 @@ export default function ReportesPage() {
         ])
         
         console.log('📊 Respuesta completa de asesores:', advisorsWithIconsData)
-        console.log('📊 general:', advisorsWithIconsData?.general)
-        console.log('📊 byClient:', advisorsWithIconsData?.byClient)
-        console.log('📊 items:', (advisorsWithIconsData as any)?.items)
-        console.log('📊 period:', (advisorsWithIconsData as any)?.period)
         
         setMetrics(metricsData)
-        // La API puede devolver {general, byClient} O {items, period}
-        // Combinar datos de general con iconos de items
         const generalData = advisorsWithIconsData?.general || []
         const itemsData = (advisorsWithIconsData as any)?.items || []
         const byClientData = advisorsWithIconsData?.byClient || []
         
         // Crear map de iconos por nombre
         const iconMap = new Map()
-        itemsData.forEach(item => {
+        itemsData.forEach((item: any) => {
           iconMap.set(item.name, {
             iconUrl: item.iconUrl || item.icon_url,
             publicId: item.publicId
@@ -282,7 +225,7 @@ export default function ReportesPage() {
         })
         
         // Combinar general con iconos
-        const generalWithIcons = generalData.map(advisor => ({
+        const generalWithIcons = generalData.map((advisor: any) => ({
           ...advisor,
           iconUrl: iconMap.get(advisor.name)?.iconUrl,
           icon_url: iconMap.get(advisor.name)?.iconUrl,
@@ -290,15 +233,12 @@ export default function ReportesPage() {
         }))
         
         // Combinar byClient con iconos
-        const byClientWithIcons = byClientData.map(advisor => ({
+        const byClientWithIcons = byClientData.map((advisor: any) => ({
           ...advisor,
           iconUrl: iconMap.get(advisor.name)?.iconUrl,
           icon_url: iconMap.get(advisor.name)?.iconUrl,
           publicId: iconMap.get(advisor.name)?.publicId
         }))
-        
-        console.log('✅ generalData final:', generalWithIcons)
-        console.log('✅ byClientData final:', byClientWithIcons)
         
         setTopAdvisorsGeneral(Array.isArray(generalWithIcons) ? generalWithIcons : [])
         setTopAdvisorsByClient(Array.isArray(byClientWithIcons) ? byClientWithIcons : [])
@@ -310,7 +250,6 @@ export default function ReportesPage() {
       } catch (err: any) {
         console.error('Error al cargar datos de reportes:', err)
         setError(err.message || "Error al cargar los datos")
-        // Asegurar que los estados sean arrays vacíos en caso de error
         setTopAdvisorsGeneral([])
         setTopAdvisorsByClient([])
         setTopClients([])
@@ -327,7 +266,6 @@ export default function ReportesPage() {
   }, [])
 
   useEffect(() => {
-    // Cargar todos los clientes reales para el mapeo id->nombre
     clientService.getAllClients().then((clients) => {
       setAllClients(clients)
       const map: Record<string, string> = {}
@@ -339,7 +277,6 @@ export default function ReportesPage() {
   // Función para descargar el gráfico como imagen
   const downloadChartImage = (ref: React.RefObject<any>, filename: string) => {
     if (ref.current) {
-      // Chart.js v3+ con react-chartjs-2: acceder a chartInstance
       const chart = ref.current.chart || ref.current;
       const url = chart.toBase64Image();
       const link = document.createElement('a');
@@ -356,13 +293,11 @@ export default function ReportesPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validar tipo de archivo
     if (!file.type.startsWith('image/')) {
       alert('Por favor selecciona un archivo de imagen válido');
       return;
     }
 
-    // Validar tamaño (máximo 2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert('La imagen debe ser menor a 2MB');
       return;
@@ -371,43 +306,37 @@ export default function ReportesPage() {
     try {
       setUploadingIcon(asesorNombre);
       
-      // Convertir a base64
       const base64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
         reader.readAsDataURL(file);
       });
 
-      // Subir el icono
       await asesoresService.uploadAsesorIcon(asesorNombre, base64);
       
       // Recargar datos para mostrar el nuevo icono
       const advisorsWithIconsData = await asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear);
       
-      // Combinar datos de general con iconos de items
       const generalData = advisorsWithIconsData?.general || []
       const itemsData = (advisorsWithIconsData as any)?.items || []
       const byClientData = advisorsWithIconsData?.byClient || []
       
-      // Crear map de iconos por nombre
       const iconMap = new Map()
-      itemsData.forEach(item => {
+      itemsData.forEach((item: any) => {
         iconMap.set(item.name, {
           iconUrl: item.iconUrl || item.icon_url,
           publicId: item.publicId
         })
       })
       
-      // Combinar general con iconos
-      const generalWithIcons = generalData.map(advisor => ({
+      const generalWithIcons = generalData.map((advisor: any) => ({
         ...advisor,
         iconUrl: iconMap.get(advisor.name)?.iconUrl,
         icon_url: iconMap.get(advisor.name)?.iconUrl,
         publicId: iconMap.get(advisor.name)?.publicId
       }))
       
-      // Combinar byClient con iconos
-      const byClientWithIcons = byClientData.map(advisor => ({
+      const byClientWithIcons = byClientData.map((advisor: any) => ({
         ...advisor,
         iconUrl: iconMap.get(advisor.name)?.iconUrl,
         icon_url: iconMap.get(advisor.name)?.iconUrl,
@@ -417,7 +346,6 @@ export default function ReportesPage() {
       setTopAdvisorsGeneral(Array.isArray(generalWithIcons) ? generalWithIcons : []);
       setTopAdvisorsByClient(Array.isArray(byClientWithIcons) ? byClientWithIcons : []);
       
-      setShowIconUpload(null);
       alert('Icono subido exitosamente');
     } catch (error) {
       console.error('Error subiendo icono:', error);
@@ -435,33 +363,28 @@ export default function ReportesPage() {
     try {
       await asesoresService.deleteAsesorIcon(asesorNombre);
       
-      // Recargar datos
       const advisorsWithIconsData = await asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear);
       
-      // Combinar datos de general con iconos de items
       const generalData = advisorsWithIconsData?.general || []
       const itemsData = (advisorsWithIconsData as any)?.items || []
       const byClientData = advisorsWithIconsData?.byClient || []
       
-      // Crear map de iconos por nombre
       const iconMap = new Map()
-      itemsData.forEach(item => {
+      itemsData.forEach((item: any) => {
         iconMap.set(item.name, {
           iconUrl: item.iconUrl || item.icon_url,
           publicId: item.publicId
         })
       })
       
-      // Combinar general con iconos
-      const generalWithIcons = generalData.map(advisor => ({
+      const generalWithIcons = generalData.map((advisor: any) => ({
         ...advisor,
         iconUrl: iconMap.get(advisor.name)?.iconUrl,
         icon_url: iconMap.get(advisor.name)?.iconUrl,
         publicId: iconMap.get(advisor.name)?.publicId
       }))
       
-      // Combinar byClient con iconos
-      const byClientWithIcons = byClientData.map(advisor => ({
+      const byClientWithIcons = byClientData.map((advisor: any) => ({
         ...advisor,
         iconUrl: iconMap.get(advisor.name)?.iconUrl,
         icon_url: iconMap.get(advisor.name)?.iconUrl,
@@ -663,7 +586,8 @@ export default function ReportesPage() {
                 </div>
               </CardContent>
             </Card>
-            {/* Métricas principales con data storytelling mejorado */}
+
+            {/* Métricas principales */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               {[0,1,2,3].map(i => {
                 const metricData = [
@@ -679,7 +603,7 @@ export default function ReportesPage() {
                     label: 'Tiempo Promedio de Cierre', 
                     icon: '⏱️', 
                     trend: metrics?.avgCloseTimeTrend ? (metrics.avgCloseTimeTrend > 0 ? `+${metrics.avgCloseTimeTrend}%` : `${metrics.avgCloseTimeTrend}%`) : '-5%', 
-                    isPositive: metrics?.avgCloseTimeTrend ? metrics.avgCloseTimeTrend < 0 : true  // Negativo es bueno para tiempo de cierre
+                    isPositive: metrics?.avgCloseTimeTrend ? metrics.avgCloseTimeTrend < 0 : true
                   },
                   { 
                     value: metrics?.dailyAverage ?? '-', 
@@ -700,20 +624,17 @@ export default function ReportesPage() {
                 return (
                   <Card key={i} className={`${cardBase} ${metricHighlights[i]} group cursor-pointer`}>
                     <CardContent className="p-6 relative">
-                      {/* Icono animado en el fondo */}
                       <div className="absolute top-4 right-4 text-6xl opacity-10 group-hover:opacity-20 transition-opacity duration-300">
                         {metricData.icon}
-                    </div>
+                      </div>
                       
-                      {/* Valor principal con animación de contador */}
                       <div className="text-4xl font-bold text-white mb-3 tracking-tight relative z-10">
                         <span className="drop-shadow-sm">{metricData.value}</span>
                         {metricData.value !== '-' && (
                           <div className="absolute -top-2 -right-2 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/60"></div>
                         )}
-                    </div>
+                      </div>
                       
-                      {/* Label con trend indicator */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="text-white/90 font-medium text-sm leading-tight">
                           {metricData.label}
@@ -732,25 +653,23 @@ export default function ReportesPage() {
                         )}
                       </div>
                       
-                                             {/* Barra de progreso sutil */}
-                       {metricData.value !== '-' && (
-                         <div className="w-full bg-white/10 rounded-full h-1 overflow-hidden">
-                           <div 
-                             className={`h-full transition-all duration-500 ${
-                               i === 0 ? 'bg-blue-500' :
-                               i === 1 ? 'bg-purple-500' :
-                               i === 2 ? 'bg-cyan-500' :
-                               'bg-pink-500'
-                             }`}
-                             style={{ width: `${65 + i * 10}%` }}
-                           ></div>
-                         </div>
-                       )}
+                      {metricData.value !== '-' && (
+                        <div className="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-500 ${
+                              i === 0 ? 'bg-blue-500' :
+                              i === 1 ? 'bg-purple-500' :
+                              i === 2 ? 'bg-cyan-500' :
+                              'bg-pink-500'
+                            }`}
+                            style={{ width: `${65 + i * 10}%` }}
+                          ></div>
+                        </div>
+                      )}
                       
-                      {/* Micro-interacción en hover */}
                       <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"></div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </div>
@@ -884,12 +803,10 @@ export default function ReportesPage() {
                           className="group relative flex items-center justify-between p-5 bg-gradient-to-r from-slate-700/40 to-slate-600/30 hover:from-slate-600/50 hover:to-slate-500/40 rounded-2xl border border-slate-600/30 hover:border-slate-500/50 transition-all duration-300 ease-out transform hover:scale-[1.01] hover:shadow-xl hover:shadow-blue-500/10 relative z-10"
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
-                          {/* Efecto de brillo en hover */}
                           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"></div>
                           
                           <div className="flex items-center gap-5 z-10">
                             <div className="relative">
-                              {/* Avatar con imagen o iniciales */}
                               <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-blue-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20 overflow-hidden">
                                 {(advisor as any).iconUrl || (advisor as any).icon_url ? (
                                   <img 
@@ -897,7 +814,6 @@ export default function ReportesPage() {
                                     alt={`Icono de ${advisor.name}`}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                      // Si la imagen falla, mostrar iniciales
                                       e.currentTarget.style.display = 'none';
                                       const parent = e.currentTarget.parentElement;
                                       if (parent && !parent.querySelector('.initials-fallback')) {
@@ -909,21 +825,16 @@ export default function ReportesPage() {
                                     }}
                                   />
                                 ) : (
-                                <span className="drop-shadow-lg">
-                              {advisor.name
-                                .split(" ")
-                                .map((n: string) => n[0])
-                                .join("")}
-                                </span>
+                                  <span className="drop-shadow-lg">
+                                    {advisor.name.split(" ").map((n: string) => n[0]).join("")}
+                                  </span>
                                 )}
                               </div>
-                            </div>
-                            
-                            {/* Botones de icono - fuera del avatar */}
-                            <div className="flex gap-1 transition-all duration-200">
+
+                              {/* Botones de icono */}
+                              <div className="absolute -bottom-2 -right-2 flex gap-1">
                                 {(advisor as any).iconUrl || (advisor as any).icon_url ? (
                                   <>
-                                    {/* Botón para cambiar foto */}
                                     <div className="relative">
                                       <input
                                         type="file"
@@ -945,7 +856,6 @@ export default function ReportesPage() {
                                         {uploadingIcon === advisor.name ? '⏳' : '📷'}
                                       </button>
                                     </div>
-                                    {/* Botón para eliminar foto */}
                                     <button
                                       onClick={() => handleDeleteIcon(advisor.name)}
                                       className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 transition-colors shadow-lg border-2 border-white/20"
@@ -977,19 +887,17 @@ export default function ReportesPage() {
                                     </button>
                                   </div>
                                 )}
-                            </div>
+                              </div>
                               
-                              {/* Badge animado para el primer lugar */}
                               {index === 0 && (
-                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-yellow-400/50 animate-bounce border-2 border-white/30">
+                                <div className="absolute -top-2 -left-2 w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-yellow-400/50 animate-bounce border-2 border-white/30">
                                   🏆
-                            </div>
+                                </div>
                               )}
                               
-                              {/* Ranking indicator */}
-                              <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                              <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
                                 {index + 1}
-                          </div>
+                              </div>
                             </div>
                             
                             <div className="min-w-0 flex-1">
@@ -1013,7 +921,6 @@ export default function ReportesPage() {
                             </div>
                           </div>
                           
-                          {/* Barra de progreso sutil */}
                           <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-700/50 rounded-b-2xl overflow-hidden">
                             <div 
                               className="h-full bg-blue-500 transition-all duration-300"
@@ -1048,12 +955,10 @@ export default function ReportesPage() {
                           className="group relative flex items-center justify-between p-5 bg-gradient-to-r from-purple-700/40 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-500/40 rounded-2xl border border-purple-600/30 hover:border-purple-500/50 transition-all duration-300 ease-out transform hover:scale-[1.01] hover:shadow-xl hover:shadow-purple-500/10 relative z-10"
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
-                          {/* Efecto de brillo en hover */}
                           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"></div>
                           
                           <div className="flex items-center gap-5 z-10">
                             <div className="relative">
-                              {/* Avatar con animación 3D */}
                               <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-purple-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20 overflow-hidden">
                                 {(advisor as any).iconUrl || (advisor as any).icon_url ? (
                                   <img 
@@ -1061,7 +966,6 @@ export default function ReportesPage() {
                                     alt={`Icono de ${advisor.name}`}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                      // Si la imagen falla, mostrar iniciales
                                       e.currentTarget.style.display = 'none';
                                       const parent = e.currentTarget.parentElement;
                                       if (parent && !parent.querySelector('.initials-fallback')) {
@@ -1074,16 +978,15 @@ export default function ReportesPage() {
                                   />
                                 ) : (
                                   <span className="drop-shadow-lg">
-                                {advisor.name.split(" ").map((n: string) => n[0]).join("")}
+                                    {advisor.name.split(" ").map((n: string) => n[0]).join("")}
                                   </span>
                                 )}
-                            </div>
-                            
-                            {/* Botones de icono para Top Asesores por Cliente - fuera del avatar */}
-                            <div className="flex gap-1 transition-all duration-200">
+                              </div>
+
+                              {/* Botones de icono para Top Asesores por Cliente */}
+                              <div className="absolute -bottom-2 -right-2 flex gap-1">
                                 {(advisor as any).iconUrl || (advisor as any).icon_url ? (
                                   <>
-                                    {/* Botón para cambiar foto */}
                                     <div className="relative">
                                       <input
                                         type="file"
@@ -1105,7 +1008,6 @@ export default function ReportesPage() {
                                         {uploadingIcon === advisor.name ? '⏳' : '📷'}
                                       </button>
                                     </div>
-                                    {/* Botón para eliminar foto */}
                                     <button
                                       onClick={() => handleDeleteIcon(advisor.name)}
                                       className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 transition-colors shadow-lg border-2 border-white/20"
@@ -1139,17 +1041,15 @@ export default function ReportesPage() {
                                 )}
                               </div>
                               
-                              {/* Badge animado para el primer lugar */}
                               {index === 0 && (
-                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-emerald-400/50 animate-bounce border-2 border-white/30">
+                                <div className="absolute -top-2 -left-2 w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-emerald-400/50 animate-bounce border-2 border-white/30">
                                   👑
-                            </div>
+                                </div>
                               )}
                               
-                              {/* Ranking indicator */}
-                              <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                              <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
                                 {index + 1}
-                          </div>
+                              </div>
                             </div>
                             
                             <div className="min-w-0 flex-1">
@@ -1173,7 +1073,6 @@ export default function ReportesPage() {
                             </div>
                           </div>
                           
-                          {/* Barra de progreso sutil */}
                           <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-700/50 rounded-b-2xl overflow-hidden">
                             <div 
                               className="h-full bg-purple-500 transition-all duration-300"
@@ -1191,7 +1090,7 @@ export default function ReportesPage() {
             </div>
 
             {/* Top Clientes */}
-            <Card className={`${cardBase} relative`}>
+            <Card className={`${cardBase} relative mb-6`}>
               {loading && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
                   <RailwayLoader size="md" text="Analizando clientes..." />
@@ -1229,16 +1128,16 @@ export default function ReportesPage() {
             </Card>
 
             {/* Pipeline de ventas */}
-                          <Card className={`${cardBase} relative`}>
-                {loading && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
-                    <RailwayLoader size="lg" text="Generando pipeline..." />
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle className="text-white">Pipeline de Ventas</CardTitle>
-                  <div className="text-slate-400">Estado actual del embudo de conversión</div>
-                </CardHeader>
+            <Card className={`${cardBase} relative mb-6`}>
+              {loading && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
+                  <RailwayLoader size="lg" text="Generando pipeline..." />
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle className="text-white">Pipeline de Ventas</CardTitle>
+                <div className="text-slate-400">Estado actual del embudo de conversión</div>
+              </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   {pipeline && [
@@ -1259,7 +1158,7 @@ export default function ReportesPage() {
             </Card>
 
             {/* Mapa de calor */}
-            <Card className={`${cardBase} relative`}>
+            <Card className={`${cardBase} relative mb-6`}>
               {loading && (
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-slate-900/70 to-black/60 flex items-center justify-center z-10 rounded-2xl backdrop-blur-md">
                   <div className="flex flex-col items-center gap-4 p-8 bg-slate-800/80 rounded-2xl border border-slate-600/50 shadow-2xl">
@@ -1300,32 +1199,29 @@ export default function ReportesPage() {
               <CardContent>
                 <div className="grid grid-cols-7 gap-1 w-full">
                   {(() => {
-                    // Siempre mostrar el grid completo de 4 semanas x 7 días = 28 celdas
                     const hasRealData = heatmap && heatmap.length > 0;
                     const avg = hasRealData ? heatmap.reduce((acc, c) => acc + (c.sales || 0), 0) / heatmap.length : 0;
                     
                     return Array(28).fill(null).map((_, idx) => {
-                          const week = Math.floor(idx / 7);
-                          const dayIndex = idx % 7;
+                      const week = Math.floor(idx / 7);
+                      const dayIndex = idx % 7;
                       const dayName = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][dayIndex];
                       
-                      // Buscar datos reales para esta celda
                       const real = hasRealData ? heatmap.find(cell => 
                         Number(cell.dayOfWeek) === dayIndex && Number(cell.week) === week
                       ) : null;
                       
-                      // Calcular intensidad: 0-5 basado en ventas
                       const intensity = real && real.sales ? Math.min(5, Math.ceil(real.sales / 2)) : 0;
                       
-                          return {
-                            day: ["L", "M", "X", "J", "V", "S", "D"][dayIndex],
+                      return {
+                        day: ["L", "M", "X", "J", "V", "S", "D"][dayIndex],
                         intensity,
-                            week,
-                            date: real?.date,
+                        week,
+                        date: real?.date,
                         sales: real?.sales || 0,
-                            avg,
-                            isActive: activeDay === dayIndex,
-                            onHover: () => setActiveDay(dayIndex),
+                        avg,
+                        isActive: activeDay === dayIndex,
+                        onHover: () => setActiveDay(dayIndex),
                         onClick: () => {
                           const ventasText = (real?.sales || 0) === 1 ? "venta" : "ventas";
                           const dateText = real?.date ? ` del ${real.date}` : "";
@@ -1343,8 +1239,8 @@ export default function ReportesPage() {
                           }
                           alert(message);
                         },
-                          };
-                        });
+                      };
+                    });
                   })().map((cell, index) => (
                     <HeatmapCell key={index} {...cell} />
                   ))}
@@ -1486,4 +1382,4 @@ export default function ReportesPage() {
       </TooltipProvider>
     </div>
   )
-} 
+}
