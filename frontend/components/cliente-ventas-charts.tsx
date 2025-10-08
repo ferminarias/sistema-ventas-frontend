@@ -53,7 +53,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const pieChartRef = useRef<HTMLCanvasElement>(null)
   const programaChartRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-
+  
   // Debug: Log para verificar que se están cargando todas las ventas para "general"
   useEffect(() => {
     console.log(`📊 ClienteVentasCharts - Cliente: "${cliente}"`)
@@ -159,7 +159,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-3">
+                  <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">
                     {getNombreCliente()[0]?.toUpperCase() || "?"}
                   </div>
@@ -167,14 +167,14 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                 </CardTitle>
                 <CardDescription className="text-muted-foreground mt-2 flex items-center gap-2">
                   <TrendingUp className="w-4 h-4" />
-                  {getDescripcionPeriodo()}
+                  {getDescripcionPeriodo()} • Cliente ID: {cliente}
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-sm">
                   <Users className="w-3 h-3 mr-1" />
-                  {ventas?.length || 0} ventas
-                </Badge>
+                {ventas?.length || 0} ventas
+              </Badge>
               </div>
             </div>
           </CardHeader>
@@ -218,9 +218,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                 <p className="text-sm text-muted-foreground mt-2">
                   Año: {selectedYear}
                 </p>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
         </div>
       </div>
     </TooltipProvider>

@@ -91,7 +91,11 @@ export default function ClienteDashboardPage() {
             <div className="text-sm text-gray-300">Creado: {new Date(client.createdAt).toLocaleString()}</div>
           </CardContent>
         </Card>
-        <ClienteVentasCharts cliente={String(client.id)} nombreCliente={client.name} />
+        <ClienteVentasCharts 
+          cliente={String(client.id)} 
+          nombreCliente={client.name}
+          clientIdToName={{[String(client.id)]: client.name}}
+        />
         <ClienteVentasTable cliente={client.name || String(client.id)} clientId={client.id} />
         {client.id === 2 && (
           <div className="pt-4">
