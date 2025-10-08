@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -983,13 +983,13 @@ export default function ReportesPage() {
                               {index === 0 && (
                                 <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-yellow-400/50 animate-bounce border-2 border-white/30">
                                   🏆
-                            </div>
+                                </div>
                               )}
                               
                               {/* Ranking indicator */}
                               <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
                                 {index + 1}
-                          </div>
+                              </div>
                             </div>
                             
                             <div className="min-w-0 flex-1">
@@ -1143,13 +1143,13 @@ export default function ReportesPage() {
                               {index === 0 && (
                                 <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-emerald-400/50 animate-bounce border-2 border-white/30">
                                   👑
-                            </div>
+                                </div>
                               )}
                               
                               {/* Ranking indicator */}
                               <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
                                 {index + 1}
-                          </div>
+                              </div>
                             </div>
                             
                             <div className="min-w-0 flex-1">
@@ -1342,7 +1342,7 @@ export default function ReportesPage() {
                             message = `📊 ${dayName}\n\n⚠️ Cargando datos de ventas...\n\n💡 Los datos aparecerán cuando el sistema termine de cargar.`;
                           }
                           alert(message);
-                        },
+                        }
                           };
                         });
                   })().map((cell, index) => (
@@ -1486,4 +1486,4 @@ export default function ReportesPage() {
       </TooltipProvider>
     </div>
   )
-} 
+}

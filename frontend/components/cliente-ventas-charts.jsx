@@ -998,7 +998,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             </Card>
           </div>
         ) : (
-          <div>
+          <>
             {/* Estadísticas destacadas - Responsive al tema */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-500/30 backdrop-blur-sm">
@@ -1402,7 +1402,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             </CardContent>
           </Card>
         </div>
-        </div>
+          </>
         )}
       </div>
     </TooltipProvider>
