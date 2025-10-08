@@ -1,6 +1,6 @@
 "use client"
 
-// Gráficos mejorados con soporte retina y semanas ISO del año - v2025.01
+import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -18,58 +18,9 @@ interface ClienteVentasChartsProps {
 }
 
 export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: ClienteVentasChartsProps) {
-  const [activeTab, setActiveTab] = useState("mensual")
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [semanaInicio, setSemanaInicio] = useState(1)
-  const [semanaFin, setSemanaFin] = useState(52)
-  const [showFilters, setShowFilters] = useState(false)
-  const chartRef = useRef<HTMLCanvasElement>(null)
-  const pieChartRef = useRef<HTMLCanvasElement>(null)
-  const [hoveredPieIndex, setHoveredPieIndex] = useState<number | null>(null)
-  const [tooltip, setTooltip] = useState<{x: number, y: number, label: string, value: number} | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 500, height: 300 });
-
-  // Estados para el nuevo gráfico de programas
-  const programaChartRef = useRef<HTMLCanvasElement>(null)
-  const [hoveredProgramaIndex, setHoveredProgramaIndex] = useState<number | null>(null)
-  const [programaTooltip, setProgramaTooltip] = useState<{x: number, y: number, label: string, value: number} | null>(null)
-
-  // Estado para programa seleccionado y sus ventas
-  const [programaSeleccionado, setProgramaSeleccionado] = useState<string | null>(null)
-
-  useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const newDimensions = { 
-          width: Math.max(rect.width, 300), // Mínimo 300px
-          height: Math.max(rect.height, 200) // Mínimo 200px
-        };
-        console.log('📐 Actualizando dimensiones:', newDimensions);
-        setDimensions(newDimensions);
-      }
-    };
-    
-    // Esperar un poco antes de la primera medición
-    const initialTimeout = setTimeout(updateSize, 100);
-    
-    const observer = new ResizeObserver(() => {
-      // Debounce para evitar múltiples actualizaciones
-      setTimeout(updateSize, 50);
-    });
-    
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-    
-    return () => {
-      clearTimeout(initialTimeout);
-      observer.disconnect();
-    };
-  }, []);
-
-  // Validación defensiva para cliente
+  const { ventas, loading: loadingVentas } = useVentas(cliente?.toLowerCase() || "")
+  
+  // Validacion defensiva para cliente
   if (!cliente || cliente === "null" || cliente === "undefined") {
     return (
       <div className="grid gap-6 md:grid-cols-2">
@@ -77,15 +28,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           <CardContent className="flex items-center justify-center h-48">
             <div className="text-center space-y-2">
               <CalendarDays className="h-8 w-8 text-muted-foreground mx-auto" />
-              <p className="text-muted-foreground">Cargando gráficos del cliente...</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-2 border-dashed border-border bg-card/50">
-          <CardContent className="flex items-center justify-center h-48">
-            <div className="text-center space-y-2">
-              <Users className="h-8 w-8 text-muted-foreground mx-auto" />
-              <p className="text-muted-foreground">Cargando distribución...</p>
+              <p className="text-muted-foreground">Cargando graficos del cliente...</p>
             </div>
           </CardContent>
         </Card>
@@ -93,6 +36,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     )
   }
 
+<<<<<<< Current (Your changes)
   const { ventas, loading: loadingVentas } = useVentas(cliente.toLowerCase())
   
   // Debug: Log para verificar que se están cargando todas las ventas para "general"
@@ -693,116 +637,116 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     // GRÁFICO DE PROGRAMAS CON HOVER
     if (programaCtx) {
       programaCtx.clearRect(0, 0, width, height)
-    const programaCenterX = width * 0.52  // Mismo centrado que asesores
-    const programaCenterY = height / 2
-    const programaRadius = Math.min(programaCenterX - 25, programaCenterY - 25)
-    let programaStartAngle = 0
-    const programaTotal = programasValores.reduce((acc, val) => acc + val, 0) || 1
-    
-    programasValores.forEach((value, index) => {
-      const sliceAngle = (value / programaTotal) * 2 * Math.PI
-      // Efecto hover: si está sobre este sector, agrandar y sombra
-      const isHovered = hoveredProgramaIndex === index
-      const r = isHovered ? programaRadius + 10 : programaRadius
-      const cx = isHovered ? programaCenterX + Math.cos(programaStartAngle + sliceAngle/2) * 8 : programaCenterX
-      const cy = isHovered ? programaCenterY + Math.sin(programaStartAngle + sliceAngle/2) * 8 : programaCenterY
+      const programaCenterX = width * 0.52  // Mismo centrado que asesores
+      const programaCenterY = height / 2
+      const programaRadius = Math.min(programaCenterX - 25, programaCenterY - 25)
+      let programaStartAngle = 0
+      const programaTotal = programasValores.reduce((acc, val) => acc + val, 0) || 1
       
-      // Sombra
-      if (isHovered) {
-        programaCtx.save()
-        programaCtx.shadowColor = "rgba(0,0,0,0.25)"
-        programaCtx.shadowBlur = 16
-      }
+      programasValores.forEach((value, index) => {
+        const sliceAngle = (value / programaTotal) * 2 * Math.PI
+        // Efecto hover: si está sobre este sector, agrandar y sombra
+        const isHovered = hoveredProgramaIndex === index
+        const r = isHovered ? programaRadius + 10 : programaRadius
+        const cx = isHovered ? programaCenterX + Math.cos(programaStartAngle + sliceAngle/2) * 8 : programaCenterX
+        const cy = isHovered ? programaCenterY + Math.sin(programaStartAngle + sliceAngle/2) * 8 : programaCenterY
+        
+        // Sombra
+        if (isHovered) {
+          programaCtx.save()
+          programaCtx.shadowColor = "rgba(0,0,0,0.25)"
+          programaCtx.shadowBlur = 16
+        }
+        
+        // Sector principal
+        programaCtx.beginPath()
+        programaCtx.moveTo(cx, cy)
+        programaCtx.arc(cx, cy, r, programaStartAngle, programaStartAngle + sliceAngle)
+        programaCtx.closePath()
+        programaCtx.fillStyle = programaColors[index % programaColors.length]
+        programaCtx.fill()
+        
+        // Borde mejorado con glow effect
+        programaCtx.strokeStyle = isHovered ? "#ef4444" : "#374151"
+        programaCtx.lineWidth = isHovered ? 3 : 2
+        programaCtx.stroke()
+        
+        // Efecto glow para sector hover
+        if (isHovered) {
+          programaCtx.save()
+          programaCtx.shadowColor = programaColors[index % programaColors.length]
+          programaCtx.shadowBlur = 20
+          programaCtx.strokeStyle = programaColors[index % programaColors.length]
+          programaCtx.lineWidth = 1
+          programaCtx.stroke()
+          programaCtx.restore()
+        }
+        
+        if (isHovered) programaCtx.restore()
+        programaStartAngle += sliceAngle
+      })
       
-      // Sector principal
-      programaCtx.beginPath()
-      programaCtx.moveTo(cx, cy)
-      programaCtx.arc(cx, cy, r, programaStartAngle, programaStartAngle + sliceAngle)
-      programaCtx.closePath()
-      programaCtx.fillStyle = programaColors[index % programaColors.length]
-      programaCtx.fill()
+      // Leyenda de programas MODERNIZADA
+      const programaLegendStartX = 15
+      const programaLegendStartY = 25
+      const programaLegendItemHeight = 24
+      const maxProgramaLegendItems = Math.min(programasNombres.length, 9)
       
-      // Borde mejorado con glow effect
-      programaCtx.strokeStyle = isHovered ? "#ef4444" : "#374151"
-      programaCtx.lineWidth = isHovered ? 3 : 2
-      programaCtx.stroke()
-      
-      // Efecto glow para sector hover
-      if (isHovered) {
+      programasNombres.slice(0, maxProgramaLegendItems).forEach((programa, index) => {
+        const y = programaLegendStartY + index * programaLegendItemHeight
+        
+        // Círculo con borde moderno
+        programaCtx.beginPath()
+        programaCtx.arc(programaLegendStartX + 6, y, 6, 0, 2 * Math.PI)
+        programaCtx.fillStyle = programaColors[index % programaColors.length]
+        programaCtx.fill()
+        
+        // Borde con glow sutil
+        programaCtx.strokeStyle = "#1f2937"
+        programaCtx.lineWidth = 2
+        programaCtx.stroke()
+        
+        // Shadow sutil para depth
         programaCtx.save()
         programaCtx.shadowColor = programaColors[index % programaColors.length]
-        programaCtx.shadowBlur = 20
-        programaCtx.strokeStyle = programaColors[index % programaColors.length]
-        programaCtx.lineWidth = 1
+        programaCtx.shadowBlur = 8
+        programaCtx.shadowOffsetX = 1
+        programaCtx.shadowOffsetY = 1
         programaCtx.stroke()
         programaCtx.restore()
+        
+        // Texto del programa - más legible y moderno
+        programaCtx.fillStyle = "#f8fafc"
+        programaCtx.font = "bold 12px Inter, sans-serif"
+        programaCtx.textAlign = "left"
+        const maxProgramaNameLength = 16
+        const displayProgramaName = programa.length > maxProgramaNameLength 
+          ? programa.substring(0, maxProgramaNameLength) + "..." 
+          : programa
+        programaCtx.fillText(displayProgramaName, programaLegendStartX + 18, y + 2)
+        
+        // Subtexto con mejor contraste
+        programaCtx.fillStyle = "#94a3b8"
+        programaCtx.font = "11px Inter, sans-serif"
+        programaCtx.fillText(`${programasValores[index]} ventas`, programaLegendStartX + 18, y + 15)
+      })
+      
+      if (programasNombres.length > maxProgramaLegendItems) {
+        const y = programaLegendStartY + maxProgramaLegendItems * programaLegendItemHeight
+        
+        // Indicador moderno para más programas
+        programaCtx.beginPath()
+        programaCtx.arc(programaLegendStartX + 6, y, 4, 0, 2 * Math.PI)
+        programaCtx.fillStyle = "#6b7280"
+        programaCtx.fill()
+        programaCtx.strokeStyle = "#374151"
+        programaCtx.lineWidth = 1
+        programaCtx.stroke()
+        
+        programaCtx.fillStyle = "#e2e8f0"
+        programaCtx.font = "italic 11px Inter, sans-serif"
+        programaCtx.fillText(`+${programasNombres.length - maxProgramaLegendItems} más programas`, programaLegendStartX + 18, y + 4)
       }
-      
-      if (isHovered) programaCtx.restore()
-      programaStartAngle += sliceAngle
-    })
-    
-    // Leyenda de programas MODERNIZADA
-    const programaLegendStartX = 15
-    const programaLegendStartY = 25
-    const programaLegendItemHeight = 24
-    const maxProgramaLegendItems = Math.min(programasNombres.length, 9)
-    
-    programasNombres.slice(0, maxProgramaLegendItems).forEach((programa, index) => {
-      const y = programaLegendStartY + index * programaLegendItemHeight
-      
-      // Círculo con borde moderno
-      programaCtx.beginPath()
-      programaCtx.arc(programaLegendStartX + 6, y, 6, 0, 2 * Math.PI)
-      programaCtx.fillStyle = programaColors[index % programaColors.length]
-      programaCtx.fill()
-      
-      // Borde con glow sutil
-      programaCtx.strokeStyle = "#1f2937"
-      programaCtx.lineWidth = 2
-      programaCtx.stroke()
-      
-      // Shadow sutil para depth
-      programaCtx.save()
-      programaCtx.shadowColor = programaColors[index % programaColors.length]
-      programaCtx.shadowBlur = 8
-      programaCtx.shadowOffsetX = 1
-      programaCtx.shadowOffsetY = 1
-      programaCtx.stroke()
-      programaCtx.restore()
-      
-      // Texto del programa - más legible y moderno
-      programaCtx.fillStyle = "#f8fafc"
-      programaCtx.font = "bold 12px Inter, sans-serif"
-      programaCtx.textAlign = "left"
-      const maxProgramaNameLength = 16
-      const displayProgramaName = programa.length > maxProgramaNameLength 
-        ? programa.substring(0, maxProgramaNameLength) + "..." 
-        : programa
-      programaCtx.fillText(displayProgramaName, programaLegendStartX + 18, y + 2)
-      
-      // Subtexto con mejor contraste
-      programaCtx.fillStyle = "#94a3b8"
-      programaCtx.font = "11px Inter, sans-serif"
-      programaCtx.fillText(`${programasValores[index]} ventas`, programaLegendStartX + 18, y + 15)
-    })
-    
-    if (programasNombres.length > maxProgramaLegendItems) {
-      const y = programaLegendStartY + maxProgramaLegendItems * programaLegendItemHeight
-      
-      // Indicador moderno para más programas
-      programaCtx.beginPath()
-      programaCtx.arc(programaLegendStartX + 6, y, 4, 0, 2 * Math.PI)
-      programaCtx.fillStyle = "#6b7280"
-      programaCtx.fill()
-      programaCtx.strokeStyle = "#374151"
-      programaCtx.lineWidth = 1
-      programaCtx.stroke()
-      
-      programaCtx.fillStyle = "#e2e8f0"
-      programaCtx.font = "italic 11px Inter, sans-serif"
-      programaCtx.fillText(`+${programasNombres.length - maxProgramaLegendItems} más programas`, programaLegendStartX + 18, y + 4)
-    }
     } // Fin del if (programaCtx)
       
       console.log('🎨 Gráficos dibujados exitosamente!', {
@@ -963,446 +907,60 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       }
       return `${selectedYear} - Semanas ${semanaInicio} a ${semanaFin}`
     }
+=======
+  if (loadingVentas) {
+    return (
+      <TooltipProvider>
+        <div className="space-y-6">
+          <Card className="border-2 border-dashed border-border bg-card/50">
+            <CardContent className="flex items-center justify-center h-96">
+              <div className="text-center space-y-2">
+                <CalendarDays className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
+                <p className="text-muted-foreground">Cargando datos de ventas...</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </TooltipProvider>
+    )
+>>>>>>> Incoming (Background Agent changes)
   }
 
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        {/* Mostrar estado de carga si está cargando */}
-        {loadingVentas ? (
-          <div className="grid gap-6 grid-cols-1">
-            <Card className="border-2 border-dashed border-border bg-card/50">
-              <CardContent className="flex items-center justify-center h-96">
-                <div className="text-center space-y-2">
-                  <CalendarDays className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
-                  <p className="text-muted-foreground">Cargando datos de ventas...</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-2 border-dashed border-border bg-card/50">
-              <CardContent className="flex items-center justify-center h-96">
-                <div className="text-center space-y-2">
-                  <Users className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
-                  <p className="text-muted-foreground">Cargando distribución por asesor...</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-2 border-dashed border-border bg-card/50">
-              <CardContent className="flex items-center justify-center h-96">
-                <div className="text-center space-y-2">
-                  <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
-                  <p className="text-muted-foreground">Cargando distribución por programa...</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <>
-            {/* Estadísticas destacadas - Responsive al tema */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-500/30 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Ventas</p>
-                    </div>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-4 w-4 text-blue-600/70 dark:text-blue-400/70 hover:text-blue-700 dark:hover:text-blue-300 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs">
-                        <p className="text-sm">{tooltips.totalVentas}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-800 dark:text-blue-100">{estadisticas.totalVentas}</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-gradient-to-br from-green-500/20 to-green-600/20 border-green-500/30 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <CalendarDays className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      <p className="text-sm font-medium text-green-700 dark:text-green-300">Promedio</p>
-                    </div>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-4 w-4 text-green-600/70 dark:text-green-400/70 hover:text-green-700 dark:hover:text-green-300 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs">
-                        <p className="text-sm">{tooltips.promedio}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <p className="text-2xl font-bold text-green-800 dark:text-green-100">{estadisticas.promedioVentas}</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-purple-500/30 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                      <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Máximo</p>
-                    </div>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-4 w-4 text-purple-600/70 dark:text-purple-400/70 hover:text-purple-700 dark:hover:text-purple-300 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs">
-                        <p className="text-sm">{tooltips.maximo}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <p className="text-2xl font-bold text-purple-800 dark:text-purple-100">{estadisticas.maxVentas}</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border-orange-500/30 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                      <p className="text-sm font-medium text-orange-700 dark:text-orange-300">Asesores</p>
-                    </div>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-4 w-4 text-orange-600/70 dark:text-orange-400/70 hover:text-orange-700 dark:hover:text-orange-300 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs">
-                        <p className="text-sm">{tooltips.asesores}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <p className="text-2xl font-bold text-orange-800 dark:text-orange-100">{estadisticas.totalAsesores}</p>
-                </CardContent>
-              </Card>
+        <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-bold text-foreground">
+                  {nombreCliente && nombreCliente !== "-" 
+                    ? `Ventas de ${nombreCliente}` 
+                    : "Graficos de Ventas"}
+                </CardTitle>
+                <CardDescription className="text-sm text-muted-foreground mt-1">
+                  Vista de datos de ventas
+                </CardDescription>
+              </div>
+              <Badge variant="secondary">
+                {ventas?.length || 0} ventas
+              </Badge>
             </div>
-
-        {/* Gráfico principal de ventas - Ancho completo */}
-        <div className="grid gap-6 grid-cols-1">
-          <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl font-bold text-foreground">
-                    {nombreCliente && nombreCliente !== "-" 
-                      ? `Ventas de ${nombreCliente}` 
-                      : "Cargando..."}
-                  </CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground mt-1">
-                    {getDescripcionPeriodo()}
-                  </CardDescription>
-                </div>
-                <Badge variant="secondary">
-                  {datos.length} períodos
-                </Badge>
+          </CardHeader>
+          <CardContent className="pb-10">
+            <div className="w-full h-[400px] flex items-center justify-center bg-muted/50 rounded-lg">
+              <div className="text-center">
+                <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  Graficos temporalmente simplificados
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Total de ventas: {ventas?.length || 0}
+                </p>
               </div>
-              
-              {/* Controles responsive al tema */}
-              <div className="space-y-4 mt-4">
-                <Tabs defaultValue="mensual" className="w-full" onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="mensual">
-                      📅 Por Meses
-                    </TabsTrigger>
-                    <TabsTrigger value="semanal">
-                      📊 Semanas ISO
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                
-                <div className="flex flex-wrap gap-2 items-center">
-                  <Select 
-                    value={selectedYear.toString()} 
-                    onValueChange={(value) => setSelectedYear(parseInt(value))}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Año" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {yearsAvailable.map(year => (
-                        <SelectItem key={year} value={year.toString()}>
-                          📅 {year}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {activeTab === "semanal" && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowFilters(!showFilters)}
-                      >
-                        <Filter className="h-4 w-4 mr-1" />
-                        Filtros
-                      </Button>
-                      
-                      {(semanaInicio !== 1 || semanaFin !== totalSemanasAño) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={resetFiltros}
-                        >
-                          <RotateCcw className="h-4 w-4 mr-1" />
-                          Reset
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </div>
-                
-                {/* Panel de filtros expandible - Responsive al tema */}
-                {activeTab === "semanal" && showFilters && (
-                  <Card className="bg-muted/50 border-border backdrop-blur-sm">
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-sm font-medium text-foreground">Filtros rápidos:</span>
-                        <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(1)} className="h-7 text-xs">
-                          Q1 (S1-13)
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(2)} className="h-7 text-xs">
-                          Q2 (S14-26)
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(3)} className="h-7 text-xs">
-                          Q3 (S27-39)
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setRangoTrimestre(4)} className="h-7 text-xs">
-                          Q4 (S40-{totalSemanasAño})
-                        </Button>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-medium text-foreground block mb-1">Semana inicio:</label>
-                          <Select value={semanaInicio.toString()} onValueChange={(v) => setSemanaInicio(parseInt(v))}>
-                            <SelectTrigger className="h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({length: totalSemanasAño}, (_, i) => i + 1).map(week => (
-                                <SelectItem key={week} value={week.toString()}>S{week}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div>
-                          <label className="text-xs font-medium text-foreground block mb-1">Semana fin:</label>
-                          <Select value={semanaFin.toString()} onValueChange={(v) => setSemanaFin(parseInt(v))}>
-                            <SelectTrigger className="h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({length: totalSemanasAño}, (_, i) => i + 1)
-                                .filter(week => week >= semanaInicio)
-                                .map(week => (
-                                <SelectItem key={week} value={week.toString()}>S{week}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="pb-10">
-              <div ref={containerRef} className="w-full h-[500px] relative">
-                <canvas ref={chartRef} className="w-full h-full rounded-lg" />
-              </div>
-            </CardContent>
-          </Card>
-
-        {/* Gráficos secundarios - Layout horizontal */}
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-          <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
-            <CardHeader className="text-center">
-              <CardTitle className="text-foreground text-2xl">Distribución por Asesor</CardTitle>
-              <CardDescription className="text-muted-foreground">{asesoresProcesados.length > 8 
-                ? `Top 7 asesores + otros (${asesoresProcesados.length - 1} total)`
-                : `${asesoresProcesados.length} asesores activos`
-              } - {getNombreCliente()}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pb-10 flex justify-center">
-              <div className="relative w-full max-w-2xl h-[400px]" ref={containerRef}>
-                <canvas ref={pieChartRef} className="w-full h-full rounded-lg cursor-pointer" />
-                {tooltip && (
-                  <div 
-                    style={{
-                      position: 'fixed', 
-                      left: tooltip.x + 15, 
-                      top: tooltip.y + 15, 
-                      zIndex: 50, 
-                      pointerEvents: 'none'
-                    }} 
-                    className="bg-gradient-to-br from-slate-900/95 to-slate-800/95 text-white px-4 py-3 rounded-xl shadow-2xl border border-purple-500/30 backdrop-blur-md animate-fade-in"
-                  >
-                    <div className="font-bold text-purple-300 text-sm">{tooltip.label}</div>
-                    <div className="text-cyan-100 text-xs mt-1">
-                      {tooltip.value} ventas realizadas
-                    </div>
-                    <div className="w-full h-px bg-gradient-to-r from-purple-500 to-cyan-500 mt-2 opacity-50"></div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
-            <CardHeader className="text-center">
-              <CardTitle className="text-foreground text-2xl flex items-center justify-center gap-2">
-                📚 Distribución por Programa
-              </CardTitle>
-              <CardDescription className="text-muted-foreground">
-                {programasProcesados.length} programa{programasProcesados.length !== 1 ? 's' : ''} de interés - {getNombreCliente()}
-                <span className="text-xs text-green-400 ml-2">
-                  (Todos los programas)
-                </span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pb-4">
-                {programasProcesados.length > 0 ? (
-                <div className="space-y-3">
-                  {programasProcesados.map((programa, index) => {
-                    const ventasPrograma = getVentasPorPrograma(programa.nombre)
-                    const isExpanded = programaSeleccionado === programa.nombre
-                    const porcentaje = ((programa.ventas / estadisticas.totalVentas) * 100).toFixed(1)
-                    
-                    return (
-                      <div key={index} className="border border-border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-md">
-                        <button
-                          onClick={() => setProgramaSeleccionado(isExpanded ? null : programa.nombre)}
-                          className="w-full p-4 text-left transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 flex-1 min-w-0">
-                              <div 
-                                className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md"
-                                style={{ backgroundColor: programaColors[index % programaColors.length] }}
-                              >
-                                {index + 1}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-foreground truncate">
-                                  {programa.nombre}
-                                </h4>
-                                <p className="text-sm text-muted-foreground">
-                                  {programa.ventas} venta{programa.ventas !== 1 ? 's' : ''} • {porcentaje}% del total
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-foreground">
-                                  {programa.ventas}
-                                </div>
-                              </div>
-                              <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                                <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Barra de progreso */}
-                          <div className="mt-3 w-full bg-muted rounded-full h-2 overflow-hidden">
-                            <div 
-                              className="h-full rounded-full transition-all duration-500"
-                        style={{
-                                backgroundColor: programaColors[index % programaColors.length],
-                                width: `${porcentaje}%` 
-                              }}
-                            />
-                          </div>
-                        </button>
-                        
-                        {/* Panel expandible con detalles de ventas */}
-                        {isExpanded && (
-                          <div className="border-t border-border bg-muted/30 p-4 animate-in slide-in-from-top-2 duration-300">
-                            <h5 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: programaColors[index % programaColors.length] }}></span>
-                              Detalles de ventas ({ventasPrograma.length})
-                            </h5>
-                            
-                            {ventasPrograma.length > 0 ? (
-                              <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
-                                {ventasPrograma.map((venta, ventaIndex) => (
-                                  <div 
-                                    key={ventaIndex}
-                                    className="bg-card p-3 rounded-lg border border-border hover:border-primary/50 transition-colors"
-                                  >
-                                    <div className="grid grid-cols-2 gap-2 text-sm">
-                                      <div>
-                                        <span className="text-muted-foreground">Cliente:</span>
-                                        <p className="font-medium text-foreground">{venta.nombre} {venta.apellido}</p>
-                        </div>
-                                      <div>
-                                        <span className="text-muted-foreground">Email:</span>
-                                        <p className="font-medium text-foreground truncate">{venta.email || 'N/A'}</p>
-                                      </div>
-                                      <div>
-                                        <span className="text-muted-foreground">Asesor:</span>
-                                        <p className="font-medium text-foreground">{venta.asesor}</p>
-                                      </div>
-                                      <div>
-                                        <span className="text-muted-foreground">Fecha:</span>
-                                        <p className="font-medium text-foreground">
-                                          {new Date(venta.fecha_venta).toLocaleDateString('es-ES', {
-                                            day: '2-digit',
-                                            month: 'short',
-                                            year: 'numeric'
-                                          })}
-                                        </p>
-                                      </div>
-                                      {venta.campos_adicionales?.modalidad && (
-                                        <div>
-                                          <span className="text-muted-foreground">Modalidad:</span>
-                                          <p className="font-medium text-foreground">{venta.campos_adicionales.modalidad}</p>
-                      </div>
-                    )}
-                                      {venta.campos_adicionales?.turno && (
-                                        <div>
-                                          <span className="text-muted-foreground">Turno:</span>
-                                          <p className="font-medium text-foreground">{venta.campos_adicionales.turno}</p>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground italic">No hay ventas para este programa</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-48">
-                    <div className="text-center space-y-2">
-                      <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto">
-                        📚
-                      </div>
-                      <p className="text-muted-foreground text-sm">No hay datos de programas disponibles</p>
-                      <p className="text-muted-foreground text-xs">Los programas se mostrarán cuando haya ventas con campo "programa_interes"</p>
-                    </div>
-                  </div>
-                )}
-            </CardContent>
-          </Card>
-        </div>
-          </>
-        )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </TooltipProvider>
   )
