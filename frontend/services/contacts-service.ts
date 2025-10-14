@@ -86,6 +86,46 @@ export interface ContactResponse {
   total_pages: number
 }
 
+export interface ImportDryRunResponse {
+  message: string
+  will_import: number
+  will_update: number
+  will_skip: number
+  total_valid_rows: number
+  import_id: number
+}
+
+export interface ImportExecutionResponse {
+  message: string
+  imported: number
+  skipped: number
+  updated: number
+  errors: string[]
+  total_processed: number
+  import_id: number
+}
+
+export interface ImportContactsOptions {
+  skip_duplicates?: boolean
+  update_existing?: boolean
+  validate_emails?: boolean
+  dry_run?: boolean
+  max_rows?: number
+}
+
+export interface ImportContactsResult<T = ImportDryRunResponse | ImportExecutionResponse> {
+  status: number
+  data: T
+}
+
+export interface ImportContactsError extends Error {
+  status: number
+  details?: any
+  errorsFile?: string
+  validationErrors?: any[]
+  importId?: number
+}
+
 class ContactsService {
   // ✅ CORREGIDO: Eliminar baseUrl ya que apiRequest maneja la URL base automáticamente
 
@@ -394,12 +434,12 @@ class ContactsService {
   async importContacts(
     clientId: number, 
     file: File, 
-    options: { skip_duplicates?: boolean; update_existing?: boolean; validate_emails?: boolean } = {}
-  ): Promise<{ message: string; imported: number; skipped: number; updated: number; errors: string[]; total_processed: number }> {
+    options: ImportContactsOptions = {}
+  ): Promise<ImportContactsResult> {
     const formData = new FormData()
     formData.append('file', file)
     
-    // Agregar opciones como parámetros
+    // Agregar opciones como parametros
     if (options.skip_duplicates !== undefined) {
       formData.append('skip_duplicates', options.skip_duplicates.toString())
     }
@@ -409,26 +449,54 @@ class ContactsService {
     if (options.validate_emails !== undefined) {
       formData.append('validate_emails', options.validate_emails.toString())
     }
+    if (options.dry_run !== undefined) {
+      formData.append('dry_run', options.dry_run.toString())
+    }
+    if (options.max_rows !== undefined) {
+      formData.append('max_rows', options.max_rows.toString())
+    }
 
-    // ✅ CORREGIDO: Usar endpoint que coincida con estructura del backend
+    // CORREGIDO: Usar endpoint que coincida con estructura del backend
     const response = await apiRequest(`/api/contacts/client/${clientId}/import`, {
       method: 'POST',
       body: formData,
     })
     
+    const contentType = response.headers.get('content-type') || ''
+    const isJson = contentType.includes('application/json')
+    const payload = isJson ? await response.json() : await response.text()
+    
     if (!response.ok) {
-      const errorData = await response.text()
-      let errorMessage = 'Error al importar contactos'
-      try {
-        const errorJson = JSON.parse(errorData)
-        errorMessage = errorJson.message || errorMessage
-      } catch (e) {
-        // Si no es JSON válido, usar el texto como está
+      const message =
+        typeof payload === 'string'
+          ? payload || 'Error al importar contactos'
+          : payload?.error || payload?.message || 'Error al importar contactos'
+
+      const error = new Error(message) as ImportContactsError
+      error.status = response.status
+      error.details = payload
+
+      if (payload && typeof payload === 'object') {
+        if (payload.errors_file) {
+          error.errorsFile = payload.errors_file
+        }
+        if (payload.validation_errors) {
+          error.validationErrors = payload.validation_errors
+        }
+        if (payload.import_id) {
+          error.importId = payload.import_id
+        }
       }
-      throw new Error(errorMessage)
+
+      throw error
     }
-    return response.json()
+
+    return {
+      status: response.status,
+      data: payload,
+    }
   }
 }
 
 export const contactsService = new ContactsService()
+

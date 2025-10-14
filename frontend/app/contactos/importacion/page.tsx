@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { ClientSelector } from "@/components/contacts/client-selector"
-import { contactsService } from "@/services/contacts-service"
+import { contactsService, ImportContactsError, ImportDryRunResponse, ImportExecutionResponse } from "@/services/contacts-service"
 import { useToast } from "@/hooks/use-toast"
 import { Download, Upload, FileSpreadsheet, AlertCircle, CheckCircle, XCircle, Settings, History, Eye, Calendar, User, Clock, TrendingUp } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -26,13 +26,15 @@ interface ClientForContacts {
   contacts_by_estado: Record<string, number>
 }
 
-interface ImportResult {
+type ImportDryRunSummary = ImportDryRunResponse
+type ImportExecutionSummary = ImportExecutionResponse & { status: number }
+
+interface ImportErrorState {
   message: string
-  imported: number
-  skipped: number
-  updated: number
-  errors: string[]
-  total_processed: number
+  status?: number
+  validationErrors?: string[]
+  errorsFile?: string
+  importId?: number
 }
 
 interface ImportHistoryItem {
@@ -44,7 +46,7 @@ interface ImportHistoryItem {
   skipped: number
   updated: number
   errors: number
-  // Campos adicionales que podrían venir del backend
+  // Campos adicionales que podrian venir del backend
   filename?: string
   file_size?: number
   file_type?: string
@@ -63,7 +65,7 @@ interface ImportDetails {
   created_at: string
   summary: any
   errors: string[]
-  // Campos adicionales que podrían venir del backend
+  // Campos adicionales que podrian venir del backend
   filename?: string
   stats?: {
     success_rate: number
@@ -92,12 +94,17 @@ export default function ImportacionPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
   const [file, setFile] = useState<File | null>(null)
   const [importing, setImporting] = useState(false)
+  const [dryRunning, setDryRunning] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [result, setResult] = useState<ImportResult | null>(null)
+  const [dryRunResult, setDryRunResult] = useState<ImportDryRunSummary | null>(null)
+  const [importResult, setImportResult] = useState<ImportExecutionSummary | null>(null)
+  const [importError, setImportError] = useState<ImportErrorState | null>(null)
+  const [lastImportId, setLastImportId] = useState<number | null>(null)
   const [importOptions, setImportOptions] = useState({
     skip_duplicates: true,
     update_existing: false,
-    validate_emails: true
+    validate_emails: true,
+    max_rows: ""
   })
 
   useEffect(() => {
@@ -126,7 +133,7 @@ export default function ImportacionPage() {
     } catch (error: any) {
       console.error('Error loading import history:', error)
       
-      // Manejar errores específicos del backend
+      // Manejar errores especificos del backend
       let errorMessage = "Error al cargar historial"
       
       if (error.message) {
@@ -135,9 +142,9 @@ export default function ImportacionPage() {
         errorMessage = error.error
       }
       
-      // Si es el error de 'User' object has no attribute 'name', mostrar mensaje más claro
+      // Si es el error de 'User' object has no attribute 'name', mostrar mensaje mas claro
       if (errorMessage.includes("'User' object has no attribute 'name'")) {
-        errorMessage = "Error en el servidor: problema con la información del usuario. Contacta al administrador."
+        errorMessage = "Error en el servidor: problema con la informacion del usuario. Contacta al administrador."
       }
       
       toast({ 
@@ -223,7 +230,10 @@ export default function ImportacionPage() {
     }
 
     setFile(file)
-    setResult(null)
+    setDryRunResult(null)
+    setImportResult(null)
+    setImportError(null)
+    setLastImportId(null)
     // Preview de primeras filas
     previewFile(file)
   }
@@ -271,14 +281,14 @@ export default function ImportacionPage() {
         })
         setPreview({ headers, rows })
       } else {
-        // Para archivos Excel, mostramos información del archivo
+        // Para archivos Excel, mostramos informacion del archivo
         setPreview({
-          headers: ['Información del archivo'],
+          headers: ['Informacion del archivo'],
           rows: [
-            { 'Información del archivo': `Nombre: ${file.name}` },
-            { 'Información del archivo': `Tamaño: ${(file.size / 1024).toFixed(1)} KB` },
-            { 'Información del archivo': `Tipo: ${file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}` },
-            { 'Información del archivo': 'El archivo será procesado correctamente por el backend' }
+            { 'Informacion del archivo': `Nombre: ${file.name}` },
+            { 'Informacion del archivo': `Tamano: ${(file.size / 1024).toFixed(1)} KB` },
+            { 'Informacion del archivo': `Tipo: ${file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}` },
+            { 'Informacion del archivo': 'El archivo sera procesado correctamente por el backend' }
           ]
         })
       }
@@ -287,83 +297,138 @@ export default function ImportacionPage() {
       setPreview({
         headers: ['Error'],
         rows: [
-          { 'Error': 'No se pudo previsualizar el archivo. El archivo será procesado correctamente por el backend.' }
+          { 'Error': 'No se pudo previsualizar el archivo. El archivo sera procesado correctamente por el backend.' }
         ]
       })
     }
   }
 
-  const handleImport = async () => {
+  const performImport = async (mode: "dry-run" | "import") => {
     if (!selected || !file) return
 
+    const isDryRun = mode === "dry-run"
+    let progressInterval: ReturnType<typeof setInterval> | null = null
+
     try {
-      setImporting(true)
-      setProgress(0)
-      setResult(null)
+      if (isDryRun) {
+        setDryRunning(true)
+      } else {
+        setImporting(true)
+        setProgress(0)
+        progressInterval = setInterval(() => {
+          setProgress(prev => Math.min(prev + 10, 90))
+        }, 200)
+      }
 
-      // Simular progreso
-      const progressInterval = setInterval(() => {
-        setProgress(prev => Math.min(prev + 10, 90))
-      }, 200)
+      setImportError(null)
+      setLastImportId(null)
 
-      const result = await contactsService.importContacts(selected.id, file, importOptions)
-      
-      clearInterval(progressInterval)
-      setProgress(100)
-      setResult(result)
+      const { data, status } = await contactsService.importContacts(selected.id, file, {
+        skip_duplicates: importOptions.skip_duplicates,
+        update_existing: importOptions.update_existing,
+        validate_emails: importOptions.validate_emails,
+        dry_run: isDryRun,
+        max_rows: importOptions.max_rows ? Number(importOptions.max_rows) : undefined,
+      })
 
-      if (result.errors.length === 0) {
-        toast({ 
-          title: "Importación exitosa", 
-          description: `Se importaron ${result.imported} contactos correctamente` 
+      if (progressInterval) {
+        clearInterval(progressInterval)
+        progressInterval = null
+      }
+
+      if (isDryRun) {
+        const summary = data as ImportDryRunResponse
+        setDryRunResult(summary)
+        setLastImportId(summary.import_id)
+        toast({
+          title: "Dry-run completado",
+          description: `${summary.will_import} se importarian, ${summary.will_update} se actualizarian, ${summary.will_skip} se omitirian`,
         })
       } else {
-        toast({ 
-          title: "Importación con errores", 
-          description: `${result.imported} contactos importados, ${result.errors.length} errores` 
+        const summary = data as ImportExecutionResponse
+        setImportResult({ ...summary, status })
+        setLastImportId(summary.import_id)
+        setProgress(100)
+
+        const hasErrors = status === 207 || (summary.errors?.length ?? 0) > 0
+        toast({
+          title: hasErrors ? "Importacion completada con advertencias" : "Importacion completada",
+          description: hasErrors
+            ? `${summary.imported} importados, ${summary.updated} actualizados, ${summary.errors.length} errores`
+            : `Se importaron ${summary.imported} contactos correctamente`,
+          variant: hasErrors ? "default" : undefined,
         })
       }
-    } catch (error: any) {
-      setProgress(0)
-      
-      // Manejar errores específicos del backend
-      let errorMessage = "Error al importar contactos"
-      
-      if (error.message) {
-        errorMessage = error.message
-      } else if (error.error) {
-        errorMessage = error.error
+    } catch (error) {
+      if (progressInterval) {
+        clearInterval(progressInterval)
+        progressInterval = null
       }
-      
-      // Si es un error de columnas, mostrar información más detallada
-      if (errorMessage.includes("Faltan columnas obligatorias")) {
-        const errorData = error
-        if (errorData.found_columns && errorData.required_columns) {
-          errorMessage = `Columnas requeridas: ${errorData.required_columns.join(", ")}\nColumnas encontradas: ${errorData.found_columns.join(", ")}`
+
+      if (!isDryRun) {
+        setProgress(0)
+      }
+
+      const importErrorInfo = error as ImportContactsError
+      const message = importErrorInfo?.message || "Error al importar contactos"
+      const details = (importErrorInfo?.details ?? {}) as any
+      const validationErrors = Array.isArray(importErrorInfo?.validationErrors)
+        ? (importErrorInfo.validationErrors as string[])
+        : Array.isArray(details?.validation_errors)
+          ? (details.validation_errors as string[])
+          : undefined
+      const errorsFile = importErrorInfo?.errorsFile || details?.errors_file
+      const importId = importErrorInfo?.importId || details?.import_id
+
+      setImportError({
+        message,
+        status: importErrorInfo?.status,
+        validationErrors,
+        errorsFile,
+        importId,
+      })
+
+      if (importId) {
+        setLastImportId(importId)
+      }
+
+      toast({
+        title: "Error de importacion",
+        description: message,
+        variant: "destructive",
+      })
+      console.error("Error completo de importacion:", error)
+    } finally {
+      if (isDryRun) {
+        setDryRunning(false)
+      } else {
+        setImporting(false)
+        if (selected) {
+          loadImportHistory()
         }
       }
-      
-      toast({ 
-        title: "Error de importación", 
-        description: errorMessage, 
-        variant: "destructive" 
-      })
-      
-      console.error("Error completo de importación:", error)
-    } finally {
-      setImporting(false)
-      // Recargar historial después de importar
-      if (selected) {
-        loadImportHistory()
-      }
     }
+  }
+
+  const handleDryRun = () => performImport("dry-run")
+  const handleImport = () => performImport("import")
+
+  const buildErrorsFileUrl = (path?: string | null) => {
+    if (!path) return null
+    if (/^https?:/i.test(path)) {
+      return path
+    }
+    const base = API_BASE.endsWith("/") ? API_BASE.slice(0, -1) : API_BASE
+    const normalized = path.startsWith("/") ? path.slice(1) : path
+    return `${base}/${normalized}`
+  }
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Importación de Contactos</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Importacion de Contactos</h1>
           <p className="text-muted-foreground">Importa contactos masivamente desde Excel o CSV</p>
         </div>
         <ClientSelector 
@@ -390,17 +455,17 @@ export default function ImportacionPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm text-muted-foreground">
-                La plantilla incluye todas las columnas necesarias y ejemplos de datos válidos.
+                La plantilla incluye todas las columnas necesarias y ejemplos de datos validos.
               </div>
               
-              {/* Información sobre formato de columnas */}
+              {/* Informacion sobre formato de columnas */}
               <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                <h4 className="text-sm font-medium text-blue-900 mb-2">📋 Formato de columnas requeridas:</h4>
+                <h4 className="text-sm font-medium text-blue-900 mb-2">Ã°Yâ€œâ€¹ Formato de columnas requeridas:</h4>
                 <ul className="text-xs text-blue-800 space-y-1">
-                  <li>• <strong>nombre</strong> - Nombre del contacto (sin asteriscos)</li>
-                  <li>• <strong>apellido</strong> - Apellido del contacto (sin asteriscos)</li>
-                  <li>• <strong>estado</strong> - Estado del contacto (sin asteriscos)</li>
-                  <li>• Otras columnas opcionales: correo, telefono, telefono_whatsapp, programa_interes, etc.</li>
+                  <li>aâ‚¬Â¢ <strong>nombre</strong> - Nombre del contacto (sin asteriscos)</li>
+                  <li>aâ‚¬Â¢ <strong>apellido</strong> - Apellido del contacto (sin asteriscos)</li>
+                  <li>aâ‚¬Â¢ <strong>estado</strong> - Estado del contacto (sin asteriscos)</li>
+                  <li>aâ‚¬Â¢ Otras columnas opcionales: correo, telefono, telefono_whatsapp, programa_interes, etc.</li>
                 </ul>
               </div>
               
@@ -411,7 +476,7 @@ export default function ImportacionPage() {
             </CardContent>
           </Card>
 
-          {/* Importación */}
+          {/* Importacion */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -438,11 +503,11 @@ export default function ImportacionPage() {
                 </div>
               )}
 
-              {/* Opciones de importación */}
+              {/* Opciones de importacion */}
               <div className="space-y-3 p-3 border rounded-md bg-muted/50">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Settings className="h-4 w-4" />
-                  Opciones de importación
+                  Opciones de importacion
                 </div>
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm">
@@ -457,7 +522,7 @@ export default function ImportacionPage() {
                       checked={importOptions.update_existing}
                       onCheckedChange={(v) => setImportOptions(prev => ({ ...prev, update_existing: !!v }))}
                     />
-                    <span>Actualizar contactos existentes</span>
+                    <span>Actualizar existentes (por email)</span>
                   </label>
                   <label className="flex items-center gap-2 text-sm">
                     <Checkbox
@@ -467,15 +532,39 @@ export default function ImportacionPage() {
                     <span>Validar formato de emails</span>
                   </label>
                 </div>
+                <div className="space-y-1">
+                  <span className="text-sm font-medium">Limite de filas</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="20000"
+                    value={importOptions.max_rows}
+                    onChange={(event) => setImportOptions(prev => ({ ...prev, max_rows: event.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Deja en blanco para usar el limite predeterminado (20000).
+                  </p>
+                </div>
               </div>
 
-              <Button 
-                onClick={handleImport} 
-                disabled={!file || importing}
-                className="w-full"
-              >
-                {importing ? "Importando..." : "Importar contactos"}
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleDryRun}
+                  disabled={!file || importing || dryRunning}
+                  className="w-full sm:w-auto"
+                >
+                  {dryRunning ? "Probando..." : "Probar (dry-run)"}
+                </Button>
+                <Button
+                  onClick={handleImport}
+                  disabled={!file || importing || dryRunning}
+                  className="w-full sm:w-auto"
+                >
+                  {importing ? "Importando..." : "Importar ahora"}
+                </Button>
+              </div>
 
               {importing && (
                 <div className="space-y-2">
@@ -486,62 +575,179 @@ export default function ImportacionPage() {
                   <Progress value={progress} />
                 </div>
               )}
+
+              {dryRunning && !importing && (
+                <div className="text-sm text-muted-foreground">
+                  Ejecutando dry-run... 
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
       ) : (
-        <div className="text-sm text-muted-foreground">Selecciona un cliente para comenzar la importación.</div>
+        <div className="text-sm text-muted-foreground">Selecciona un cliente para comenzar la importacion.</div>
       )}
 
       {/* Resultados */}
-      {result && (
+      {dryRunResult && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {result.errors.length === 0 ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              ) : (
-                <AlertCircle className="h-5 w-5 text-yellow-500" />
-              )}
-              Resultado de la importación
+              <AlertCircle className="h-5 w-5 text-blue-500" />
+              Resultado del dry-run
             </CardTitle>
+            <CardDescription>{dryRunResult.message}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{result.imported}</div>
+                <div className="text-2xl font-bold text-green-600">{dryRunResult.will_import}</div>
+                <div className="text-sm text-muted-foreground">Importarian</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">{dryRunResult.will_update}</div>
+                <div className="text-sm text-muted-foreground">Actualizarian</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{dryRunResult.will_skip}</div>
+                <div className="text-sm text-muted-foreground">Se omitirian</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-foreground">{dryRunResult.total_valid_rows}</div>
+                <div className="text-sm text-muted-foreground">Filas validas</div>
+              </div>
+            </div>
+            {lastImportId && (
+              <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Badge variant="outline">Import ID: {lastImportId}</Badge>
+                {selected && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => loadImportDetails(String(lastImportId))}>
+                      Ver detalles
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={loadImportHistory}>
+                      Ver historial
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {importResult && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {(importResult.status === 207 || importResult.errors.length > 0) ? (
+                <AlertCircle className="h-5 w-5 text-yellow-500" />
+              ) : (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              )}
+              Resultado de la importacion
+            </CardTitle>
+            <CardDescription>{importResult.message}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{importResult.imported}</div>
                 <div className="text-sm text-muted-foreground">Importados</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{result.skipped}</div>
+                <div className="text-2xl font-bold text-blue-600">{importResult.skipped}</div>
                 <div className="text-sm text-muted-foreground">Omitidos</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{result.updated}</div>
+                <div className="text-2xl font-bold text-purple-600">{importResult.updated}</div>
                 <div className="text-sm text-muted-foreground">Actualizados</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{result.errors.length}</div>
+                <div className="text-2xl font-bold text-red-600">{importResult.errors.length}</div>
                 <div className="text-sm text-muted-foreground">Errores</div>
               </div>
             </div>
-
             <div className="text-center text-sm text-muted-foreground">
-              Total procesados: {result.total_processed} filas
+              Total procesados: {importResult.total_processed} filas (HTTP {importResult.status})
             </div>
-
-            {result.errors.length > 0 && (
+            {importResult.status === 207 && (
+              <p className="text-center text-sm text-yellow-600">
+                Importacion completada con errores parciales (codigo 207).
+              </p>
+            )}
+            {importResult.errors.length > 0 && (
               <Alert>
-                <XCircle className="h-4 w-4" />
                 <AlertDescription>
                   <div className="font-medium mb-2">Errores encontrados:</div>
                   <ul className="list-disc list-inside space-y-1 text-sm max-h-40 overflow-y-auto">
-                    {result.errors.map((error, i) => (
+                    {importResult.errors.map((error, i) => (
                       <li key={i}>{error}</li>
                     ))}
                   </ul>
                 </AlertDescription>
               </Alert>
+            )}
+            {lastImportId && (
+              <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Badge variant="outline">Import ID: {lastImportId}</Badge>
+                {selected && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => loadImportDetails(String(lastImportId))}>
+                      Ver detalles
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={loadImportHistory}>
+                      Ver historial
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {importError && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-600" />
+              Error durante la importacion
+            </CardTitle>
+            {importError.status && (
+              <CardDescription>Codigo de respuesta: {importError.status}</CardDescription>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert variant="destructive">
+              <AlertDescription>{importError.message}</AlertDescription>
+            </Alert>
+            {importError.validationErrors && importError.validationErrors.length > 0 && (
+              <div className="space-y-2">
+                <div className="font-medium text-sm">Errores de validacion:</div>
+                <ul className="list-disc list-inside space-y-1 text-sm max-h-40 overflow-y-auto">
+                  {importError.validationErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {importError.errorsFile && (
+              <Button variant="outline" size="sm" asChild>
+                <a href={buildErrorsFileUrl(importError.errorsFile) || '#'} target="_blank" rel="noopener noreferrer">
+                  Descargar archivo de errores
+                </a>
+              </Button>
+            )}
+            {importError.importId && (
+              <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Badge variant="outline">Import ID: {importError.importId}</Badge>
+                {selected && (
+                  <Button variant="outline" size="sm" onClick={() => loadImportDetails(String(importError.importId))}>
+                    Ver detalles
+                  </Button>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -599,8 +805,8 @@ export default function ImportacionPage() {
                       <TableHead>Usuario</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead>Resultados</TableHead>
-                      <TableHead>Duración</TableHead>
-                      <TableHead>Tasa de éxito</TableHead>
+                      <TableHead>Duracion</TableHead>
+                      <TableHead>Tasa de exito</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -688,9 +894,9 @@ export default function ImportacionPage() {
                               </DialogTrigger>
                               <DialogContent className="max-w-2xl">
                                 <DialogHeader>
-                                  <DialogTitle>Detalles de Importación</DialogTitle>
+                                  <DialogTitle>Detalles de Importacion</DialogTitle>
                                   <DialogDescription>
-                                    Información completa de la importación #{item.id}
+                                    Informacion completa de la importacion #{item.id}
                                   </DialogDescription>
                                 </DialogHeader>
                                 {selectedImport && (
@@ -708,15 +914,15 @@ export default function ImportacionPage() {
                                           {selectedImport.stats && (
                                             <>
                                               <div className="flex justify-between">
-                                                <span>Tasa de éxito:</span>
+                                                <span>Tasa de exito:</span>
                                                 <span className="font-medium">{selectedImport.stats.success_rate.toFixed(1)}%</span>
                                               </div>
                                               <div className="flex justify-between">
-                                                <span>Duración:</span>
+                                                <span>Duracion:</span>
                                                 <span className="font-medium">{selectedImport.stats.duration_formatted}</span>
                                               </div>
                                               <div className="flex justify-between">
-                                                <span>Tamaño del archivo:</span>
+                                                <span>Tamano del archivo:</span>
                                                 <span className="font-medium">{selectedImport.stats.file_size_formatted}</span>
                                               </div>
                                               <div className="flex justify-between">
@@ -753,7 +959,7 @@ export default function ImportacionPage() {
                                     
                                     {selectedImport.validation_errors && selectedImport.validation_errors.length > 0 && (
                                       <div>
-                                        <h4 className="font-medium mb-2 text-red-600">Errores de Validación</h4>
+                                        <h4 className="font-medium mb-2 text-red-600">Errores de Validacion</h4>
                                         <div className="bg-red-50 border border-red-200 rounded-md p-3">
                                           <ul className="list-disc list-inside space-y-1 text-sm">
                                             {selectedImport.validation_errors.map((error, i) => (

@@ -165,12 +165,23 @@ class ComprobantesService {
   }
 
   // Realizar búsqueda de comprobantes
-  async searchComprobantes(filters: ComprobanteFilters): Promise<ComprobanteSearchResponse> {
+  async searchComprobantes(filters: ComprobanteFilters, options?: { signal?: AbortSignal, timeoutMs?: number }): Promise<ComprobanteSearchResponse> {
     const params = new URLSearchParams()
 
+    // Defaults seguros
+    const page = (filters.page ?? 1)
+    const limit = (filters.limit ?? 20)
+    params.set('page', String(page))
+    params.set('limit', String(limit))
+
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== "") {
-        params.append(key, value.toString())
+      if (key === 'page' || key === 'limit') return
+      if (value === undefined || value === null || value === '') return
+      // Asegurar tipos renderizables y envío correcto
+      if (typeof value === 'number' || typeof value === 'boolean') {
+        params.append(key, String(value))
+      } else {
+        params.append(key, String(value))
       }
     })
 
@@ -183,9 +194,22 @@ class ComprobantesService {
       console.log("🎯 BÚSQUEDA SIN FILTROS: Esperamos TODAS las ventas con archivos")
     }
 
+    // Soporte de AbortController y timeout opcional
+    let controller: AbortController | null = null
+    let timeoutId: any
+    let signal: AbortSignal | undefined = options?.signal
+    if (!signal) {
+      controller = new AbortController()
+      signal = controller.signal
+    }
+    if (options?.timeoutMs && controller) {
+      timeoutId = setTimeout(() => controller?.abort(), options.timeoutMs)
+    }
+
     const response = await fetch(`${API_BASE_URL}/api/comprobantes/search?${params}`, {
       headers: getAuthHeaders(),
-      credentials: "include"
+      credentials: "include",
+      signal
     })
 
     if (!response.ok) {
@@ -241,6 +265,8 @@ class ComprobantesService {
       limit: ensureRenderableValue(extractValue(backendResponse.pagination?.results_per_page)) || 20,
       total_pages: ensureRenderableValue(extractValue(backendResponse.pagination?.total_pages)) || 1
     }
+
+    if (timeoutId) clearTimeout(timeoutId)
 
     console.log("✅ DEBUG: Respuesta mapeada:", mappedResponse)
     return mappedResponse

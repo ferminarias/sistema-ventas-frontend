@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Download } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { contactsService } from "@/services/contacts-service"
+import { contactsService, ImportContactsError, ImportExecutionResponse } from "@/services/contacts-service"
+import { API_BASE } from "@/lib/api"
 
 interface ImportContactsDialogProps {
   clientId: number
@@ -26,8 +27,13 @@ export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsI
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [importResult, setImportResult] = useState<{
     imported: number
+    skipped?: number
+    updated?: number
     errors?: string[]
     message: string
+    status?: number
+    errorsFile?: string | null
+    importId?: number
   } | null>(null)
 
   const handleFileSelect = (file: File) => {
@@ -88,27 +94,80 @@ export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsI
 
     try {
       setLoading(true)
-      const result = await contactsService.importContacts(clientId, selectedFile)
-      setImportResult(result)
-      
-      if (result.imported > 0) {
-        toast({
-          title: "Importación exitosa",
-          description: `Se importaron ${result.imported} contactos correctamente`,
-        })
+      setImportResult(null)
+
+      const { data, status } = await contactsService.importContacts(clientId, selectedFile, {
+        skip_duplicates: true,
+        update_existing: false,
+        validate_emails: true,
+      })
+
+      const summary = data as ImportExecutionResponse
+      const hasErrors = status === 207 || (summary.errors?.length ?? 0) > 0
+
+      setImportResult({
+        imported: summary.imported,
+        skipped: summary.skipped,
+        updated: summary.updated,
+        errors: summary.errors,
+        message: summary.message,
+        status,
+        importId: summary.import_id,
+        errorsFile: null,
+      })
+
+      toast({
+        title: hasErrors ? "Importacion completada con advertencias" : "Importacion completada",
+        description: hasErrors
+          ? `${summary.imported} importados, ${summary.updated} actualizados, ${summary.errors.length} errores`
+          : `Se importaron ${summary.imported} contactos correctamente`,
+        variant: hasErrors ? "default" : undefined,
+      })
+
+      if (summary.imported > 0) {
         onContactsImported()
       }
-    } catch (error: any) {
-      console.error('Error importing contacts:', error)
+    } catch (error) {
+      const importError = error as ImportContactsError
+      console.error("Error importing contacts:", importError)
+      const details = (importError.details ?? {}) as Record<string, any>
+      const validationErrors = Array.isArray(importError.validationErrors)
+        ? importError.validationErrors
+        : (Array.isArray(details.validation_errors) ? details.validation_errors : undefined)
+      const errorsFile = importError.errorsFile || details.errors_file || null
+      const importId = importError.importId || details.import_id
+
+      setImportResult({
+        imported: 0,
+        errors: validationErrors,
+        message: importError.message || "Error al importar contactos",
+        status: importError.status,
+        errorsFile,
+        importId,
+      })
+
       toast({
-        title: "Error de importación",
-        description: error.message || "Error al importar contactos",
+        title: "Error de importacion",
+        description: importError.message || "Error al importar contactos",
         variant: "destructive",
       })
     } finally {
       setLoading(false)
     }
   }
+
+  const resolveErrorsFileUrl = (path?: string | null) => {
+    if (!path) return null
+    if (/^https?:/i.test(path)) {
+      return path
+    }
+    const base = API_BASE.endsWith("/") ? API_BASE.slice(0, -1) : API_BASE
+    const normalized = path.startsWith("/") ? path.slice(1) : path
+    return `${base}/${normalized}`
+  }
+
+
+
 
   const downloadTemplate = () => {
     // Crear CSV template
@@ -128,7 +187,7 @@ export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsI
     ]
     
     const csvContent = headers.join(',') + '\n' +
-      'Juan,Pérez,juan.perez@ejemplo.com,123456789,987654321,no contactado,Maestría en Marketing,email,google,spring_sale,logolink,Contacto de ejemplo'
+      'Juan,Perez,juan.perez@ejemplo.com,123456789,987654321,no contactado,Maestria en Marketing,email,google,spring_sale,logolink,Contacto de ejemplo'
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
@@ -171,7 +230,7 @@ export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsI
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Download className="h-5 w-5" />
-                Plantilla de Importación
+                Plantilla de Importacion
               </CardTitle>
               <CardDescription>
                 Descarga la plantilla para ver el formato requerido
@@ -185,12 +244,12 @@ export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsI
             </CardContent>
           </Card>
 
-          {/* Área de carga */}
+          {/* Area de carga */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Seleccionar Archivo</CardTitle>
               <CardDescription>
-                Arrastra un archivo aquí o haz clic para seleccionar
+                Arrastra un archivo aqui o haz clic para seleccionar
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -225,7 +284,7 @@ export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsI
                   ) : (
                     <div className="space-y-2">
                       <p className="text-lg font-medium">
-                        Arrastra tu archivo aquí
+                        Arrastra tu archivo aqui
                       </p>
                       <p className="text-sm text-muted-foreground">
                         o haz clic para seleccionar
@@ -258,30 +317,58 @@ export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsI
             </CardContent>
           </Card>
 
-          {/* Resultado de importación */}
+          {/* Resultado de importacion */}
           {importResult && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  {importResult.imported > 0 ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  {(importResult.status && importResult.status !== 200) || (importResult.errors && importResult.errors.length > 0) ? (
+                    <AlertCircle className="h-5 w-5 text-yellow-500" />
                   ) : (
-                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
                   )}
-                  Resultado de Importación
+                  Resultado de importacion
                 </CardTitle>
+                {importResult.status && (
+                  <CardDescription>Codigo de respuesta: {importResult.status}</CardDescription>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 <Alert>
                   <AlertDescription>{importResult.message}</AlertDescription>
                 </Alert>
 
-                {importResult.imported > 0 && (
-                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                      ✅ {importResult.imported} contactos importados correctamente
-                    </p>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="text-center">
+                    <div className="text-xl font-semibold text-green-600">{importResult.imported}</div>
+                    <div className="text-sm text-muted-foreground">Importados</div>
                   </div>
+                  <div className="text-center">
+                    <div className="text-xl font-semibold text-purple-600">{importResult.updated ?? 0}</div>
+                    <div className="text-sm text-muted-foreground">Actualizados</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-semibold text-blue-600">{importResult.skipped ?? 0}</div>
+                    <div className="text-sm text-muted-foreground">Omitidos</div>
+                  </div>
+                </div>
+
+                {typeof importResult.importId === "number" && (
+                  <div className="text-sm text-muted-foreground">
+                    ID de importacion: {importResult.importId}
+                  </div>
+                )}
+
+                {importResult.errorsFile && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a
+                      href={resolveErrorsFileUrl(importResult.errorsFile) || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Descargar archivo de errores
+                    </a>
+                  </Button>
                 )}
 
                 {importResult.errors && importResult.errors.length > 0 && (
@@ -292,7 +379,7 @@ export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsI
                     <div className="max-h-32 overflow-y-auto space-y-1">
                       {importResult.errors.map((error, index) => (
                         <p key={index} className="text-sm text-red-600 dark:text-red-400">
-                          • {error}
+                          - {error}
                         </p>
                       ))}
                     </div>
@@ -311,9 +398,9 @@ export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsI
               <div className="text-sm space-y-1">
                 <p><strong>Columnas requeridas:</strong> nombre, apellido</p>
                 <p><strong>Columnas opcionales:</strong> correo, telefono, telefono_whatsapp, estado, programa_interes, utm_medio, utm_source, utm_campaign, utm_content, notas</p>
-                <p><strong>Estados válidos:</strong> no contactado, contactado, interesado, seguimiento, propuesta, negociacion, ganado, perdido, descartado</p>
-                <p><strong>UTM tracking:</strong> utm_medio, utm_source, utm_campaign, utm_content para seguimiento de campañas</p>
-                <p><strong>Nota:</strong> Los correos duplicados serán omitidos automáticamente</p>
+                <p><strong>Estados validos:</strong> no contactado, contactado, interesado, seguimiento, propuesta, negociacion, ganado, perdido, descartado</p>
+                <p><strong>UTM tracking:</strong> utm_medio, utm_source, utm_campaign, utm_content para seguimiento de campanas</p>
+                <p><strong>Nota:</strong> Los correos duplicados seran omitidos automaticamente</p>
               </div>
             </CardContent>
           </Card>

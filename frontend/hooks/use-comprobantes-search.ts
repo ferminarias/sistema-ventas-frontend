@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import type { ComprobanteFilters, ComprobanteSearchResponse, FiltrosDisponibles } from "@/types/comprobante"
 import { comprobantesService } from "@/services/comprobantes"
 
@@ -10,6 +10,9 @@ export function useComprobantesSearch() {
   const [loading, setLoading] = useState(false)
   const [loadingFiltros, setLoadingFiltros] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+  const debounceRef = useRef<any>(null)
+  const lastQueryRef = useRef<string>("")
 
   // Cargar filtros disponibles al montar el hook
   useEffect(() => {
@@ -28,27 +31,53 @@ export function useComprobantesSearch() {
     loadFiltros()
   }, [])
 
-  const searchComprobantes = useCallback(async (filters: ComprobanteFilters) => {
-    setLoading(true)
+  const searchComprobantes = useCallback((filters: ComprobanteFilters, opts?: { debounceMs?: number }) => {
+    const debounceMs = opts?.debounceMs ?? 400
     setError(null)
-    
-    try {
-      const token = localStorage.getItem('token')
-      
-      const response = await comprobantesService.searchComprobantes(filters)
-      
-      setData(response)
-    } catch (err) {
-      console.error("❌ Error en búsqueda de comprobantes:", err)
-      setError(err instanceof Error ? err.message : 'Error desconocido')
-    } finally {
-      setLoading(false)
+
+    // Construir clave de query para evitar búsquedas idénticas
+    const params = new URLSearchParams()
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== "") params.append(k, String(v))
+    })
+    const queryKey = params.toString()
+    if (queryKey === lastQueryRef.current && data) {
+      return // Evitar request duplicado
     }
-  }, [])
+    lastQueryRef.current = queryKey
+
+    // Limpiar debounce anterior
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    debounceRef.current = setTimeout(async () => {
+      // Cancelar request previo
+      if (abortRef.current) abortRef.current.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+
+      setLoading(true)
+      try {
+        const response = await comprobantesService.searchComprobantes(
+          filters,
+          { signal: controller.signal, timeoutMs: 15000 }
+        )
+        setData(response)
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return
+        console.error("❌ Error en búsqueda de comprobantes:", err)
+        setError(err instanceof Error ? err.message : 'Error desconocido')
+      } finally {
+        setLoading(false)
+      }
+    }, debounceMs)
+  }, [data])
 
   const reset = useCallback(() => {
     setData(null)
     setError(null)
+    lastQueryRef.current = ""
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (abortRef.current) abortRef.current.abort()
   }, [])
 
   return {
