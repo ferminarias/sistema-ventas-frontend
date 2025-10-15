@@ -492,7 +492,7 @@ export default function ReportesPage() {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-red-400 text-xl font-bold">{error}</div>
       </div>
-    )
+    );
   }
 
   // Opciones para el gráfico de tendencia
@@ -570,7 +570,7 @@ export default function ReportesPage() {
         },
       },
     },
-  }
+  };
 
   // Opciones para el gráfico de barras (distribución horaria)
   const hourlyBarOptions = {
@@ -637,7 +637,7 @@ export default function ReportesPage() {
         },
       },
     },
-  }
+  };
 
   // Datos para el gráfico de tendencia
   const salesTrendData = salesTrend && {
