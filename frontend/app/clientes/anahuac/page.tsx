@@ -6,10 +6,12 @@ import { ClienteBreadcrumb } from "@/components/cliente-breadcrumb"
 
 export default function AnahuacDashboard() {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6 max-w-none">
       <ClienteBreadcrumb cliente="Anahuac" />
       <DashboardHeader cliente="Anahuac" />
-      <ClienteVentasCharts cliente="Anahuac" />
+      <div className="w-full">
+        <ClienteVentasCharts cliente="Anahuac" />
+      </div>
       <ClienteVentasTable cliente="Anahuac" />
     </div>
   )

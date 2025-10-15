@@ -968,7 +968,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
   return (
     <TooltipProvider>
-      <div className="space-y-6">
+      <div className="w-full space-y-8 px-2">
         {/* Mostrar estado de carga si esta cargando */}
         {loadingVentas ? (
           <div className="grid gap-6 grid-cols-1">
@@ -1088,12 +1088,12 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-bold text-foreground">
+                  <CardTitle className="text-3xl font-bold text-foreground mb-2">
                     {nombreCliente && nombreCliente !== "-" 
-                      ? `Ventas de ${nombreCliente}` 
+                      ? `📊 Ventas de ${nombreCliente}` 
                       : "Cargando..."}
                   </CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground mt-1">
+                  <CardDescription className="text-base text-muted-foreground">
                     {getDescripcionPeriodo()}
                   </CardDescription>
                 </div>
@@ -1213,8 +1213,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                 )}
               </div>
             </CardHeader>
-            <CardContent className="pb-10">
-              <div ref={containerRef} className="w-full h-[500px] relative">
+            <CardContent className="pb-12">
+              <div ref={containerRef} className="w-full h-[800px] relative">
                 <canvas ref={chartRef} className="w-full h-full rounded-lg" />
               </div>
             </CardContent>
@@ -1225,15 +1225,15 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         <div className="grid gap-6 grid-cols-1">
           <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
             <CardHeader className="text-center">
-              <CardTitle className="text-foreground text-2xl">Distribución por Asesor</CardTitle>
+              <CardTitle className="text-foreground text-3xl font-bold">Distribución por Asesor</CardTitle>
               <CardDescription className="text-muted-foreground">{asesoresProcesados.length > 8 
                 ? `Top 7 asesores + otros (${asesoresProcesados.length - 1} total)`
                 : `${asesoresProcesados.length} asesores activos`
               } - {getNombreCliente()}
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-10 flex justify-center">
-              <div className="relative w-full max-w-2xl h-[400px]" ref={containerRef}>
+            <CardContent className="pb-16 flex justify-center">
+              <div className="relative w-full max-w-4xl h-[600px]" ref={containerRef}>
                 <canvas ref={pieChartRef} className="w-full h-full rounded-lg cursor-pointer" />
                 {tooltip && (
                   <div 
@@ -1368,8 +1368,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                                         <div>
                                           <span className="text-muted-foreground">Modalidad:</span>
                                           <p className="font-medium text-foreground">{venta.campos_adicionales.modalidad}</p>
-                      </div>
-                    )}
+                                        </div>
+                                      )}
                                       {venta.campos_adicionales?.turno && (
                                         <div>
                                           <span className="text-muted-foreground">Turno:</span>
@@ -1383,30 +1383,25 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                             ) : (
                               <p className="text-sm text-muted-foreground italic">No hay ventas para este programa</p>
                             )}
-                          </div>
-                        )}
                       </div>
                     )
-                  })}
+                  })
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-48">
-                    <div className="text-center space-y-2">
-                      <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto">
-                        📚
-                      </div>
-                      <p className="text-muted-foreground text-sm">No hay datos de programas disponibles</p>
-                      <p className="text-muted-foreground text-xs">Los programas se mostrarán cuando haya ventas con campo "programa_interes"</p>
+                  <div className="text-center space-y-2">
+                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto">
+                      📚
                     </div>
+                    <p className="text-muted-foreground text-sm">No hay datos de programas disponibles</p>
+                    <p className="text-muted-foreground text-xs">Los programas se mostrarán cuando haya ventas con campo "programa_interes"</p>
                   </div>
-                )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
-          </div>
-        )}
-      </div>
+      )}
     </TooltipProvider>
   )
 }
-
