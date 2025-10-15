@@ -1,7 +1,7 @@
 "use client"
 
-// Graficos mejorados con soporte retina y semanas ISO del ano - v2025.01
-import * as React from "react"
+// Gráficos mejorados con soporte retina y semanas ISO del año - v2025.01
+import React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -31,7 +31,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 500, height: 300 });
 
-  // Estados para el nuevo grafico de programas
+  // Estados para el nuevo gráfico de programas
   const programaChartRef = useRef<HTMLCanvasElement>(null)
   const [hoveredProgramaIndex, setHoveredProgramaIndex] = useState<number | null>(null)
   const [programaTooltip, setProgramaTooltip] = useState<{x: number, y: number, label: string, value: number} | null>(null)
@@ -969,7 +969,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        {/* Mostrar estado de carga si esta cargando */}
+        {/* Mostrar estado de carga si está cargando */}
         {loadingVentas ? (
           <div className="grid gap-6 grid-cols-1">
             <Card className="border-2 border-dashed border-border bg-card/50">
@@ -999,7 +999,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           </div>
         ) : (
           <div>
-            {/* Estadisticas destacadas - Responsive al tema */}
+            {/* Estadísticas destacadas - Responsive al tema */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-500/30 backdrop-blur-sm">
                 <CardContent className="p-4">
@@ -1408,4 +1408,3 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     </TooltipProvider>
   )
 }
-
