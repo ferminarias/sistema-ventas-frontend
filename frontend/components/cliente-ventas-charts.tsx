@@ -955,7 +955,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   }
 
   // Obtener descripción del período seleccionado
-  const getDescripcionPeriodo = () => {
+  const getDescripcionPeriodo = (): string => {
     if (activeTab === "mensual") {
       return `${selectedYear} - Vista mensual`
     } else {
@@ -964,7 +964,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       }
       return `${selectedYear} - Semanas ${semanaInicio} a ${semanaFin}`
     }
-  }
+  };
 
   return (
     <TooltipProvider>
@@ -1219,6 +1219,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               </div>
             </CardContent>
           </Card>
+        </div>
 
         {/* Gráficos secundarios - Layout horizontal */}
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
@@ -1402,7 +1403,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             </CardContent>
           </Card>
         </div>
-        </div>
+          </div>
         )}
       </div>
     </TooltipProvider>

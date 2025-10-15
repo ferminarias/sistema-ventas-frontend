@@ -662,7 +662,7 @@ export default function ReportesPage() {
         yAxisID: "y1",
       },
     ],
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-10">
