@@ -1082,7 +1082,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               </Card>
             </div>
 
-        {/* Gráfico principal de ventas - Ancho completo */}
+        {/* Gráfico principal de ventas - Centrado y amplio */}
         <div className="grid gap-6 grid-cols-1">
           <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
             <CardHeader className="pb-4">
@@ -1213,8 +1213,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                 )}
               </div>
             </CardHeader>
-            <CardContent className="pb-12">
-              <div ref={containerRef} className="w-full h-[800px] relative">
+            <CardContent className="pb-12 flex justify-center">
+              <div ref={containerRef} className="w-full max-w-5xl h-[800px] relative">
                 <canvas ref={chartRef} className="w-full h-full rounded-lg" />
               </div>
             </CardContent>
