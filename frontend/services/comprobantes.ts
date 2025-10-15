@@ -129,7 +129,7 @@ class ComprobantesService {
     // SOLUCIÓN: Agregar tipos de archivo que siempre deben estar disponibles
     const enhancedData = this.enhanceFiltersWithLegacyTypes(data)
     
-    return this.ensureAllValuesRenderable(enhancedData)
+    return enhancedData
   }
 
   // NUEVO: Mejorar filtros para incluir tipos legacy como 'imagen_comprobante'
@@ -188,10 +188,16 @@ class ComprobantesService {
     console.log("🔍 DEBUG: Filtros recibidos en searchComprobantes:", filters)
     console.log("🔍 DEBUG: Parámetros URL construidos:", Object.fromEntries(params))
     console.log("🔍 DEBUG: URL completa de búsqueda:", `${API_BASE_URL}/api/comprobantes/search?${params}`)
-    
+
+    // DEBUG ADICIONAL: Verificar token y autenticación
+    const token = localStorage.getItem("token")
+    console.log("🔐 DEBUG: Token de autenticación:", token ? "Token presente" : "SIN TOKEN")
+    console.log("🔐 DEBUG: Headers de autenticación:", getAuthHeaders())
+
     // Si no hay filtros específicos, el backend debe devolver TODAS las ventas con archivos
     if (params.toString() === 'page=1&limit=20' || params.toString() === 'page=1&limit=50') {
       console.log("🎯 BÚSQUEDA SIN FILTROS: Esperamos TODAS las ventas con archivos")
+      console.log("🎯 BÚSQUEDA SIN FILTROS: Debería devolver ventas con archivos adjuntos")
     }
 
     // Soporte de AbortController y timeout opcional
@@ -272,22 +278,61 @@ class ComprobantesService {
     return mappedResponse
   }
 
-  // Método para asegurar que todos los valores de un objeto sean renderizables
-  private ensureAllValuesRenderable(obj: any): any {
-    if (obj === null || obj === undefined) return obj
-    if (typeof obj !== 'object') return ensureRenderableValue(obj)
-    
-    if (Array.isArray(obj)) {
-      return obj.map(item => this.ensureAllValuesRenderable(item))
+    // Función de diagnóstico para verificar integración con backend
+  async diagnosticarIntegracion(): Promise<{ success: boolean, data?: any, error?: string }> {
+    console.log("🔍 DIAGNÓSTICO: Verificando integración con backend...")
+
+    try {
+      // 1. Verificar autenticación
+      const token = localStorage.getItem("token")
+      console.log("🔐 DIAGNÓSTICO: Token presente:", !!token)
+
+      if (!token) {
+        return { success: false, error: "No hay token de autenticación" }
+      }
+
+      // 2. Verificar endpoint de filtros
+      console.log("🔍 DIAGNÓSTICO: Probando endpoint de filtros...")
+      const filtrosResponse = await fetch(`${API_BASE_URL}/api/comprobantes/filtros`, {
+        headers: getAuthHeaders(),
+        credentials: "include"
+      })
+
+      if (!filtrosResponse.ok) {
+        return { success: false, error: `Error en filtros: ${filtrosResponse.status} ${filtrosResponse.statusText}` }
+      }
+
+      const filtrosData = await filtrosResponse.json()
+      console.log("✅ DIAGNÓSTICO: Filtros obtenidos correctamente:", filtrosData)
+
+      // 3. Verificar búsqueda sin filtros (debería devolver todas las ventas con archivos)
+      console.log("🔍 DIAGNÓSTICO: Probando búsqueda sin filtros...")
+      const searchResponse = await fetch(`${API_BASE_URL}/api/comprobantes/search?page=1&limit=10`, {
+        headers: getAuthHeaders(),
+        credentials: "include"
+      })
+
+      if (!searchResponse.ok) {
+        return { success: false, error: `Error en búsqueda: ${searchResponse.status} ${searchResponse.statusText}` }
+      }
+
+      const searchData = await searchResponse.json()
+      console.log("✅ DIAGNÓSTICO: Búsqueda exitosa:", searchData)
+
+      return {
+        success: true,
+        data: {
+          filtros: filtrosData,
+          search: searchData,
+          total_comprobantes: searchData.resultados?.length || 0,
+          has_archivos: searchData.resultados?.some((c: any) => c.archivos?.length > 0) || false
+        }
+      }
+
+    } catch (error) {
+      console.error("❌ DIAGNÓSTICO: Error:", error)
+      return { success: false, error: error instanceof Error ? error.message : "Error desconocido" }
     }
-    
-    const result: any = {}
-    for (const [key, value] of Object.entries(obj)) {
-      // Asegurar que cada valor sea renderable
-      result[key] = ensureRenderableValue(value)
-    }
-    
-    return result
   }
 
   // Descargar archivo usando la estructura correcta del backend

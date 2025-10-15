@@ -6,11 +6,12 @@ import { ResultsList } from "@/components/comprobantes/results-list"
 import { useComprobantesSearch } from "@/hooks/use-comprobantes-search"
 import { useAuth } from "@/contexts/auth-context"
 import type { ComprobanteFilters } from "@/types/comprobante"
-import { FileSearch, AlertCircle, RefreshCw, Download, ArrowLeft } from "lucide-react"
+import { FileSearch, AlertCircle, RefreshCw, Download, ArrowLeft, Bug } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/ui/use-toast"
 import { RailwayLoader } from "@/components/ui/railway-loader"
 import { useRouter } from "next/navigation"
-import { useToast } from "@/components/ui/use-toast"
+import { comprobantesService } from "@/services/comprobantes"
 
 export default function BusquedaComprobantesPage() {
   const { data, filtrosDisponibles, loading, loadingFiltros, error, search } = useComprobantesSearch()
@@ -49,12 +50,21 @@ export default function BusquedaComprobantesPage() {
     }
   }, [user, authLoading, router, toast])
 
-  // Búsqueda automática solo cuando cambia el usuario - EVITAR LOOPS
+  // Búsqueda automática inicial - Buscar TODOS los comprobantes disponibles
   useEffect(() => {
     if (user && (user.role === 'admin' || user.role === 'supervisor')) {
-      search(currentFilters)
+      console.log(" Iniciando búsqueda automática de comprobantes...")
+
+      // Búsqueda inicial amplia para obtener TODOS los comprobantes
+      const initialFilters: ComprobanteFilters = {
+        page: 1,
+        limit: 50, // Más resultados para ver si hay datos
+        // No agregar filtros específicos para obtener TODOS los comprobantes
+      }
+
+      search(initialFilters)
     }
-  }, [user?.id, user?.role]) // Removido currentFilters y search para evitar loops
+  }, [user?.id, user?.role]) // Solo cuando cambia el usuario, no en cada render
 
   const handleSearch = (filters: ComprobanteFilters) => {
     setCurrentFilters(filters)
@@ -63,6 +73,47 @@ export default function BusquedaComprobantesPage() {
 
   const handleRefresh = () => {
     search(currentFilters)
+  }
+
+  const handleDiagnostico = async () => {
+    console.log("🔍 Ejecutando diagnóstico de integración...")
+
+    try {
+      const resultado = await comprobantesService.diagnosticarIntegracion()
+
+      if (resultado.success) {
+        toast({
+          title: "✅ Integración Funcionando",
+          description: `Comprobantes encontrados: ${resultado.data?.total_comprobantes || 0}. ${resultado.data?.has_archivos ? '✅ Tiene archivos' : '⚠️ Sin archivos'}`,
+        })
+
+        console.log("✅ DIAGNÓSTICO EXITOSO:", resultado.data)
+
+        // Si no hay comprobantes, sugerir crear algunos
+        if (resultado.data?.total_comprobantes === 0) {
+          toast({
+            title: "📝 Sugerencia",
+            description: "No hay comprobantes con archivos. Crea algunas ventas con archivos para probar la búsqueda.",
+            variant: "default",
+          })
+        }
+      } else {
+        toast({
+          title: "❌ Error de Integración",
+          description: resultado.error || "Error desconocido en la integración",
+          variant: "destructive",
+        })
+
+        console.error("❌ DIAGNÓSTICO FALLIDO:", resultado.error)
+      }
+    } catch (error) {
+      console.error("❌ Error ejecutando diagnóstico:", error)
+      toast({
+        title: "Error",
+        description: "Error ejecutando diagnóstico",
+        variant: "destructive",
+      })
+    }
   }
 
   // Mostrar loading mientras se verifica autenticación
@@ -114,6 +165,30 @@ export default function BusquedaComprobantesPage() {
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Actualizar
+            </Button>
+            <Button
+              onClick={() => {
+                console.log("🔍 BUSCAR TODO: Forzando búsqueda sin filtros...")
+                const allFilters: ComprobanteFilters = {
+                  page: 1,
+                  limit: 100, // Buscar más resultados
+                  // Sin filtros específicos para obtener TODOS los comprobantes
+                }
+                handleSearch(allFilters)
+              }}
+              variant="outline"
+              className="border-purple-700 text-purple-300 hover:bg-purple-800 bg-transparent"
+            >
+              <FileSearch className="h-4 w-4 mr-2" />
+              Buscar Todo
+            </Button>
+            <Button
+              onClick={handleDiagnostico}
+              variant="outline"
+              className="border-orange-700 text-orange-300 hover:bg-orange-800 bg-transparent"
+            >
+              <Bug className="h-4 w-4 mr-2" />
+              Diagnosticar
             </Button>
             <Button className="bg-purple-600 hover:bg-purple-700 text-white">
               <FileSearch className="h-4 w-4 mr-2" />
