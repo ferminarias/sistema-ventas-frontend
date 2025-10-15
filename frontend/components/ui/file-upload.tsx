@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Upload, X, Image, Loader2 } from "lucide-react"
+import { Upload, X, Image, Loader2, FileIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface FileUploadProps {
@@ -28,8 +28,8 @@ export function FileUpload({
   field,
   label = "Archivo",
   placeholder = "Seleccionar archivo...",
-  accept = "image/*",
-  maxSize = 2, // 2MB por defecto para evitar errores del backend
+  accept = "image/*,.pdf,.doc,.docx,.xls,.xlsx",
+  maxSize = 5, // 5MB para permitir PDFs y documentos
   className,
   disabled = false,
   required = false
@@ -51,9 +51,18 @@ export function FileUpload({
     const file = event.target.files?.[0]
     if (!file) return
 
-    // Validar tipo de archivo
-    if (!file.type.startsWith('image/')) {
-      setError("Solo se permiten archivos de imagen")
+    // Validar tipos permitidos
+    const allowedTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ]
+
+    if (!allowedTypes.includes(file.type)) {
+      setError("Tipo de archivo no permitido. Solo imágenes, PDFs, Word y Excel")
       return
     }
 
@@ -125,11 +134,22 @@ export function FileUpload({
         {preview && (
           <div className="relative">
             <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center">
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full h-full object-contain"
-              />
+              {preview.startsWith('data:image/') ? (
+                // Imagen
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                // PDF u otro documento
+                <div className="flex flex-col items-center justify-center">
+                  <FileIcon className="h-8 w-8 text-gray-500" />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {preview.startsWith('data:application/pdf') ? 'PDF' : 'Documento'}
+                  </p>
+                </div>
+              )}
             </div>
             <Button
               type="button"
@@ -199,7 +219,7 @@ export function FileUpload({
             className="w-full border-gray-600 bg-gray-800/50 text-gray-200 hover:border-gray-500 hover:bg-gray-800/70 hover:text-gray-100 transition-colors"
           >
             <Upload className="mr-2 h-4 w-4" />
-            {isUploading ? "Subiendo..." : "Seleccionar Logo"}
+            {isUploading ? "Subiendo..." : "Seleccionar Archivo"}
           </Button>
         )}
 
@@ -211,7 +231,7 @@ export function FileUpload({
         {/* Información adicional */}
         <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-3">
           <p className="text-xs text-gray-300 mb-1">
-            <span className="font-medium">Formatos soportados:</span> JPG, PNG, GIF
+            <span className="font-medium">Formatos soportados:</span> JPG, PNG, GIF, PDF, Word, Excel
           </p>
           <p className="text-xs text-gray-300 mb-2">
             <span className="font-medium">Tamaño máximo:</span> {maxSize}MB
@@ -220,7 +240,7 @@ export function FileUpload({
             <div className="flex items-start gap-2 p-2 bg-gray-700/50 border border-gray-600 rounded">
               <span className="text-gray-400 text-sm">💡</span>
               <p className="text-xs text-gray-300">
-                Si tu imagen es muy grande, comprímela usando <span className="font-medium">TinyPNG</span> o similar
+                Si tu archivo es muy grande, comprímelo usando <span className="font-medium">TinyPNG</span> o similar
               </p>
             </div>
           )}

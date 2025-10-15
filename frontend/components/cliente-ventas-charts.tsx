@@ -1221,8 +1221,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           </Card>
         </div>
 
-        {/* Gráficos secundarios - Layout horizontal */}
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        {/* Gráficos secundarios - Cada uno ocupa toda la fila */}
+        <div className="grid gap-6 grid-cols-1">
           <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
             <CardHeader className="text-center">
               <CardTitle className="text-foreground text-2xl">Distribución por Asesor</CardTitle>

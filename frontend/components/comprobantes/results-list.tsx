@@ -15,6 +15,105 @@ interface ResultsListProps {
   loading?: boolean
 }
 
+// Componente para visualizar PDFs con autenticación
+const PDFViewer = memo(({ archivo }: { archivo: ArchivoComprobante }) => {
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+    let objectUrl: string | null = null
+
+    const loadPDF = async () => {
+      try {
+        setLoading(true)
+        setError(false)
+
+        const previewUrl = comprobantesService.getPreviewUrlFromFile(archivo)
+        
+        // Si es Cloudinary, usar directamente
+        if (previewUrl.startsWith('https://res.cloudinary.com/')) {
+          if (isMounted) {
+            setPdfUrl(previewUrl)
+            setLoading(false)
+          }
+          return
+        }
+
+        // Para archivos del backend, cargar con autenticación
+        const token = localStorage.getItem("token")
+        const response = await fetch(previewUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}`)
+        }
+
+        const blob = await response.blob()
+        objectUrl = URL.createObjectURL(blob)
+
+        if (isMounted) {
+          setPdfUrl(objectUrl)
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error("❌ Error cargando PDF:", err)
+        if (isMounted) {
+          setError(true)
+          setLoading(false)
+        }
+      }
+    }
+
+    loadPDF()
+
+    return () => {
+      isMounted = false
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+  }, [archivo])
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-96 bg-gray-900 rounded-lg">
+        <div className="text-center">
+          <RailwayLoader size="md" text="Cargando PDF..." />
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !pdfUrl) {
+    return (
+      <div className="flex justify-center items-center h-96 bg-gray-900 rounded-lg">
+        <div className="text-center">
+          <FileText className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+          <p className="text-gray-400">Error al cargar PDF</p>
+          <p className="text-sm text-gray-500">Usa el botón de descarga para ver el archivo</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex justify-center">
+      <iframe
+        src={pdfUrl}
+        className="w-full h-96 rounded-lg border border-gray-600"
+        title="PDF Preview"
+      />
+    </div>
+  )
+})
+
+PDFViewer.displayName = 'PDFViewer'
+
 const ComprobanteItem = memo(({ comprobante, onVerComprobante, onDownloadFile, downloading }: {
   comprobante: Comprobante,
   onVerComprobante: (archivo: any, venta: Comprobante) => void,
@@ -570,18 +669,7 @@ export const ResultsList = memo(function ResultsList({ comprobantes, loading = f
                              (currentFile.file_url && currentFile.file_url.includes('.pdf'))
                 
                 if (isPdf) {
-                  return (
-                    <div className="flex justify-center">
-                      <iframe
-                        src={`${comprobantesService.getPreviewUrlFromFile(currentFile)}?token=${localStorage.getItem("token")}`}
-                        className="w-full h-96 rounded-lg border border-gray-600"
-                        title={getDisplayName(currentFile)}
-                        onLoad={() => {
-                          // PDF cargado exitosamente
-                        }}
-                      />
-                    </div>
-                  )
+                  return <PDFViewer archivo={currentFile} />
                 }
                 
                 return (
