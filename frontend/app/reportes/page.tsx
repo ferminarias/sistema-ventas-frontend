@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Info } from "lucide-react"
 import { clientService } from '@/services/client-service'
+import { ClienteVentasCharts } from '@/components/cliente-ventas-charts'
 import { useAuth } from "@/contexts/auth-context"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-production.up.railway.app';
@@ -39,7 +40,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-
 // Registrar componentes de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler)
 
-// 1. Clases base optimizadas para mejor rendimiento
+// 1. Clases base optimizadas para mejor rendimientoimage.png
 const cardBase = `
   transition-all duration-300 ease-out
   border border-gray-700/50 shadow-xl rounded-2xl 
@@ -185,14 +186,10 @@ export default function ReportesPage() {
   const [allowedClients, setAllowedClients] = useState<any[]>([])
   const [clienteFiltro, setClienteFiltro] = useState<string | undefined>(undefined)
   
-  // Estados para el filtro mensual GLOBAL de la página
+  // Estados para el filtro mensual de Top Asesores
   const currentDate = new Date()
-  const [globalFilterMonth, setGlobalFilterMonth] = useState<string>('all') // 'all' para mostrar acumulativo
-  const [globalFilterYear, setGlobalFilterYear] = useState<string>(String(currentDate.getFullYear()))
-  
-  // Calcular mes/año para la API (undefined si es 'all', sino enviar los valores)
-  const selectedMonth = globalFilterMonth === 'all' ? undefined : globalFilterMonth
-  const selectedReportYear = globalFilterMonth === 'all' ? undefined : String(globalFilterYear)
+  const [selectedMonth, setSelectedMonth] = useState<string>(String(currentDate.getMonth() + 1).padStart(2, '0'))
+  const [selectedReportYear, setSelectedReportYear] = useState<string>(String(currentDate.getFullYear()))
   
   // Estados para manejo de iconos de asesores
   const [uploadingIcon, setUploadingIcon] = useState<string | null>(null)
@@ -241,16 +238,8 @@ export default function ReportesPage() {
       try {
         setLoading(true)
         setError(null)
-        console.log('🔍 Parámetros para API:', {
-          clienteFiltro,
-          selectedMonth,
-          selectedReportYear,
-          globalFilterMonth,
-          globalFilterYear
-        })
-        
         const [metricsData, advisorsWithIconsData, clientsData, salesTrendData, hourlyData, pipelineData, heatmapData] = await Promise.all([
-          analyticsService.getMetrics(clienteFiltro, selectedMonth, selectedReportYear),
+          analyticsService.getMetrics(clienteFiltro),
           asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear),
           analyticsService.getTopClients(clienteFiltro),
           analyticsService.getSalesTrend(selectedPeriod, clienteFiltro),
@@ -258,69 +247,22 @@ export default function ReportesPage() {
           analyticsService.getPipeline(clienteFiltro),
           analyticsService.getHeatmap(clienteFiltro),
         ])
-        
-        console.log('📊 Respuesta completa de asesores:', advisorsWithIconsData)
-        console.log('📊 general:', advisorsWithIconsData?.general)
-        console.log('📊 byClient:', advisorsWithIconsData?.byClient)
-        console.log('📊 items:', (advisorsWithIconsData as any)?.items)
-        console.log('📊 period:', (advisorsWithIconsData as any)?.period)
-        
         setMetrics(metricsData)
-        // La API puede devolver {general, byClient} O {items, period}
-        // Combinar datos de general con iconos de items
-        const generalData = advisorsWithIconsData?.general || []
-        const itemsData = (advisorsWithIconsData as any)?.items || []
-        const byClientData = advisorsWithIconsData?.byClient || []
-        
-        // Crear map de iconos por nombre
-        const iconMap = new Map()
-        itemsData.forEach(item => {
-          iconMap.set(item.name, {
-            iconUrl: item.iconUrl || item.icon_url,
-            publicId: item.publicId
-          })
-        })
-        
-        // Combinar general con iconos
-        const generalWithIcons = generalData.map(advisor => ({
-          ...advisor,
-          iconUrl: iconMap.get(advisor.name)?.iconUrl,
-          icon_url: iconMap.get(advisor.name)?.iconUrl,
-          publicId: iconMap.get(advisor.name)?.publicId
-        }))
-        
-        // Combinar byClient con iconos
-        const byClientWithIcons = byClientData.map(advisor => ({
-          ...advisor,
-          iconUrl: iconMap.get(advisor.name)?.iconUrl,
-          icon_url: iconMap.get(advisor.name)?.iconUrl,
-          publicId: iconMap.get(advisor.name)?.publicId
-        }))
-        
-        console.log('✅ generalData final:', generalWithIcons)
-        console.log('✅ byClientData final:', byClientWithIcons)
-        
-        setTopAdvisorsGeneral(Array.isArray(generalWithIcons) ? generalWithIcons : [])
-        setTopAdvisorsByClient(Array.isArray(byClientWithIcons) ? byClientWithIcons : [])
-        setTopClients(Array.isArray(clientsData) ? clientsData : [])
+        setTopAdvisorsGeneral(advisorsWithIconsData.general)
+        setTopAdvisorsByClient(advisorsWithIconsData.byClient)
+        setTopClients(clientsData)
         setSalesTrend(salesTrendData)
         setHourlyDistribution(hourlyData)
         setPipeline(pipelineData)
-        setHeatmap(Array.isArray(heatmapData) ? heatmapData : [])
+        setHeatmap(heatmapData)
       } catch (err: any) {
-        console.error('Error al cargar datos de reportes:', err)
         setError(err.message || "Error al cargar los datos")
-        // Asegurar que los estados sean arrays vacíos en caso de error
-        setTopAdvisorsGeneral([])
-        setTopAdvisorsByClient([])
-        setTopClients([])
-        setHeatmap([])
       } finally {
         setLoading(false)
       }
     }
     loadData()
-  }, [selectedPeriod, clienteFiltro, globalFilterMonth, globalFilterYear])
+  }, [selectedPeriod, clienteFiltro, selectedMonth, selectedReportYear])
 
   useEffect(() => {
     setFadeIn(true)
@@ -383,39 +325,8 @@ export default function ReportesPage() {
       
       // Recargar datos para mostrar el nuevo icono
       const advisorsWithIconsData = await asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear);
-      
-      // Combinar datos de general con iconos de items
-      const generalData = advisorsWithIconsData?.general || []
-      const itemsData = (advisorsWithIconsData as any)?.items || []
-      const byClientData = advisorsWithIconsData?.byClient || []
-      
-      // Crear map de iconos por nombre
-      const iconMap = new Map()
-      itemsData.forEach(item => {
-        iconMap.set(item.name, {
-          iconUrl: item.iconUrl || item.icon_url,
-          publicId: item.publicId
-        })
-      })
-      
-      // Combinar general con iconos
-      const generalWithIcons = generalData.map(advisor => ({
-        ...advisor,
-        iconUrl: iconMap.get(advisor.name)?.iconUrl,
-        icon_url: iconMap.get(advisor.name)?.iconUrl,
-        publicId: iconMap.get(advisor.name)?.publicId
-      }))
-      
-      // Combinar byClient con iconos
-      const byClientWithIcons = byClientData.map(advisor => ({
-        ...advisor,
-        iconUrl: iconMap.get(advisor.name)?.iconUrl,
-        icon_url: iconMap.get(advisor.name)?.iconUrl,
-        publicId: iconMap.get(advisor.name)?.publicId
-      }))
-      
-      setTopAdvisorsGeneral(Array.isArray(generalWithIcons) ? generalWithIcons : []);
-      setTopAdvisorsByClient(Array.isArray(byClientWithIcons) ? byClientWithIcons : []);
+      setTopAdvisorsGeneral(advisorsWithIconsData.general);
+      setTopAdvisorsByClient(advisorsWithIconsData.byClient);
       
       setShowIconUpload(null);
       alert('Icono subido exitosamente');
@@ -437,39 +348,8 @@ export default function ReportesPage() {
       
       // Recargar datos
       const advisorsWithIconsData = await asesoresService.getTopAsesoresWithIcons(clienteFiltro, selectedMonth, selectedReportYear);
-      
-      // Combinar datos de general con iconos de items
-      const generalData = advisorsWithIconsData?.general || []
-      const itemsData = (advisorsWithIconsData as any)?.items || []
-      const byClientData = advisorsWithIconsData?.byClient || []
-      
-      // Crear map de iconos por nombre
-      const iconMap = new Map()
-      itemsData.forEach(item => {
-        iconMap.set(item.name, {
-          iconUrl: item.iconUrl || item.icon_url,
-          publicId: item.publicId
-        })
-      })
-      
-      // Combinar general con iconos
-      const generalWithIcons = generalData.map(advisor => ({
-        ...advisor,
-        iconUrl: iconMap.get(advisor.name)?.iconUrl,
-        icon_url: iconMap.get(advisor.name)?.iconUrl,
-        publicId: iconMap.get(advisor.name)?.publicId
-      }))
-      
-      // Combinar byClient con iconos
-      const byClientWithIcons = byClientData.map(advisor => ({
-        ...advisor,
-        iconUrl: iconMap.get(advisor.name)?.iconUrl,
-        icon_url: iconMap.get(advisor.name)?.iconUrl,
-        publicId: iconMap.get(advisor.name)?.publicId
-      }))
-      
-      setTopAdvisorsGeneral(Array.isArray(generalWithIcons) ? generalWithIcons : []);
-      setTopAdvisorsByClient(Array.isArray(byClientWithIcons) ? byClientWithIcons : []);
+      setTopAdvisorsGeneral(advisorsWithIconsData.general);
+      setTopAdvisorsByClient(advisorsWithIconsData.byClient);
       
       alert('Icono eliminado exitosamente');
     } catch (error) {
@@ -597,12 +477,20 @@ export default function ReportesPage() {
     ],
   }
 
+  const nombreClienteSeleccionado = selectedClient === "all"
+    ? "Todos los clientes"
+    : clientIdToName[String(selectedClient)] || "(Nombre no disponible)"
+
+  console.log("selectedClient:", selectedClient);
+  console.log("clientIdToName:", clientIdToName);
+  console.log("Nombre calculado:", nombreClienteSeleccionado);
+
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-10">
       <TooltipProvider>
         <div className={`transition-opacity duration-500 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
           <div className="p-6 max-w-7xl mx-auto">
-            {/* Botón de volver atrás y título */}
+            {/* Botón de volver atrás */}
             <div className="flex items-center gap-4 mb-6">
               <Button 
                 variant="outline" 
@@ -614,87 +502,14 @@ export default function ReportesPage() {
               </Button>
               <h1 className="text-4xl font-bold text-white">📊 Reportes y Análisis</h1>
             </div>
-
-            {/* Filtro mensual global */}
-            <Card className="mb-6 border-blue-500/30 bg-gradient-to-r from-blue-900/20 to-purple-900/20">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-blue-300">📅 Período de Análisis:</span>
-                    <div className="flex items-center gap-2">
-                      <select 
-                        value={globalFilterMonth}
-                        onChange={(e) => setGlobalFilterMonth(e.target.value)}
-                        className="bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-2 text-sm font-medium hover:border-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="all">📊 Todo el período (Acumulado)</option>
-                        <option value="01">Enero</option>
-                        <option value="02">Febrero</option>
-                        <option value="03">Marzo</option>
-                        <option value="04">Abril</option>
-                        <option value="05">Mayo</option>
-                        <option value="06">Junio</option>
-                        <option value="07">Julio</option>
-                        <option value="08">Agosto</option>
-                        <option value="09">Septiembre</option>
-                        <option value="10">Octubre</option>
-                        <option value="11">Noviembre</option>
-                        <option value="12">Diciembre</option>
-                      </select>
-                      {globalFilterMonth !== 'all' && (
-                        <select 
-                          value={globalFilterYear}
-                          onChange={(e) => setGlobalFilterYear(e.target.value)}
-                          className="bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-2 text-sm font-medium hover:border-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="2024">2024</option>
-                          <option value="2025">2025</option>
-                          <option value="2026">2026</option>
-                        </select>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    {globalFilterMonth === 'all' 
-                      ? '📈 Mostrando datos acumulados de todo el historial'
-                      : `📅 Mostrando datos de ${getMonthName(globalFilterMonth)} ${globalFilterYear}`
-                    }
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
             {/* Métricas principales con data storytelling mejorado */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               {[0,1,2,3].map(i => {
                 const metricData = [
-                  { 
-                    value: metrics?.totalSales ?? '-', 
-                    label: 'Total de Ventas', 
-                    icon: '📈', 
-                    trend: metrics?.totalSalesTrend ? (metrics.totalSalesTrend > 0 ? `+${metrics.totalSalesTrend}%` : `${metrics.totalSalesTrend}%`) : '+12%', 
-                    isPositive: metrics?.totalSalesTrend ? metrics.totalSalesTrend > 0 : true 
-                  },
-                  { 
-                    value: metrics?.avgCloseTime ?? '-', 
-                    label: 'Tiempo Promedio de Cierre', 
-                    icon: '⏱️', 
-                    trend: metrics?.avgCloseTimeTrend ? (metrics.avgCloseTimeTrend > 0 ? `+${metrics.avgCloseTimeTrend}%` : `${metrics.avgCloseTimeTrend}%`) : '-5%', 
-                    isPositive: metrics?.avgCloseTimeTrend ? metrics.avgCloseTimeTrend < 0 : true  // Negativo es bueno para tiempo de cierre
-                  },
-                  { 
-                    value: metrics?.dailyAverage ?? '-', 
-                    label: 'Ventas por Día Promedio', 
-                    icon: '📊', 
-                    trend: metrics?.dailyAverageTrend ? (metrics.dailyAverageTrend > 0 ? `+${metrics.dailyAverageTrend}%` : `${metrics.dailyAverageTrend}%`) : '+8%', 
-                    isPositive: metrics?.dailyAverageTrend ? metrics.dailyAverageTrend > 0 : true 
-                  },
-                  { 
-                    value: metrics?.conversionRate ?? '-', 
-                    label: 'Tasa de Conversión', 
-                    icon: '🎯', 
-                    trend: metrics?.conversionRateTrend ? (metrics.conversionRateTrend > 0 ? `+${metrics.conversionRateTrend}%` : `${metrics.conversionRateTrend}%`) : '+3%', 
-                    isPositive: metrics?.conversionRateTrend ? metrics.conversionRateTrend > 0 : true 
-                  }
+                  { value: metrics?.totalSales ?? '-', label: 'Ventas del Mes', icon: '📈', trend: '+12%', isPositive: true },
+                  { value: metrics?.avgCloseTime ?? '-', label: 'Tiempo Promedio de Cierre', icon: '⏱️', trend: '-5%', isPositive: true },
+                  { value: metrics?.dailyAverage ?? '-', label: 'Ventas por Día Promedio', icon: '📊', trend: '+8%', isPositive: true },
+                  { value: metrics?.conversionRate ?? '-', label: 'Tasa de Conversión', icon: '🎯', trend: '+3%', isPositive: true }
                 ][i];
                 
                 return (
@@ -867,17 +682,47 @@ export default function ReportesPage() {
                   </div>
                 )}
                 <CardHeader>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
                   <CardTitle className="text-white">🏆 Top Asesores General</CardTitle>
-                  <div className="text-slate-400">
-                    {globalFilterMonth === 'all' 
-                      ? 'Ranking acumulado de todo el período' 
-                      : `${getMonthName(globalFilterMonth)} ${globalFilterYear} - Ranking mensual`
-                    }
+                      <div className="text-slate-400">
+                        {getMonthName(selectedMonth)} {selectedReportYear} - Ranking mensual
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <select 
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                        className="bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 text-sm"
+                      >
+                        <option value="01">Enero</option>
+                        <option value="02">Febrero</option>
+                        <option value="03">Marzo</option>
+                        <option value="04">Abril</option>
+                        <option value="05">Mayo</option>
+                        <option value="06">Junio</option>
+                        <option value="07">Julio</option>
+                        <option value="08">Agosto</option>
+                        <option value="09">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                      </select>
+                      <select 
+                        value={selectedReportYear}
+                        onChange={(e) => setSelectedReportYear(e.target.value)}
+                        className="bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 text-sm"
+                      >
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                      </select>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {Array.isArray(topAdvisorsGeneral) && topAdvisorsGeneral.length > 0 ? (
+                    {topAdvisorsGeneral.length > 0 ? (
                       topAdvisorsGeneral.map((advisor, index) => (
                         <div 
                           key={index} 
@@ -891,22 +736,11 @@ export default function ReportesPage() {
                             <div className="relative">
                               {/* Avatar con imagen o iniciales */}
                               <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-blue-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20 overflow-hidden">
-                                {(advisor as any).iconUrl || (advisor as any).icon_url ? (
+                                {(advisor as any).icon_url ? (
                                   <img 
-                                    src={(advisor as any).iconUrl || (advisor as any).icon_url} 
+                                    src={(advisor as any).icon_url} 
                                     alt={`Icono de ${advisor.name}`}
                                     className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      // Si la imagen falla, mostrar iniciales
-                                      e.currentTarget.style.display = 'none';
-                                      const parent = e.currentTarget.parentElement;
-                                      if (parent && !parent.querySelector('.initials-fallback')) {
-                                        const span = document.createElement('span');
-                                        span.className = 'initials-fallback drop-shadow-lg';
-                                        span.textContent = advisor.name.split(" ").map((n: string) => n[0]).join("");
-                                        parent.appendChild(span);
-                                      }
-                                    }}
                                   />
                                 ) : (
                                 <span className="drop-shadow-lg">
@@ -917,60 +751,29 @@ export default function ReportesPage() {
                                 </span>
                                 )}
                               </div>
-                            </div>
-                            
-                            {/* Botones de icono - fuera del avatar */}
-                            <div className="flex gap-1 transition-all duration-200">
-                                {(advisor as any).iconUrl || (advisor as any).icon_url ? (
-                                  <>
-                                    {/* Botón para cambiar foto */}
-                                    <div className="relative">
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => handleFileUpload(e, advisor.name)}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6 z-10"
-                                        disabled={uploadingIcon === advisor.name}
-                                        id={`file-input-${advisor.name.replace(/\s+/g, '-')}`}
-                                      />
-                                      <button
-                                        onClick={() => {
-                                          const input = document.getElementById(`file-input-${advisor.name.replace(/\s+/g, '-')}`) as HTMLInputElement;
-                                          if (input) input.click();
-                                        }}
-                                        className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-blue-600 transition-colors shadow-lg border-2 border-white/20"
-                                        title="Cambiar foto de perfil"
-                                        disabled={uploadingIcon === advisor.name}
-                                      >
-                                        {uploadingIcon === advisor.name ? '⏳' : '📷'}
-                                      </button>
-                                    </div>
-                                    {/* Botón para eliminar foto */}
-                                    <button
-                                      onClick={() => handleDeleteIcon(advisor.name)}
-                                      className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 transition-colors shadow-lg border-2 border-white/20"
-                                      title="Eliminar foto de perfil"
-                                    >
-                                      🗑️
-                                    </button>
-                                  </>
+                              
+                              {/* Botones de icono - visible en hover */}
+                              <div className="absolute -top-1 -right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                {(advisor as any).icon_url ? (
+                                  <button
+                                    onClick={() => handleDeleteIcon(advisor.name)}
+                                    className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 transition-colors"
+                                    title="Eliminar icono"
+                                  >
+                                    🗑️
+                                  </button>
                                 ) : (
                                   <div className="relative">
                                     <input
                                       type="file"
                                       accept="image/*"
                                       onChange={(e) => handleFileUpload(e, advisor.name)}
-                                      className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6 z-10"
+                                      className="absolute inset-0 opacity-0 cursor-pointer w-5 h-5"
                                       disabled={uploadingIcon === advisor.name}
-                                      id={`file-input-add-${advisor.name.replace(/\s+/g, '-')}`}
                                     />
                                     <button
-                                      onClick={() => {
-                                        const input = document.getElementById(`file-input-add-${advisor.name.replace(/\s+/g, '-')}`) as HTMLInputElement;
-                                        if (input) input.click();
-                                      }}
-                                      className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-green-600 transition-colors shadow-lg border-2 border-white/20 animate-pulse"
-                                      title="Agregar foto de perfil"
+                                      className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-green-600 transition-colors"
+                                      title="Subir icono"
                                       disabled={uploadingIcon === advisor.name}
                                     >
                                       {uploadingIcon === advisor.name ? '⏳' : '📷'}
@@ -983,13 +786,13 @@ export default function ReportesPage() {
                               {index === 0 && (
                                 <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-yellow-400/50 animate-bounce border-2 border-white/30">
                                   🏆
-                                </div>
+                            </div>
                               )}
                               
                               {/* Ranking indicator */}
                               <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
                                 {index + 1}
-                              </div>
+                          </div>
                             </div>
                             
                             <div className="min-w-0 flex-1">
@@ -1041,7 +844,7 @@ export default function ReportesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {Array.isArray(topAdvisorsByClient) && topAdvisorsByClient.length > 0 ? (
+                    {topAdvisorsByClient.length > 0 ? (
                       topAdvisorsByClient.map((advisor, index) => (
                         <div 
                           key={index} 
@@ -1054,102 +857,23 @@ export default function ReportesPage() {
                           <div className="flex items-center gap-5 z-10">
                             <div className="relative">
                               {/* Avatar con animación 3D */}
-                              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-purple-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20 overflow-hidden">
-                                {(advisor as any).iconUrl || (advisor as any).icon_url ? (
-                                  <img 
-                                    src={(advisor as any).iconUrl || (advisor as any).icon_url} 
-                                    alt={`Icono de ${advisor.name}`}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      // Si la imagen falla, mostrar iniciales
-                                      e.currentTarget.style.display = 'none';
-                                      const parent = e.currentTarget.parentElement;
-                                      if (parent && !parent.querySelector('.initials-fallback')) {
-                                        const span = document.createElement('span');
-                                        span.className = 'initials-fallback drop-shadow-lg';
-                                        span.textContent = advisor.name.split(" ").map((n: string) => n[0]).join("");
-                                        parent.appendChild(span);
-                                      }
-                                    }}
-                                  />
-                                ) : (
-                                  <span className="drop-shadow-lg">
-                                {advisor.name.split(" ").map((n: string) => n[0]).join("")}
-                                  </span>
-                                )}
+                              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-2xl shadow-purple-500/40 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 border-2 border-white/20">
+                                <span className="drop-shadow-lg">
+                              {advisor.name.split(" ").map((n: string) => n[0]).join("")}
+                                </span>
                             </div>
-                            
-                            {/* Botones de icono para Top Asesores por Cliente - fuera del avatar */}
-                            <div className="flex gap-1 transition-all duration-200">
-                                {(advisor as any).iconUrl || (advisor as any).icon_url ? (
-                                  <>
-                                    {/* Botón para cambiar foto */}
-                                    <div className="relative">
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => handleFileUpload(e, advisor.name)}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6 z-10"
-                                        disabled={uploadingIcon === advisor.name}
-                                        id={`file-input-client-${advisor.name.replace(/\s+/g, '-')}`}
-                                      />
-                                      <button
-                                        onClick={() => {
-                                          const input = document.getElementById(`file-input-client-${advisor.name.replace(/\s+/g, '-')}`) as HTMLInputElement;
-                                          if (input) input.click();
-                                        }}
-                                        className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-purple-600 transition-colors shadow-lg border-2 border-white/20"
-                                        title="Cambiar foto de perfil"
-                                        disabled={uploadingIcon === advisor.name}
-                                      >
-                                        {uploadingIcon === advisor.name ? '⏳' : '📷'}
-                                      </button>
-                                    </div>
-                                    {/* Botón para eliminar foto */}
-                                    <button
-                                      onClick={() => handleDeleteIcon(advisor.name)}
-                                      className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 transition-colors shadow-lg border-2 border-white/20"
-                                      title="Eliminar foto de perfil"
-                                    >
-                                      🗑️
-                                    </button>
-                                  </>
-                                ) : (
-                                  <div className="relative">
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      onChange={(e) => handleFileUpload(e, advisor.name)}
-                                      className="absolute inset-0 opacity-0 cursor-pointer w-6 h-6 z-10"
-                                      disabled={uploadingIcon === advisor.name}
-                                      id={`file-input-client-add-${advisor.name.replace(/\s+/g, '-')}`}
-                                    />
-                                    <button
-                                      onClick={() => {
-                                        const input = document.getElementById(`file-input-client-add-${advisor.name.replace(/\s+/g, '-')}`) as HTMLInputElement;
-                                        if (input) input.click();
-                                      }}
-                                      className="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-pink-600 transition-colors shadow-lg border-2 border-white/20 animate-pulse"
-                                      title="Agregar foto de perfil"
-                                      disabled={uploadingIcon === advisor.name}
-                                    >
-                                      {uploadingIcon === advisor.name ? '⏳' : '📷'}
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
                               
                               {/* Badge animado para el primer lugar */}
                               {index === 0 && (
                                 <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-xs shadow-xl shadow-emerald-400/50 animate-bounce border-2 border-white/30">
                                   👑
-                                </div>
+                            </div>
                               )}
                               
                               {/* Ranking indicator */}
                               <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
                                 {index + 1}
-                              </div>
+                          </div>
                             </div>
                             
                             <div className="min-w-0 flex-1">
@@ -1203,7 +927,7 @@ export default function ReportesPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {Array.isArray(topClients) && topClients.length > 0 ? (
+                  {topClients.length > 0 ? (
                     topClients.map((client, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
                         <div className="flex items-center gap-3">
@@ -1342,7 +1066,7 @@ export default function ReportesPage() {
                             message = `📊 ${dayName}\n\n⚠️ Cargando datos de ventas...\n\n💡 Los datos aparecerán cuando el sistema termine de cargar.`;
                           }
                           alert(message);
-                        }
+                        },
                           };
                         });
                   })().map((cell, index) => (
@@ -1481,9 +1205,19 @@ export default function ReportesPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Renderizar ClienteVentasCharts solo cuando el mapeo ya está completamente cargado y el nombre está disponible */}
+            {Object.keys(clientIdToName).length > 0 && 
+              (selectedClient === "all" || clientIdToName[String(selectedClient)] !== undefined) && (
+              <ClienteVentasCharts
+                cliente={selectedClient}
+                clientIdToName={clientIdToName}
+                nombreCliente={nombreClienteSeleccionado}
+              />
+            )}
           </div>
         </div>
       </TooltipProvider>
     </div>
   )
-}
+} 
