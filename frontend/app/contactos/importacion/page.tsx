@@ -422,7 +422,6 @@ export default function ImportacionPage() {
     const normalized = path.startsWith("/") ? path.slice(1) : path
     return `${base}/${normalized}`
   }
-  }
 
   return (
     <div className="space-y-6">

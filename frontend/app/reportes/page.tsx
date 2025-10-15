@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import * as React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -499,10 +499,21 @@ export default function ReportesPage() {
   const salesTrendOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: {
+        top: 20,
+        right: 30,
+        bottom: 20,
+        left: 20
+      }
+    },
     plugins: {
       legend: {
+        position: 'top' as const,
+        align: 'start' as const,
         labels: {
           color: "#cbd5e1",
+          padding: 20,
         },
       },
       tooltip: {
@@ -525,19 +536,38 @@ export default function ReportesPage() {
     },
     scales: {
       x: {
-        ticks: { color: "#cbd5e1" },
-        grid: { color: "#334155" },
+        ticks: { 
+          color: "#cbd5e1",
+          maxRotation: 45,
+          minRotation: 0
+        },
+        grid: { 
+          color: "#334155",
+          drawBorder: false
+        },
       },
       y: {
-        ticks: { color: "#cbd5e1" },
-        grid: { color: "#334155" },
+        ticks: { 
+          color: "#cbd5e1",
+          padding: 10
+        },
+        grid: { 
+          color: "#334155",
+          drawBorder: false
+        },
       },
       y1: {
         type: "linear" as const,
         display: true,
         position: "right" as const,
-        ticks: { color: "#cbd5e1" },
-        grid: { drawOnChartArea: false },
+        ticks: { 
+          color: "#cbd5e1",
+          padding: 10
+        },
+        grid: { 
+          drawOnChartArea: false,
+          drawBorder: false
+        },
       },
     },
   }
@@ -546,8 +576,23 @@ export default function ReportesPage() {
   const hourlyBarOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: {
+        top: 20,
+        right: 30,
+        bottom: 20,
+        left: 20
+      }
+    },
     plugins: {
-      legend: { labels: { color: "#cbd5e1" } },
+      legend: { 
+        position: 'top' as const,
+        align: 'start' as const,
+        labels: { 
+          color: "#cbd5e1",
+          padding: 20
+        } 
+      },
       tooltip: {
         backgroundColor: '#1e293b',
         titleColor: '#fff',
@@ -556,7 +601,7 @@ export default function ReportesPage() {
         borderWidth: 1,
         padding: 12,
         callbacks: {
-          title: (items: any[]) => `Hora: ${items[0].label}:00`,
+          title: (items: any[]) => `${items[0].label}`,
           label: (item: any) => `${item.dataset.label}: ${item.formattedValue} ventas`,
         },
         displayColors: false,
@@ -567,8 +612,30 @@ export default function ReportesPage() {
       },
     },
     scales: {
-      x: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } },
-      y: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } },
+      x: { 
+        ticks: { 
+          color: "#cbd5e1",
+          maxRotation: 0,
+          padding: 10
+        }, 
+        grid: { 
+          color: "#334155",
+          drawBorder: false,
+          display: false
+        },
+        categoryPercentage: 0.8,
+        barPercentage: 0.9
+      },
+      y: { 
+        ticks: { 
+          color: "#cbd5e1",
+          padding: 10
+        }, 
+        grid: { 
+          color: "#334155",
+          drawBorder: false
+        },
+      },
     },
   }
 
@@ -601,7 +668,7 @@ export default function ReportesPage() {
     <div className="min-h-screen bg-gray-900 text-white pb-10">
       <TooltipProvider>
         <div className={`transition-opacity duration-500 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="p-6 max-w-7xl mx-auto">
+          <div className="p-2 sm:p-4 lg:p-6 w-full max-w-full mx-auto">
             {/* Botón de volver atrás y título */}
             <div className="flex items-center gap-4 mb-6">
               <Button 
@@ -793,13 +860,15 @@ export default function ReportesPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="h-80 flex items-center justify-center">
+                <div className="w-full h-96 min-h-[400px]">
                   {loading ? (
-                    <RailwayLoader size="lg" text="Generando gráfico de tendencias..." />
+                    <div className="flex items-center justify-center h-full">
+                      <RailwayLoader size="lg" text="Generando gráfico de tendencias..." />
+                    </div>
                   ) : salesTrendData ? (
                     <Line ref={lineChartRef} data={salesTrendData} options={salesTrendOptions} />
                   ) : (
-                    <div className="text-center text-slate-400">No hay datos de ventas</div>
+                    <div className="flex items-center justify-center h-full text-center text-slate-400">No hay datos de ventas</div>
                   )}
                 </div>
               </CardContent>
@@ -830,9 +899,11 @@ export default function ReportesPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="h-80 flex items-center justify-center">
+                <div className="w-full h-96 min-h-[400px]">
                   {loading ? (
-                    <RailwayLoader size="lg" text="Analizando distribución horaria..." />
+                    <div className="flex items-center justify-center h-full">
+                      <RailwayLoader size="lg" text="Analizando distribución horaria..." />
+                    </div>
                   ) : hourlyDistribution && hourlyDistribution.labels && hourlyDistribution.sales ? (
                     <Bar
                       ref={barChartRef}
@@ -840,19 +911,33 @@ export default function ReportesPage() {
                         labels: hourlyDistribution.labels,
                         datasets: [
                           {
-                            label: 'Ventas por hora',
+                            label: 'Ventas',
                             data: hourlyDistribution.sales,
-                            backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                            backgroundColor: [
+                              'rgba(139, 92, 246, 0.8)',
+                              'rgba(147, 197, 253, 0.8)',
+                              'rgba(96, 165, 250, 0.8)',
+                              'rgba(59, 130, 246, 0.8)',
+                              'rgba(37, 99, 235, 0.8)',
+                              'rgba(29, 78, 216, 0.8)',
+                              'rgba(139, 92, 246, 0.8)',
+                              'rgba(147, 197, 253, 0.8)',
+                              'rgba(96, 165, 250, 0.8)',
+                              'rgba(59, 130, 246, 0.8)',
+                              'rgba(37, 99, 235, 0.8)',
+                              'rgba(29, 78, 216, 0.8)',
+                            ],
                             borderColor: '#8b5cf6',
-                            borderWidth: 1,
-                            borderRadius: 4,
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            borderSkipped: false,
                           },
                         ],
                       }}
                       options={hourlyBarOptions}
                     />
                   ) : (
-                    <div className="text-center text-slate-400">No hay datos de distribución horaria</div>
+                    <div className="flex items-center justify-center h-full text-center text-slate-400">No hay datos de distribución horaria</div>
                   )}
                 </div>
               </CardContent>
