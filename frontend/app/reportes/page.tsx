@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -39,7 +39,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sistemas-de-ventas-
 // Registrar componentes de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler)
 
-// 1. Clases base optimizadas para mejor rendimientoimage.png
+// 1. Clases base optimizadas para mejor rendimiento
 const cardBase = `
   transition-all duration-300 ease-out
   border border-gray-700/50 shadow-xl rounded-2xl 
@@ -492,28 +492,17 @@ export default function ReportesPage() {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-red-400 text-xl font-bold">{error}</div>
       </div>
-    );
+    )
   }
 
   // Opciones para el gráfico de tendencia
   const salesTrendOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    layout: {
-      padding: {
-        top: 20,
-        right: 30,
-        bottom: 20,
-        left: 20
-      }
-    },
     plugins: {
       legend: {
-        position: 'top' as const,
-        align: 'start' as const,
         labels: {
           color: "#cbd5e1",
-          padding: 20,
         },
       },
       tooltip: {
@@ -536,63 +525,29 @@ export default function ReportesPage() {
     },
     scales: {
       x: {
-        ticks: { 
-          color: "#cbd5e1",
-          maxRotation: 45,
-          minRotation: 0
-        },
-        grid: { 
-          color: "#334155",
-          drawBorder: false
-        },
+        ticks: { color: "#cbd5e1" },
+        grid: { color: "#334155" },
       },
       y: {
-        ticks: { 
-          color: "#cbd5e1",
-          padding: 10
-        },
-        grid: { 
-          color: "#334155",
-          drawBorder: false
-        },
+        ticks: { color: "#cbd5e1" },
+        grid: { color: "#334155" },
       },
       y1: {
         type: "linear" as const,
         display: true,
         position: "right" as const,
-        ticks: { 
-          color: "#cbd5e1",
-          padding: 10
-        },
-        grid: { 
-          drawOnChartArea: false,
-          drawBorder: false
-        },
+        ticks: { color: "#cbd5e1" },
+        grid: { drawOnChartArea: false },
       },
     },
-  };
+  }
 
   // Opciones para el gráfico de barras (distribución horaria)
   const hourlyBarOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    layout: {
-      padding: {
-        top: 20,
-        right: 30,
-        bottom: 20,
-        left: 20
-      }
-    },
     plugins: {
-      legend: { 
-        position: 'top' as const,
-        align: 'start' as const,
-        labels: { 
-          color: "#cbd5e1",
-          padding: 20
-        } 
-      },
+      legend: { labels: { color: "#cbd5e1" } },
       tooltip: {
         backgroundColor: '#1e293b',
         titleColor: '#fff',
@@ -601,7 +556,7 @@ export default function ReportesPage() {
         borderWidth: 1,
         padding: 12,
         callbacks: {
-          title: (items: any[]) => `${items[0].label}`,
+          title: (items: any[]) => `Hora: ${items[0].label}:00`,
           label: (item: any) => `${item.dataset.label}: ${item.formattedValue} ventas`,
         },
         displayColors: false,
@@ -612,32 +567,10 @@ export default function ReportesPage() {
       },
     },
     scales: {
-      x: { 
-        ticks: { 
-          color: "#cbd5e1",
-          maxRotation: 0,
-          padding: 10
-        }, 
-        grid: { 
-          color: "#334155",
-          drawBorder: false,
-          display: false
-        },
-        categoryPercentage: 0.8,
-        barPercentage: 0.9
-      },
-      y: { 
-        ticks: { 
-          color: "#cbd5e1",
-          padding: 10
-        }, 
-        grid: { 
-          color: "#334155",
-          drawBorder: false
-        },
-      },
+      x: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } },
+      y: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } },
     },
-  };
+  }
 
   // Datos para el gráfico de tendencia
   const salesTrendData = salesTrend && {
@@ -662,13 +595,13 @@ export default function ReportesPage() {
         yAxisID: "y1",
       },
     ],
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-10">
       <TooltipProvider>
         <div className={`transition-opacity duration-500 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="p-2 sm:p-4 lg:p-6 w-full max-w-full mx-auto">
+          <div className="p-6 max-w-7xl mx-auto">
             {/* Botón de volver atrás y título */}
             <div className="flex items-center gap-4 mb-6">
               <Button 
@@ -860,15 +793,13 @@ export default function ReportesPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="w-full h-96 min-h-[400px]">
+                <div className="h-80 flex items-center justify-center">
                   {loading ? (
-                    <div className="flex items-center justify-center h-full">
-                      <RailwayLoader size="lg" text="Generando gráfico de tendencias..." />
-                    </div>
+                    <RailwayLoader size="lg" text="Generando gráfico de tendencias..." />
                   ) : salesTrendData ? (
                     <Line ref={lineChartRef} data={salesTrendData} options={salesTrendOptions} />
                   ) : (
-                    <div className="flex items-center justify-center h-full text-center text-slate-400">No hay datos de ventas</div>
+                    <div className="text-center text-slate-400">No hay datos de ventas</div>
                   )}
                 </div>
               </CardContent>
@@ -899,11 +830,9 @@ export default function ReportesPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="w-full h-96 min-h-[400px]">
+                <div className="h-80 flex items-center justify-center">
                   {loading ? (
-                    <div className="flex items-center justify-center h-full">
-                      <RailwayLoader size="lg" text="Analizando distribución horaria..." />
-                    </div>
+                    <RailwayLoader size="lg" text="Analizando distribución horaria..." />
                   ) : hourlyDistribution && hourlyDistribution.labels && hourlyDistribution.sales ? (
                     <Bar
                       ref={barChartRef}
@@ -911,33 +840,19 @@ export default function ReportesPage() {
                         labels: hourlyDistribution.labels,
                         datasets: [
                           {
-                            label: 'Ventas',
+                            label: 'Ventas por hora',
                             data: hourlyDistribution.sales,
-                            backgroundColor: [
-                              'rgba(139, 92, 246, 0.8)',
-                              'rgba(147, 197, 253, 0.8)',
-                              'rgba(96, 165, 250, 0.8)',
-                              'rgba(59, 130, 246, 0.8)',
-                              'rgba(37, 99, 235, 0.8)',
-                              'rgba(29, 78, 216, 0.8)',
-                              'rgba(139, 92, 246, 0.8)',
-                              'rgba(147, 197, 253, 0.8)',
-                              'rgba(96, 165, 250, 0.8)',
-                              'rgba(59, 130, 246, 0.8)',
-                              'rgba(37, 99, 235, 0.8)',
-                              'rgba(29, 78, 216, 0.8)',
-                            ],
+                            backgroundColor: 'rgba(139, 92, 246, 0.8)',
                             borderColor: '#8b5cf6',
-                            borderWidth: 2,
-                            borderRadius: 8,
-                            borderSkipped: false,
+                            borderWidth: 1,
+                            borderRadius: 4,
                           },
                         ],
                       }}
                       options={hourlyBarOptions}
                     />
                   ) : (
-                    <div className="flex items-center justify-center h-full text-center text-slate-400">No hay datos de distribución horaria</div>
+                    <div className="text-center text-slate-400">No hay datos de distribución horaria</div>
                   )}
                 </div>
               </CardContent>
