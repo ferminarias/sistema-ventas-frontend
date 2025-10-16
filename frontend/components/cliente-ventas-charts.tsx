@@ -649,40 +649,37 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     if (asesoresValores.length > 0 && estadisticas.totalVentas > 0) {
       const centerX = width / 2
       const centerY = height / 2
-      const baseOuterRadius = Math.min(width, height) * 0.34
-      const baseInnerRadius = baseOuterRadius * 0.58
+      const baseOuterRadius = Math.min(width, height) * 0.36
+      const baseInnerRadius = baseOuterRadius * 0.52
+      const advisorPalette = ["#4ECDC4", "#45B7D1", "#B57BED", "#6C63FF"]
       let startAngle = -Math.PI / 2
 
-      const backgroundGlow = pieCtx.createRadialGradient(centerX, centerY, baseInnerRadius * 0.25, centerX, centerY, baseOuterRadius * 2.2)
-      backgroundGlow.addColorStop(0, "rgba(15, 23, 42, 0.55)")
-      backgroundGlow.addColorStop(1, "rgba(15, 23, 42, 0)")
-      pieCtx.fillStyle = backgroundGlow
+      const surfaceGradient = pieCtx.createRadialGradient(centerX, centerY, baseInnerRadius * 0.3, centerX, centerY, baseOuterRadius * 2.1)
+      surfaceGradient.addColorStop(0, "rgba(6, 13, 24, 0.82)")
+      surfaceGradient.addColorStop(1, "rgba(6, 13, 24, 0.35)")
+      pieCtx.fillStyle = surfaceGradient
       pieCtx.fillRect(0, 0, width, height)
 
       const slicesMeta: PieSliceMeta[] = []
 
       asesoresValores.forEach((value, index) => {
-        const sliceAngle = (value / estadisticas.totalVentas) * TAU
+        const sliceAngle = estadisticas.totalVentas > 0 ? (value / estadisticas.totalVentas) * TAU : 0
+        if (sliceAngle <= 0) {
+          return
+        }
+
+        const paletteColor = advisorPalette[index % advisorPalette.length]
         const midAngle = startAngle + sliceAngle / 2
         const normalizedMid = normalizeAngle(midAngle)
         const isHovered = hoveredPieIndex === index
-        const outerRadius = baseOuterRadius + (isHovered ? 20 : 10)
-        const innerRadius = Math.max(baseInnerRadius - (isHovered ? 6 : 0), baseInnerRadius * 0.68)
-        const baseColor = modernColors[index % modernColors.length]
-        const highlightColor = lightenColor(baseColor, 0.45)
-        const rimColor = lightenColor(baseColor, 0.15)
-        const shadowColor = deepenColor(baseColor, 0.45)
+        const outerRadius = baseOuterRadius + (isHovered ? 10 : 4)
+        const innerRadius = baseInnerRadius - (isHovered ? 2 : 0)
         const percentage = estadisticas.totalVentas > 0 ? (value / estadisticas.totalVentas) * 100 : 0
 
-        const gradient = pieCtx.createLinearGradient(
-          centerX + Math.cos(midAngle - Math.PI / 2) * innerRadius,
-          centerY + Math.sin(midAngle - Math.PI / 2) * innerRadius,
-          centerX + Math.cos(midAngle + Math.PI / 2) * outerRadius,
-          centerY + Math.sin(midAngle + Math.PI / 2) * outerRadius
-        )
-        gradient.addColorStop(0, highlightColor)
-        gradient.addColorStop(0.45, baseColor)
-        gradient.addColorStop(1, shadowColor)
+        const wedgeGradient = pieCtx.createRadialGradient(centerX, centerY, innerRadius * 0.45, centerX, centerY, outerRadius)
+        wedgeGradient.addColorStop(0, hexToRgba(lightenColor(paletteColor, 0.45), 0.85))
+        wedgeGradient.addColorStop(0.65, paletteColor)
+        wedgeGradient.addColorStop(1, hexToRgba(deepenColor(paletteColor, 0.35), 0.95))
 
         pieCtx.save()
         pieCtx.beginPath()
@@ -690,66 +687,104 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         pieCtx.arc(centerX, centerY, innerRadius, startAngle + sliceAngle, startAngle, true)
         pieCtx.closePath()
 
-        pieCtx.shadowColor = hexToRgba(highlightColor, isHovered ? 0.75 : 0.45)
-        pieCtx.shadowBlur = isHovered ? 30 : 16
+        pieCtx.shadowColor = hexToRgba(paletteColor, isHovered ? 0.45 : 0.28)
+        pieCtx.shadowBlur = isHovered ? 22 : 12
         pieCtx.shadowOffsetX = 0
-        pieCtx.shadowOffsetY = 0
+        pieCtx.shadowOffsetY = 6
 
-        pieCtx.fillStyle = gradient
+        pieCtx.fillStyle = wedgeGradient
         pieCtx.fill()
 
-        pieCtx.lineWidth = isHovered ? 3 : 1.6
-        pieCtx.strokeStyle = hexToRgba(rimColor, isHovered ? 0.9 : 0.55)
+        pieCtx.strokeStyle = hexToRgba(lightenColor(paletteColor, 0.25), 0.75)
+        pieCtx.lineWidth = isHovered ? 2 : 1.25
         pieCtx.stroke()
         pieCtx.restore()
 
-        const connectorRadius = outerRadius + 8
-        const labelRadius = outerRadius + 40
-        const connectorX = centerX + Math.cos(midAngle) * connectorRadius
-        const connectorY = centerY + Math.sin(midAngle) * connectorRadius
-        const labelX = centerX + Math.cos(midAngle) * labelRadius
-        const labelY = centerY + Math.sin(midAngle) * labelRadius
-        const drawLeft = normalizedMid > Math.PI / 2 && normalizedMid < (3 * Math.PI) / 2
+        const midRadius = innerRadius + (outerRadius - innerRadius) * 0.55
+        const labelX = centerX + Math.cos(midAngle) * midRadius
+        const labelY = centerY + Math.sin(midAngle) * midRadius
 
-        pieCtx.save()
-        pieCtx.beginPath()
-        pieCtx.moveTo(connectorX, connectorY)
-        pieCtx.lineTo(labelX, labelY)
-        pieCtx.strokeStyle = hexToRgba(highlightColor, isHovered ? 0.9 : 0.55)
-        pieCtx.lineWidth = isHovered ? 1.8 : 1.2
-        pieCtx.stroke()
-        pieCtx.restore()
+        const displayName = asesoresNombres[index]
+        const valueLabel = `${value} ventas · ${percentage.toFixed(1)}%`
 
-        pieCtx.save()
-        pieCtx.font = "600 10px 'Space Grotesk', 'Inter', sans-serif"
-        pieCtx.textAlign = drawLeft ? "end" : "start"
-        pieCtx.textBaseline = "middle"
-        const labelText = `${asesoresNombres[index]} (${percentage.toFixed(1)}%)`
-        const textWidth = pieCtx.measureText(labelText).width
-        const paddingX = 10
-        const paddingY = 6
-        const bgWidth = textWidth + paddingX * 2
-        const bgHeight = 22
-        const bgX = drawLeft ? labelX - bgWidth : labelX
-        const bgY = labelY - bgHeight / 2
+        const useInternalLabel = sliceAngle > 0.7
+        if (useInternalLabel) {
+          pieCtx.save()
+          pieCtx.textAlign = "center"
+          pieCtx.textBaseline = "middle"
 
-        const labelGradient = pieCtx.createLinearGradient(bgX, bgY, bgX, bgY + bgHeight)
-        labelGradient.addColorStop(0, hexToRgba(lightenColor(baseColor, 0.5), 0.9))
-        labelGradient.addColorStop(1, hexToRgba(deepenColor(baseColor, 0.2), 0.9))
+          pieCtx.font = "600 13px 'Poppins', 'Inter', sans-serif"
+          const nameWidth = pieCtx.measureText(displayName).width
+          pieCtx.font = "500 11px 'Poppins', 'Inter', sans-serif"
+          const valueWidth = pieCtx.measureText(valueLabel).width
+          const boxWidth = Math.max(nameWidth, valueWidth) + 18
+          const boxHeight = 36
 
-        pieCtx.beginPath()
-        pieCtx.roundRect(bgX, bgY, bgWidth, bgHeight, 10)
-        pieCtx.fillStyle = labelGradient
-        pieCtx.fill()
+          pieCtx.beginPath()
+          pieCtx.roundRect(labelX - boxWidth / 2, labelY - boxHeight / 2, boxWidth, boxHeight, 10)
+          pieCtx.fillStyle = "rgba(6, 17, 29, 0.72)"
+          pieCtx.fill()
 
-        pieCtx.strokeStyle = hexToRgba(lightenColor(baseColor, 0.45), 0.7)
-        pieCtx.lineWidth = 1
-        pieCtx.stroke()
+          pieCtx.strokeStyle = hexToRgba(lightenColor(paletteColor, 0.2), 0.8)
+          pieCtx.lineWidth = 1
+          pieCtx.stroke()
 
-        const textX = drawLeft ? bgX + bgWidth - paddingX : bgX + paddingX
-        pieCtx.fillStyle = "#f8fafc"
-        pieCtx.fillText(labelText, textX, labelY)
-        pieCtx.restore()
+          pieCtx.font = "600 13px 'Poppins', 'Inter', sans-serif"
+          pieCtx.fillStyle = "#F8FBFF"
+          pieCtx.fillText(displayName, labelX, labelY - 7)
+
+          pieCtx.font = "500 11px 'Poppins', 'Inter', sans-serif"
+          pieCtx.fillStyle = "rgba(216, 233, 255, 0.9)"
+          pieCtx.fillText(valueLabel, labelX, labelY + 8)
+          pieCtx.restore()
+        } else {
+          const connectorRadius = outerRadius + 12
+          const externalX = centerX + Math.cos(midAngle) * connectorRadius
+          const externalY = centerY + Math.sin(midAngle) * connectorRadius
+          const labelOffset = 48
+          const toLeft = normalizedMid > Math.PI / 2 && normalizedMid < (3 * Math.PI) / 2
+          const boxX = externalX + (toLeft ? -labelOffset : labelOffset)
+          const boxY = externalY
+
+          pieCtx.save()
+          pieCtx.beginPath()
+          pieCtx.moveTo(centerX + Math.cos(midAngle) * outerRadius, centerY + Math.sin(midAngle) * outerRadius)
+          pieCtx.lineTo(externalX, externalY)
+          pieCtx.lineTo(boxX, boxY)
+          pieCtx.strokeStyle = hexToRgba(paletteColor, 0.6)
+          pieCtx.lineWidth = 1.2
+          pieCtx.stroke()
+
+          const labelWidth = Math.max(
+            pieCtx.measureText(displayName).width,
+            pieCtx.measureText(valueLabel).width
+          ) + 20
+          const labelHeight = 38
+
+          pieCtx.beginPath()
+          pieCtx.roundRect(
+            toLeft ? boxX - labelWidth : boxX,
+            boxY - labelHeight / 2,
+            labelWidth,
+            labelHeight,
+            12
+          )
+          pieCtx.fillStyle = "rgba(9, 24, 39, 0.9)"
+          pieCtx.fill()
+          pieCtx.strokeStyle = hexToRgba(lightenColor(paletteColor, 0.25), 0.75)
+          pieCtx.stroke()
+
+          pieCtx.textAlign = toLeft ? "end" : "start"
+          const textBaseX = toLeft ? boxX - 10 : boxX + 10
+          pieCtx.font = "600 13px 'Poppins', 'Inter', sans-serif"
+          pieCtx.fillStyle = "#F8FBFF"
+          pieCtx.fillText(displayName, textBaseX, boxY - 6)
+
+          pieCtx.font = "500 11px 'Poppins', 'Inter', sans-serif"
+          pieCtx.fillStyle = "rgba(216, 233, 255, 0.9)"
+          pieCtx.fillText(valueLabel, textBaseX, boxY + 10)
+          pieCtx.restore()
+        }
 
         slicesMeta.push({
           start: startAngle,
@@ -757,7 +792,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           startNormalized: normalizeAngle(startAngle),
           endNormalized: normalizeAngle(startAngle + sliceAngle),
           value,
-          label: asesoresNombres[index],
+          label: displayName,
           innerRadius,
           outerRadius,
           percentage
@@ -773,126 +808,47 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       }
 
       const focusColor = hoveredPieIndex !== null
-        ? modernColors[hoveredPieIndex % modernColors.length]
-        : "#38bdf8"
+        ? advisorPalette[hoveredPieIndex % advisorPalette.length]
+        : advisorPalette[1]
 
-      const selectedSlice = hoveredPieIndex !== null ? asesoresProcesados[hoveredPieIndex] : undefined
-      const centerRadius = Math.max(baseInnerRadius - 6, baseInnerRadius * 0.84)
-      const centerGradient = pieCtx.createRadialGradient(centerX, centerY, centerRadius * 0.1, centerX, centerY, centerRadius)
-      centerGradient.addColorStop(0, hexToRgba(lightenColor(focusColor, 0.6), selectedSlice ? 0.95 : 0.65))
-      centerGradient.addColorStop(0.7, hexToRgba(deepenColor(focusColor, 0.2), 0.9))
-      centerGradient.addColorStop(1, "rgba(8, 11, 19, 0.95)")
+      const coreRadius = baseInnerRadius * 0.85
+      const coreGradient = pieCtx.createRadialGradient(centerX, centerY, coreRadius * 0.3, centerX, centerY, coreRadius)
+      coreGradient.addColorStop(0, "rgba(10, 24, 38, 0.92)")
+      coreGradient.addColorStop(1, "rgba(4, 10, 18, 0.95)")
 
       pieCtx.save()
       pieCtx.beginPath()
-      pieCtx.arc(centerX, centerY, centerRadius, 0, TAU)
-      pieCtx.fillStyle = centerGradient
+      pieCtx.arc(centerX, centerY, coreRadius, 0, TAU)
+      pieCtx.fillStyle = coreGradient
       pieCtx.fill()
-
-      // Aro de definición brillante alrededor del núcleo
-      const definitionRingRadius = centerRadius + 6
-      const definitionGradient = pieCtx.createRadialGradient(
-        centerX,
-        centerY,
-        centerRadius * 0.92,
-        centerX,
-        centerY,
-        definitionRingRadius + 4
-      )
-      definitionGradient.addColorStop(0, hexToRgba(lightenColor(focusColor, 0.55), 0.35))
-      definitionGradient.addColorStop(0.5, hexToRgba(lightenColor(focusColor, 0.25), 0.55))
-      definitionGradient.addColorStop(1, "rgba(12, 19, 33, 0.85)")
-
-      pieCtx.lineWidth = 2.5
-      pieCtx.strokeStyle = hexToRgba(lightenColor(focusColor, 0.7), 0.9)
+      pieCtx.strokeStyle = hexToRgba(lightenColor(focusColor, 0.35), 0.6)
+      pieCtx.lineWidth = 1.5
       pieCtx.stroke()
-
-      pieCtx.beginPath()
-      pieCtx.arc(centerX, centerY, definitionRingRadius, 0, TAU)
-      pieCtx.strokeStyle = definitionGradient
-      pieCtx.lineWidth = 3
-      pieCtx.stroke()
-
-      // Brillo superior para dar sensación de lente
-      const highlightGradient = pieCtx.createRadialGradient(
-        centerX,
-        centerY - centerRadius * 0.55,
-        0,
-        centerX,
-        centerY - centerRadius * 0.55,
-        centerRadius * 0.9
-      )
-      highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.32)")
-      highlightGradient.addColorStop(0.7, "rgba(255, 255, 255, 0.05)")
-      highlightGradient.addColorStop(1, "rgba(255, 255, 255, 0)")
-
-      pieCtx.beginPath()
-      pieCtx.ellipse(centerX, centerY - centerRadius * 0.35, centerRadius * 0.75, centerRadius * 0.42, 0, 0, TAU)
-      pieCtx.fillStyle = highlightGradient
-      pieCtx.fill()
-
       pieCtx.restore()
 
       pieCtx.save()
       pieCtx.textAlign = "center"
       pieCtx.textBaseline = "middle"
-      if (selectedSlice) {
-        const porcentaje = estadisticas.totalVentas > 0
-          ? Math.round((selectedSlice.ventas / estadisticas.totalVentas) * 1000) / 10
-          : 0
+      pieCtx.fillStyle = "#E6F3FF"
+      pieCtx.font = "600 15px 'Poppins', 'Inter', sans-serif"
+      pieCtx.fillText("Total de ventas", centerX, centerY - 24)
 
-        pieCtx.shadowColor = "rgba(10, 20, 40, 0.55)"
-        pieCtx.shadowBlur = 12
-        pieCtx.shadowOffsetX = 0
-        pieCtx.shadowOffsetY = 6
+      pieCtx.fillStyle = "#FFFFFF"
+      pieCtx.font = "700 34px 'Poppins', 'Inter', sans-serif"
+      pieCtx.fillText(String(estadisticas.totalVentas), centerX, centerY + 2)
 
-        pieCtx.fillStyle = "#f8fafc"
-        pieCtx.font = "600 15px 'Space Grotesk', 'Inter', sans-serif"
-        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.55)"
-        pieCtx.lineWidth = 3
-        pieCtx.strokeText(selectedSlice.nombre, centerX, centerY - 30)
-        pieCtx.fillText(selectedSlice.nombre, centerX, centerY - 30)
+      pieCtx.fillStyle = "rgba(198, 216, 235, 0.92)"
+      pieCtx.font = "500 12px 'Poppins', 'Inter', sans-serif"
+      const contextoTexto = `${asesoresProcesados.length} asesores · ${getNombreCliente()}`
+      pieCtx.fillText(contextoTexto, centerX, centerY + 30)
 
-        pieCtx.fillStyle = "#ffffff"
-        pieCtx.font = "700 34px 'Space Grotesk', 'Inter', sans-serif"
-        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.65)"
-        pieCtx.lineWidth = 4
-        pieCtx.strokeText(String(selectedSlice.ventas), centerX, centerY + 2)
-        pieCtx.fillText(String(selectedSlice.ventas), centerX, centerY + 2)
-
-        pieCtx.fillStyle = "rgba(203, 213, 225, 0.92)"
-        pieCtx.font = "500 13px 'Space Grotesk', 'Inter', sans-serif"
-        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.45)"
-        pieCtx.lineWidth = 3
-        pieCtx.strokeText(`${porcentaje}% del total`, centerX, centerY + 34)
-        pieCtx.fillText(`${porcentaje}% del total`, centerX, centerY + 34)
-      } else {
-        pieCtx.shadowColor = "rgba(10, 20, 40, 0.55)"
-        pieCtx.shadowBlur = 12
-        pieCtx.shadowOffsetX = 0
-        pieCtx.shadowOffsetY = 6
-
-        pieCtx.fillStyle = "#f8fafc"
-        pieCtx.font = "600 15px 'Space Grotesk', 'Inter', sans-serif"
-        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.55)"
-        pieCtx.lineWidth = 3
-        pieCtx.strokeText("Total de ventas", centerX, centerY - 26)
-        pieCtx.fillText("Total de ventas", centerX, centerY - 26)
-
-        pieCtx.fillStyle = "#ffffff"
-        pieCtx.font = "700 34px 'Space Grotesk', 'Inter', sans-serif"
-        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.65)"
-        pieCtx.lineWidth = 4
-        pieCtx.strokeText(String(estadisticas.totalVentas), centerX, centerY + 4)
-        pieCtx.fillText(String(estadisticas.totalVentas), centerX, centerY + 4)
-
-        pieCtx.fillStyle = "rgba(203, 213, 225, 0.92)"
-        pieCtx.font = "500 13px 'Space Grotesk', 'Inter', sans-serif"
-        const footerText = `${asesoresProcesados.length} asesores activos`
-        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.45)"
-        pieCtx.lineWidth = 3
-        pieCtx.strokeText(footerText, centerX, centerY + 36)
-        pieCtx.fillText(footerText, centerX, centerY + 36)
+      if (hoveredPieIndex !== null) {
+        const slice = slicesMeta[hoveredPieIndex]
+        if (slice) {
+          pieCtx.fillStyle = "rgba(198, 216, 235, 0.75)"
+          pieCtx.font = "500 11px 'Poppins', 'Inter', sans-serif"
+          pieCtx.fillText(`${slice.label}`, centerX, centerY + 48)
+        }
       }
       pieCtx.restore()
     } else {
