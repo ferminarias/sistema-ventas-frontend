@@ -705,9 +705,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         const labelY = centerY + Math.sin(midAngle) * midRadius
 
         const displayName = asesoresNombres[index]
-        const valueLabel = `${value} ventas · ${percentage.toFixed(1)}%`
+        const valueLabel = `${value} ventas - ${percentage.toFixed(1)}%`
 
-        const useInternalLabel = percentage >= 32
+        const useInternalLabel = percentage >= 58 && sliceAngle > 1.3
         if (useInternalLabel) {
           pieCtx.save()
           pieCtx.textAlign = "center"
@@ -717,8 +717,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           const nameWidth = pieCtx.measureText(displayName).width
           pieCtx.font = "500 11px 'Poppins', 'Inter', sans-serif"
           const valueWidth = pieCtx.measureText(valueLabel).width
-          const boxWidth = Math.max(nameWidth, valueWidth) + 14
-          const boxHeight = 32
+          const boxWidth = Math.min(Math.max(nameWidth, valueWidth) + 14, width * 0.24)
+          const boxHeight = 30
 
           pieCtx.beginPath()
           pieCtx.roundRect(labelX - boxWidth / 2, labelY - boxHeight / 2, boxWidth, boxHeight, 10)
@@ -738,10 +738,10 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           pieCtx.fillText(valueLabel, labelX, labelY + 6)
           pieCtx.restore()
         } else {
-          const connectorRadius = outerRadius + 18
+          const connectorRadius = outerRadius + 34
           const externalX = centerX + Math.cos(midAngle) * connectorRadius
           const externalY = centerY + Math.sin(midAngle) * connectorRadius
-          const labelOffset = 68
+          const labelOffset = Math.min(width * 0.22, 110)
           const toLeft = normalizedMid > Math.PI / 2 && normalizedMid < (3 * Math.PI) / 2
           const boxX = externalX + (toLeft ? -labelOffset : labelOffset)
           const boxY = externalY
@@ -755,11 +755,12 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           pieCtx.lineWidth = 1.2
           pieCtx.stroke()
 
-          const labelWidth = Math.max(
-            pieCtx.measureText(displayName).width,
-            pieCtx.measureText(valueLabel).width
-          ) + 20
-          const labelHeight = 36
+          pieCtx.font = "600 13px 'Poppins', 'Inter', sans-serif"
+          const nameWidth = pieCtx.measureText(displayName).width
+          pieCtx.font = "500 11px 'Poppins', 'Inter', sans-serif"
+          const valueWidth = pieCtx.measureText(valueLabel).width
+          const labelWidth = Math.min(Math.max(nameWidth, valueWidth) + 22, width * 0.28)
+          const labelHeight = 34
 
           pieCtx.beginPath()
           pieCtx.roundRect(
