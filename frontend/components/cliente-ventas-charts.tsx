@@ -494,39 +494,91 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         const maxValue = Math.max(...datos)
         const barWidth = Math.max((width - 100) / datos.length, 10)
         const chartHeight = height - 80
-    
-    datos.forEach((value, index) => {
+
+        // Fondo con gradiente sutil
+        const bgGradient = ctx.createLinearGradient(0, 0, 0, height)
+        bgGradient.addColorStop(0, 'rgba(59, 130, 246, 0.05)')
+        bgGradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)')
+        ctx.fillStyle = bgGradient
+        ctx.fillRect(0, 0, width, height)
+
+        datos.forEach((value, index) => {
           const barHeight = (value / maxValue) * chartHeight
           const x = 50 + index * barWidth
           const y = height - 40 - barHeight
 
-          // Dibujar barra
-          ctx.fillStyle = modernColors[index % modernColors.length]
-          ctx.fillRect(x, y, barWidth - 5, barHeight)
+          // Crear gradiente para la barra
+          const barGradient = ctx.createLinearGradient(x, y, x, y + barHeight)
+          const baseColor = modernColors[index % modernColors.length]
+          barGradient.addColorStop(0, baseColor)
+          barGradient.addColorStop(1, baseColor + 'CC') // Más transparente abajo
 
-          // Dibujar valor
+          // Sombra de la barra
+          ctx.save()
+          ctx.shadowColor = baseColor + '40'
+          ctx.shadowBlur = 15
+          ctx.shadowOffsetX = 0
+          ctx.shadowOffsetY = 5
+
+          // Dibujar barra con bordes redondeados
+          ctx.fillStyle = barGradient
+          const radius = 4
+          ctx.beginPath()
+          ctx.roundRect(x, y, barWidth - 5, barHeight, radius)
+          ctx.fill()
+
+          // Borde brillante
+          ctx.strokeStyle = baseColor + '80'
+          ctx.lineWidth = 1
+          ctx.stroke()
+          ctx.restore()
+
+          // Dibujar valor con estilo
           if (value > 0) {
+            ctx.save()
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
+            ctx.shadowBlur = 2
+            ctx.shadowOffsetX = 1
+            ctx.shadowOffsetY = 1
             ctx.fillStyle = '#ffffff'
-            ctx.font = '12px Inter'
+            ctx.font = 'bold 12px Inter'
             ctx.textAlign = 'center'
-            ctx.fillText(value.toString(), x + barWidth/2, y - 5)
+            ctx.fillText(value.toString(), x + barWidth/2, y - 8)
+            ctx.restore()
           }
         })
 
-        // Dibujar eje X
-        ctx.strokeStyle = '#666'
-    ctx.lineWidth = 1
-    ctx.beginPath()
+        // Líneas de cuadrícula sutiles
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
+        ctx.lineWidth = 1
+        for (let i = 1; i <= 4; i++) {
+          const gridY = height - 40 - (chartHeight / 4) * i
+          ctx.beginPath()
+          ctx.moveTo(50, gridY)
+          ctx.lineTo(width - 50, gridY)
+          ctx.stroke()
+        }
+
+        // Dibujar eje X con estilo
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+        ctx.lineWidth = 2
+        ctx.beginPath()
         ctx.moveTo(50, height - 40)
         ctx.lineTo(width - 50, height - 40)
-    ctx.stroke()
+        ctx.stroke()
 
-        // Dibujar labels
+        // Dibujar labels con estilo
         labels.forEach((label, index) => {
-          ctx.fillStyle = '#999'
-          ctx.font = '10px Inter'
+          ctx.save()
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
+          ctx.shadowBlur = 1
+          ctx.shadowOffsetX = 1
+          ctx.shadowOffsetY = 1
+          ctx.fillStyle = '#e2e8f0'
+          ctx.font = '11px Inter'
           ctx.textAlign = 'center'
           ctx.fillText(label, 50 + index * barWidth + barWidth/2, height - 20)
+          ctx.restore()
         })
       } else {
         console.log('📭 No hay datos para dibujar gráfico de barras')
@@ -541,28 +593,114 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       if (asesoresValores.length > 0 && estadisticas.totalVentas > 0) {
         console.log('🥧 Dibujando gráfico circular con asesores:', asesoresValores)
         const centerX = width / 2
-    const centerY = height / 2
+        const centerY = height / 2
         const radius = Math.min(width, height) / 3
-    let startAngle = 0
+        let startAngle = 0
 
-    asesoresValores.forEach((value, index) => {
+        // Sombra del gráfico completo
+        pieCtx.save()
+        pieCtx.shadowColor = 'rgba(0, 0, 0, 0.3)'
+        pieCtx.shadowBlur = 20
+        pieCtx.shadowOffsetX = 0
+        pieCtx.shadowOffsetY = 10
+
+        asesoresValores.forEach((value, index) => {
           const sliceAngle = (value / estadisticas.totalVentas) * 2 * Math.PI
+          const baseColor = modernColors[index % modernColors.length]
           
-          // Dibujar sector
-      pieCtx.beginPath()
+          // Crear gradiente radial para el sector
+          const gradient = pieCtx.createRadialGradient(
+            centerX - radius * 0.3, centerY - radius * 0.3, 0,
+            centerX, centerY, radius
+          )
+          gradient.addColorStop(0, baseColor + 'FF')
+          gradient.addColorStop(0.7, baseColor + 'CC')
+          gradient.addColorStop(1, baseColor + '80')
+
+          // Dibujar sector con gradiente
+          pieCtx.beginPath()
           pieCtx.moveTo(centerX, centerY)
           pieCtx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle)
-      pieCtx.closePath()
-      pieCtx.fillStyle = modernColors[index % modernColors.length]
-      pieCtx.fill()
+          pieCtx.closePath()
+          pieCtx.fillStyle = gradient
+          pieCtx.fill()
 
-          // Dibujar borde
-          pieCtx.strokeStyle = '#333'
+          // Borde brillante del sector
+          pieCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+          pieCtx.lineWidth = 3
+          pieCtx.stroke()
+
+          // Líneas hacia los labels
+          const labelRadius = radius + 30
+          const midAngle = startAngle + sliceAngle / 2
+          const labelX = centerX + Math.cos(midAngle) * labelRadius
+          const labelY = centerY + Math.sin(midAngle) * labelRadius
+
+          // Línea conectora
+          pieCtx.beginPath()
+          pieCtx.moveTo(centerX + Math.cos(midAngle) * radius, centerY + Math.sin(midAngle) * radius)
+          pieCtx.lineTo(labelX, labelY)
+          pieCtx.strokeStyle = 'rgba(255, 255, 255, 0.4)'
           pieCtx.lineWidth = 2
+          pieCtx.stroke()
+
+          // Label con fondo
+          const labelText = `${asesoresNombres[index]}: ${value}`
+          pieCtx.font = 'bold 12px Inter'
+          pieCtx.textAlign = midAngle > Math.PI / 2 && midAngle < 3 * Math.PI / 2 ? 'end' : 'start'
+          
+          // Fondo del label
+          const textWidth = pieCtx.measureText(labelText).width
+          const labelPadding = 8
+          const labelBgX = midAngle > Math.PI / 2 && midAngle < 3 * Math.PI / 2 ? labelX - textWidth - labelPadding : labelX + labelPadding
+          const labelBgY = labelY - 6
+          
+          pieCtx.fillStyle = baseColor + 'E6'
+          pieCtx.fillRect(labelBgX - 4, labelBgY - 12, textWidth + 8, 20)
+          
+          // Borde del label
+          pieCtx.strokeStyle = baseColor
+          pieCtx.lineWidth = 1
+          pieCtx.strokeRect(labelBgX - 4, labelBgY - 12, textWidth + 8, 20)
+          
+          // Texto del label
+          pieCtx.fillStyle = '#ffffff'
+          pieCtx.fillText(labelText, labelX, labelY)
+
+          startAngle += sliceAngle
+        })
+
+        pieCtx.restore()
+
+        // Centro del gráfico con efecto glassmorphism
+        pieCtx.save()
+        const centerGradient = pieCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 0.4)
+        centerGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)')
+        centerGradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)')
+        
+        pieCtx.fillStyle = centerGradient
+        pieCtx.beginPath()
+        pieCtx.arc(centerX, centerY, radius * 0.4, 0, 2 * Math.PI)
+        pieCtx.fill()
+        
+        pieCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+        pieCtx.lineWidth = 2
         pieCtx.stroke()
-      
-      startAngle += sliceAngle
-    })
+        pieCtx.restore()
+
+        // Texto central
+        pieCtx.save()
+        pieCtx.shadowColor = 'rgba(0, 0, 0, 0.5)'
+        pieCtx.shadowBlur = 3
+        pieCtx.shadowOffsetX = 1
+        pieCtx.shadowOffsetY = 1
+        pieCtx.fillStyle = '#ffffff'
+        pieCtx.font = 'bold 16px Inter'
+        pieCtx.textAlign = 'center'
+        pieCtx.fillText('Total', centerX, centerY - 5)
+        pieCtx.font = 'bold 20px Inter'
+        pieCtx.fillText(estadisticas.totalVentas.toString(), centerX, centerY + 15)
+        pieCtx.restore()
       } else {
         console.log('📭 No hay datos para dibujar gráfico circular')
         // Dibujar mensaje de "sin datos"
