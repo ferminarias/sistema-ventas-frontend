@@ -436,6 +436,148 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     "#d946ef", // Fucsia moderno
   ]
 
+  // Efecto para dibujar los gráficos
+  useEffect(() => {
+    console.log('🎨 Iniciando dibujo de gráficos:', {
+      loadingVentas,
+      datosLength: datos.length,
+      asesoresLength: asesoresValores.length,
+      chartRef: !!chartRef.current,
+      pieChartRef: !!pieChartRef.current
+    })
+
+    if (loadingVentas || !chartRef.current || !pieChartRef.current) {
+      console.log('⏳ Esperando carga o canvas...')
+      return
+    }
+
+    const timeoutId = setTimeout(() => {
+      const canvas = chartRef.current
+      const pieCanvas = pieChartRef.current
+      
+      if (!canvas || !pieCanvas) {
+        console.log('❌ Canvas no disponibles')
+        return
+      }
+
+      const ctx = canvas.getContext('2d')
+      const pieCtx = pieCanvas.getContext('2d')
+      
+      if (!ctx || !pieCtx) {
+        console.log('❌ Contexto de canvas no disponible')
+        return
+      }
+
+      // Configurar dimensiones y DPI
+      const dpr = window.devicePixelRatio || 1
+      const rect = canvas.getBoundingClientRect()
+      const width = rect.width
+      const height = rect.height
+
+      console.log('📐 Dimensiones del canvas:', { width, height, dpr })
+
+      canvas.width = width * dpr
+      canvas.height = height * dpr
+      pieCanvas.width = width * dpr
+      pieCanvas.height = height * dpr
+
+      ctx.scale(dpr, dpr)
+      pieCtx.scale(dpr, dpr)
+
+      // Limpiar canvas
+      ctx.clearRect(0, 0, width, height)
+      pieCtx.clearRect(0, 0, width, height)
+
+      // Dibujar gráfico de barras
+      if (datos.length > 0 && Math.max(...datos) > 0) {
+        console.log('📊 Dibujando gráfico de barras con datos:', datos)
+        const maxValue = Math.max(...datos)
+        const barWidth = Math.max((width - 100) / datos.length, 10)
+        const chartHeight = height - 80
+
+        datos.forEach((value, index) => {
+          const barHeight = (value / maxValue) * chartHeight
+          const x = 50 + index * barWidth
+          const y = height - 40 - barHeight
+
+          // Dibujar barra
+          ctx.fillStyle = modernColors[index % modernColors.length]
+          ctx.fillRect(x, y, barWidth - 5, barHeight)
+
+          // Dibujar valor
+          if (value > 0) {
+            ctx.fillStyle = '#ffffff'
+            ctx.font = '12px Inter'
+            ctx.textAlign = 'center'
+            ctx.fillText(value.toString(), x + barWidth/2, y - 5)
+          }
+        })
+
+        // Dibujar eje X
+        ctx.strokeStyle = '#666'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(50, height - 40)
+        ctx.lineTo(width - 50, height - 40)
+        ctx.stroke()
+
+        // Dibujar labels
+        labels.forEach((label, index) => {
+          ctx.fillStyle = '#999'
+          ctx.font = '10px Inter'
+          ctx.textAlign = 'center'
+          ctx.fillText(label, 50 + index * barWidth + barWidth/2, height - 20)
+        })
+      } else {
+        console.log('📭 No hay datos para dibujar gráfico de barras')
+        // Dibujar mensaje de "sin datos"
+        ctx.fillStyle = '#666'
+        ctx.font = '16px Inter'
+        ctx.textAlign = 'center'
+        ctx.fillText('No hay datos de ventas para mostrar', width/2, height/2)
+      }
+
+      // Dibujar gráfico circular de asesores
+      if (asesoresValores.length > 0 && estadisticas.totalVentas > 0) {
+        console.log('🥧 Dibujando gráfico circular con asesores:', asesoresValores)
+        const centerX = width / 2
+        const centerY = height / 2
+        const radius = Math.min(width, height) / 3
+        let startAngle = 0
+
+        asesoresValores.forEach((value, index) => {
+          const sliceAngle = (value / estadisticas.totalVentas) * 2 * Math.PI
+          
+          // Dibujar sector
+          pieCtx.beginPath()
+          pieCtx.moveTo(centerX, centerY)
+          pieCtx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle)
+          pieCtx.closePath()
+          pieCtx.fillStyle = modernColors[index % modernColors.length]
+          pieCtx.fill()
+
+          // Dibujar borde
+          pieCtx.strokeStyle = '#333'
+          pieCtx.lineWidth = 2
+          pieCtx.stroke()
+
+          startAngle += sliceAngle
+        })
+      } else {
+        console.log('📭 No hay datos para dibujar gráfico circular')
+        // Dibujar mensaje de "sin datos"
+        pieCtx.fillStyle = '#666'
+        pieCtx.font = '16px Inter'
+        pieCtx.textAlign = 'center'
+        pieCtx.fillText('No hay datos de asesores para mostrar', width/2, height/2)
+      }
+
+      console.log('✅ Gráficos dibujados exitosamente')
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [datos, labels, asesoresValores, estadisticas, loadingVentas, modernColors])
+
   return (
     <TooltipProvider>
       <div className="w-full space-y-8 px-2">
