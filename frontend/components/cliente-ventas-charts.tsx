@@ -741,7 +741,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           const connectorRadius = outerRadius + 34
           const externalX = centerX + Math.cos(midAngle) * connectorRadius
           const externalY = centerY + Math.sin(midAngle) * connectorRadius
-          const labelOffset = Math.min(width * 0.22, 110)
+          const labelOffset = Math.min(width * 0.22, 120)
           const toLeft = normalizedMid > Math.PI / 2 && normalizedMid < (3 * Math.PI) / 2
           const boxX = externalX + (toLeft ? -labelOffset : labelOffset)
           const boxY = externalY
@@ -756,9 +756,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           pieCtx.stroke()
 
           pieCtx.font = "600 13px 'Poppins', 'Inter', sans-serif"
-          const nameWidth = pieCtx.measureText(displayName).width
+          const nameWidth = Math.max(pieCtx.measureText(displayName).width, 80)
           pieCtx.font = "500 11px 'Poppins', 'Inter', sans-serif"
-          const valueWidth = pieCtx.measureText(valueLabel).width
+          const valueWidth = Math.max(pieCtx.measureText(valueLabel).width, 78)
           const labelWidth = Math.min(Math.max(nameWidth, valueWidth) + 22, width * 0.28)
           const labelHeight = 34
 
@@ -776,7 +776,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           pieCtx.stroke()
 
           pieCtx.textAlign = toLeft ? "end" : "start"
-          const textBaseX = toLeft ? boxX - 10 : boxX + 10
+          const textBaseX = toLeft ? boxX - 12 : boxX + 12
           pieCtx.font = "600 13px 'Poppins', 'Inter', sans-serif"
           pieCtx.fillStyle = "#F8FBFF"
           pieCtx.fillText(displayName, textBaseX, boxY - 5)

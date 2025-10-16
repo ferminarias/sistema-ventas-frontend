@@ -19,6 +19,83 @@ interface ImportContactsDialogProps {
   onContactsImported: () => void
 }
 
+const formatValidationErrorEntry = (entry: unknown): string | null => {
+  if (entry === null || entry === undefined) return null
+  if (typeof entry === "string") return entry
+  if (typeof entry === "number" || typeof entry === "boolean") return String(entry)
+
+  if (typeof entry === "object") {
+    const errorObj = entry as Record<string, any>
+    const rowValue = errorObj.row ?? errorObj.line ?? errorObj.index ?? errorObj.row_number ?? errorObj.fila
+    const rowLabel = rowValue !== undefined && rowValue !== null ? `Fila ${rowValue}` : "Fila desconocida"
+
+    const rawErrors = errorObj.errors ?? errorObj.error ?? errorObj.messages ?? errorObj.message
+    let errorText: string | null = null
+
+    if (Array.isArray(rawErrors)) {
+      errorText = rawErrors
+        .map((err) => {
+          if (typeof err === "string") return err
+          if (typeof err === "number" || typeof err === "boolean") return String(err)
+          if (err && typeof err === "object") {
+            return Object.entries(err)
+              .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : value}`)
+              .join("; ")
+          }
+          return JSON.stringify(err)
+        })
+        .join("; ")
+    } else if (rawErrors && typeof rawErrors === "object") {
+      errorText = Object.entries(rawErrors)
+        .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : value}`)
+        .join("; ")
+    } else if (rawErrors !== undefined && rawErrors !== null) {
+      errorText = String(rawErrors)
+    }
+
+    const dataPreview =
+      errorObj.data && typeof errorObj.data === "object"
+        ? Object.entries(errorObj.data)
+            .slice(0, 3)
+            .map(([key, value]) => `${key}: ${value ?? ""}`)
+            .join(", ")
+        : undefined
+
+    if (!errorText || errorText.trim().length === 0) {
+      const cloned = { ...errorObj }
+      delete cloned.row
+      delete cloned.line
+      delete cloned.index
+      delete cloned.row_number
+      delete cloned.fila
+      delete cloned.errors
+      delete cloned.error
+      delete cloned.messages
+      delete cloned.message
+      delete cloned.data
+      const fallback = Object.keys(cloned).length > 0 ? JSON.stringify(cloned) : "Error desconocido"
+      errorText = fallback
+    }
+
+    return `${rowLabel}: ${errorText}${dataPreview ? ` | Datos: ${dataPreview}` : ""}`
+  }
+
+  try {
+    return JSON.stringify(entry)
+  } catch {
+    return String(entry)
+  }
+}
+
+const normalizeValidationErrorList = (errors?: unknown): string[] | undefined => {
+  if (!errors) return undefined
+  const list = Array.isArray(errors) ? errors : [errors]
+  const normalized = list
+    .map((entry) => formatValidationErrorEntry(entry))
+    .filter((value): value is string => Boolean(value && value.trim().length > 0))
+  return normalized.length ? normalized : undefined
+}
+
 export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsImported }: ImportContactsDialogProps) {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -103,13 +180,14 @@ export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsI
       })
 
       const summary = data as ImportExecutionResponse
-      const hasErrors = status === 207 || (summary.errors?.length ?? 0) > 0
+      const normalizedErrors = normalizeValidationErrorList(summary.errors) ?? []
+      const hasErrors = status === 207 || normalizedErrors.length > 0
 
       setImportResult({
         imported: summary.imported,
         skipped: summary.skipped,
         updated: summary.updated,
-        errors: summary.errors,
+        errors: normalizedErrors,
         message: summary.message,
         status,
         importId: summary.import_id,
@@ -131,9 +209,12 @@ export function ImportContactsDialog({ clientId, open, onOpenChange, onContactsI
       const importError = error as ImportContactsError
       console.error("Error importing contacts:", importError)
       const details = (importError.details ?? {}) as Record<string, any>
-      const validationErrors = Array.isArray(importError.validationErrors)
+      const rawValidationErrors = Array.isArray(importError.validationErrors)
         ? importError.validationErrors
-        : (Array.isArray(details.validation_errors) ? details.validation_errors : undefined)
+        : Array.isArray(details.validation_errors)
+          ? details.validation_errors
+          : undefined
+      const validationErrors = normalizeValidationErrorList(rawValidationErrors)
       const errorsFile = importError.errorsFile || details.errors_file || null
       const importId = importError.importId || details.import_id
 

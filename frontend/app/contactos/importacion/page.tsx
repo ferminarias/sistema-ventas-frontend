@@ -87,6 +87,83 @@ interface ImportHistoryResponse {
   }
 }
 
+const formatValidationErrorEntry = (entry: unknown): string | null => {
+  if (entry === null || entry === undefined) return null
+  if (typeof entry === "string") return entry
+  if (typeof entry === "number" || typeof entry === "boolean") return String(entry)
+
+  if (typeof entry === "object") {
+    const errorObj = entry as Record<string, any>
+    const rowValue = errorObj.row ?? errorObj.line ?? errorObj.index ?? errorObj.row_number ?? errorObj.fila
+    const rowLabel = rowValue !== undefined && rowValue !== null ? `Fila ${rowValue}` : "Fila desconocida"
+
+    const rawErrors = errorObj.errors ?? errorObj.error ?? errorObj.messages ?? errorObj.message
+    let errorText: string | null = null
+
+    if (Array.isArray(rawErrors)) {
+      errorText = rawErrors
+        .map((err) => {
+          if (typeof err === "string") return err
+          if (typeof err === "number" || typeof err === "boolean") return String(err)
+          if (err && typeof err === "object") {
+            return Object.entries(err)
+              .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : value}`)
+              .join("; ")
+          }
+          return JSON.stringify(err)
+        })
+        .join("; ")
+    } else if (rawErrors && typeof rawErrors === "object") {
+      errorText = Object.entries(rawErrors)
+        .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : value}`)
+        .join("; ")
+    } else if (rawErrors !== undefined && rawErrors !== null) {
+      errorText = String(rawErrors)
+    }
+
+    const dataPreview =
+      errorObj.data && typeof errorObj.data === "object"
+        ? Object.entries(errorObj.data)
+            .slice(0, 3)
+            .map(([key, value]) => `${key}: ${value ?? ""}`)
+            .join(", ")
+        : undefined
+
+    if (!errorText || errorText.trim().length === 0) {
+      const cloned = { ...errorObj }
+      delete cloned.row
+      delete cloned.line
+      delete cloned.index
+      delete cloned.row_number
+      delete cloned.fila
+      delete cloned.errors
+      delete cloned.error
+      delete cloned.messages
+      delete cloned.message
+      delete cloned.data
+      const fallback = Object.keys(cloned).length > 0 ? JSON.stringify(cloned) : "Error desconocido"
+      errorText = fallback
+    }
+
+    return `${rowLabel}: ${errorText}${dataPreview ? ` | Datos: ${dataPreview}` : ""}`
+  }
+
+  try {
+    return JSON.stringify(entry)
+  } catch {
+    return String(entry)
+  }
+}
+
+const normalizeValidationErrorList = (errors?: unknown): string[] | undefined => {
+  if (!errors) return undefined
+  const list = Array.isArray(errors) ? errors : [errors]
+  const normalized = list
+    .map((entry) => formatValidationErrorEntry(entry))
+    .filter((value): value is string => Boolean(value && value.trim().length > 0))
+  return normalized.length ? normalized : undefined
+}
+
 export default function ImportacionPage() {
   const { toast } = useToast()
   const [clients, setClients] = useState<ClientForContacts[]>([])
@@ -346,7 +423,8 @@ export default function ImportacionPage() {
         })
       } else {
         const summary = data as ImportExecutionResponse
-        setImportResult({ ...summary, status })
+        const normalizedErrors = normalizeValidationErrorList(summary.errors) ?? []
+        setImportResult({ ...summary, errors: normalizedErrors, status })
         setLastImportId(summary.import_id)
         setProgress(100)
 
@@ -372,11 +450,12 @@ export default function ImportacionPage() {
       const importErrorInfo = error as ImportContactsError
       const message = importErrorInfo?.message || "Error al importar contactos"
       const details = (importErrorInfo?.details ?? {}) as any
-      const validationErrors = Array.isArray(importErrorInfo?.validationErrors)
-        ? (importErrorInfo.validationErrors as string[])
+      const rawValidationErrors = Array.isArray(importErrorInfo?.validationErrors)
+        ? importErrorInfo.validationErrors
         : Array.isArray(details?.validation_errors)
-          ? (details.validation_errors as string[])
+          ? details.validation_errors
           : undefined
+      const validationErrors = normalizeValidationErrorList(rawValidationErrors)
       const errorsFile = importErrorInfo?.errorsFile || details?.errors_file
       const importId = importErrorInfo?.importId || details?.import_id
 
@@ -948,9 +1027,15 @@ export default function ImportacionPage() {
                                         <h4 className="font-medium mb-2 text-red-600">Errores</h4>
                                         <div className="bg-red-50 border border-red-200 rounded-md p-3">
                                           <ul className="list-disc list-inside space-y-1 text-sm">
-                                            {selectedImport.errors.map((error, i) => (
-                                              <li key={i} className="text-red-700">{error}</li>
-                                            ))}
+                                            {selectedImport.errors.map((error, i) => {
+                                              const message = formatValidationErrorEntry(error) ?? (typeof error === "string" ? error : "")
+                                              if (!message) return null
+                                              return (
+                                                <li key={i} className="text-red-700">
+                                                  {message}
+                                                </li>
+                                              )
+                                            })}
                                           </ul>
                                         </div>
                                       </div>
@@ -961,9 +1046,15 @@ export default function ImportacionPage() {
                                         <h4 className="font-medium mb-2 text-red-600">Errores de Validacion</h4>
                                         <div className="bg-red-50 border border-red-200 rounded-md p-3">
                                           <ul className="list-disc list-inside space-y-1 text-sm">
-                                            {selectedImport.validation_errors.map((error, i) => (
-                                              <li key={i} className="text-red-700">{error}</li>
-                                            ))}
+                                            {selectedImport.validation_errors.map((error, i) => {
+                                              const message = formatValidationErrorEntry(error)
+                                              if (!message) return null
+                                              return (
+                                                <li key={i} className="text-red-700">
+                                                  {message}
+                                                </li>
+                                              )
+                                            })}
                                           </ul>
                                         </div>
                                       </div>
