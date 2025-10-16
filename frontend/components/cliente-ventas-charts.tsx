@@ -788,9 +788,49 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       pieCtx.arc(centerX, centerY, centerRadius, 0, TAU)
       pieCtx.fillStyle = centerGradient
       pieCtx.fill()
-      pieCtx.strokeStyle = "rgba(255, 255, 255, 0.18)"
-      pieCtx.lineWidth = 1
+
+      // Aro de definición brillante alrededor del núcleo
+      const definitionRingRadius = centerRadius + 6
+      const definitionGradient = pieCtx.createRadialGradient(
+        centerX,
+        centerY,
+        centerRadius * 0.92,
+        centerX,
+        centerY,
+        definitionRingRadius + 4
+      )
+      definitionGradient.addColorStop(0, hexToRgba(lightenColor(focusColor, 0.55), 0.35))
+      definitionGradient.addColorStop(0.5, hexToRgba(lightenColor(focusColor, 0.25), 0.55))
+      definitionGradient.addColorStop(1, "rgba(12, 19, 33, 0.85)")
+
+      pieCtx.lineWidth = 2.5
+      pieCtx.strokeStyle = hexToRgba(lightenColor(focusColor, 0.7), 0.9)
       pieCtx.stroke()
+
+      pieCtx.beginPath()
+      pieCtx.arc(centerX, centerY, definitionRingRadius, 0, TAU)
+      pieCtx.strokeStyle = definitionGradient
+      pieCtx.lineWidth = 3
+      pieCtx.stroke()
+
+      // Brillo superior para dar sensación de lente
+      const highlightGradient = pieCtx.createRadialGradient(
+        centerX,
+        centerY - centerRadius * 0.55,
+        0,
+        centerX,
+        centerY - centerRadius * 0.55,
+        centerRadius * 0.9
+      )
+      highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.32)")
+      highlightGradient.addColorStop(0.7, "rgba(255, 255, 255, 0.05)")
+      highlightGradient.addColorStop(1, "rgba(255, 255, 255, 0)")
+
+      pieCtx.beginPath()
+      pieCtx.ellipse(centerX, centerY - centerRadius * 0.35, centerRadius * 0.75, centerRadius * 0.42, 0, 0, TAU)
+      pieCtx.fillStyle = highlightGradient
+      pieCtx.fill()
+
       pieCtx.restore()
 
       pieCtx.save()
@@ -801,29 +841,58 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           ? Math.round((selectedSlice.ventas / estadisticas.totalVentas) * 1000) / 10
           : 0
 
-        pieCtx.fillStyle = "#f1f5ff"
-        pieCtx.font = "600 13px 'Space Grotesk', 'Inter', sans-serif"
-        pieCtx.fillText(selectedSlice.nombre, centerX, centerY - 26)
+        pieCtx.shadowColor = "rgba(10, 20, 40, 0.55)"
+        pieCtx.shadowBlur = 12
+        pieCtx.shadowOffsetX = 0
+        pieCtx.shadowOffsetY = 6
+
+        pieCtx.fillStyle = "#f8fafc"
+        pieCtx.font = "600 15px 'Space Grotesk', 'Inter', sans-serif"
+        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.55)"
+        pieCtx.lineWidth = 3
+        pieCtx.strokeText(selectedSlice.nombre, centerX, centerY - 30)
+        pieCtx.fillText(selectedSlice.nombre, centerX, centerY - 30)
 
         pieCtx.fillStyle = "#ffffff"
-        pieCtx.font = "700 30px 'Space Grotesk', 'Inter', sans-serif"
+        pieCtx.font = "700 34px 'Space Grotesk', 'Inter', sans-serif"
+        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.65)"
+        pieCtx.lineWidth = 4
+        pieCtx.strokeText(String(selectedSlice.ventas), centerX, centerY + 2)
         pieCtx.fillText(String(selectedSlice.ventas), centerX, centerY + 2)
 
-        pieCtx.fillStyle = "rgba(148, 163, 184, 0.9)"
-        pieCtx.font = "500 12px 'Space Grotesk', 'Inter', sans-serif"
-        pieCtx.fillText(`${porcentaje}% del total`, centerX, centerY + 30)
+        pieCtx.fillStyle = "rgba(203, 213, 225, 0.92)"
+        pieCtx.font = "500 13px 'Space Grotesk', 'Inter', sans-serif"
+        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.45)"
+        pieCtx.lineWidth = 3
+        pieCtx.strokeText(`${porcentaje}% del total`, centerX, centerY + 34)
+        pieCtx.fillText(`${porcentaje}% del total`, centerX, centerY + 34)
       } else {
-        pieCtx.fillStyle = "#f1f5ff"
-        pieCtx.font = "600 13px 'Space Grotesk', 'Inter', sans-serif"
-        pieCtx.fillText("Total de ventas", centerX, centerY - 20)
+        pieCtx.shadowColor = "rgba(10, 20, 40, 0.55)"
+        pieCtx.shadowBlur = 12
+        pieCtx.shadowOffsetX = 0
+        pieCtx.shadowOffsetY = 6
+
+        pieCtx.fillStyle = "#f8fafc"
+        pieCtx.font = "600 15px 'Space Grotesk', 'Inter', sans-serif"
+        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.55)"
+        pieCtx.lineWidth = 3
+        pieCtx.strokeText("Total de ventas", centerX, centerY - 26)
+        pieCtx.fillText("Total de ventas", centerX, centerY - 26)
 
         pieCtx.fillStyle = "#ffffff"
-        pieCtx.font = "700 32px 'Space Grotesk', 'Inter', sans-serif"
-        pieCtx.fillText(String(estadisticas.totalVentas), centerX, centerY + 6)
+        pieCtx.font = "700 34px 'Space Grotesk', 'Inter', sans-serif"
+        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.65)"
+        pieCtx.lineWidth = 4
+        pieCtx.strokeText(String(estadisticas.totalVentas), centerX, centerY + 4)
+        pieCtx.fillText(String(estadisticas.totalVentas), centerX, centerY + 4)
 
-        pieCtx.fillStyle = "rgba(148, 163, 184, 0.9)"
-        pieCtx.font = "500 12px 'Space Grotesk', 'Inter', sans-serif"
-        pieCtx.fillText(`${asesoresProcesados.length} asesores activos`, centerX, centerY + 32)
+        pieCtx.fillStyle = "rgba(203, 213, 225, 0.92)"
+        pieCtx.font = "500 13px 'Space Grotesk', 'Inter', sans-serif"
+        const footerText = `${asesoresProcesados.length} asesores activos`
+        pieCtx.strokeStyle = "rgba(15, 23, 42, 0.45)"
+        pieCtx.lineWidth = 3
+        pieCtx.strokeText(footerText, centerX, centerY + 36)
+        pieCtx.fillText(footerText, centerX, centerY + 36)
       }
       pieCtx.restore()
     } else {
