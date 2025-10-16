@@ -39,6 +39,56 @@ const normalizeAngle = (angle: number) => {
   return normalized
 }
 
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
+
+const hexToRgb = (hex: string) => {
+  let normalized = hex.replace("#", "")
+  if (normalized.length === 3) {
+    normalized = normalized
+      .split("")
+      .map((char) => char + char)
+      .join("")
+  }
+
+  const value = parseInt(normalized, 16)
+
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  }
+}
+
+const rgbToHex = (r: number, g: number, b: number) => {
+  const componentToHex = (component: number) => {
+    const clamped = clamp(Math.round(component), 0, 255)
+    return clamped.toString(16).padStart(2, "0")
+  }
+
+  return `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`
+}
+
+const mixHexColors = (color1: string, color2: string, weight: number) => {
+  const w = clamp(weight, 0, 1)
+  const c1 = hexToRgb(color1)
+  const c2 = hexToRgb(color2)
+
+  return rgbToHex(
+    c1.r * (1 - w) + c2.r * w,
+    c1.g * (1 - w) + c2.g * w,
+    c1.b * (1 - w) + c2.b * w
+  )
+}
+
+const lightenColor = (hex: string, amount: number) => mixHexColors(hex, "#ffffff", clamp(amount, 0, 1))
+
+const deepenColor = (hex: string, amount: number) => mixHexColors(hex, "#0f172a", clamp(amount, 0, 1))
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const { r, g, b } = hexToRgb(hex)
+  return `rgba(${r}, ${g}, ${b}, ${clamp(alpha, 0, 1)})`
+}
+
 export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: ClienteVentasChartsProps) {
   const [activeTab, setActiveTab] = useState("mensual")
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
@@ -481,6 +531,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     const rect = canvas.getBoundingClientRect()
     const width = rect.width || canvas.width
     const height = rect.height || canvas.height
+    const chartWidth = Math.max(width - 100, 200)
+    const chartOriginX = 50
+    const chartBottomY = height - 40
 
     canvas.width = width * dpr
     canvas.height = height * dpr
@@ -495,49 +548,60 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
     if (datos.length > 0 && Math.max(...datos) > 0) {
       const maxValue = Math.max(...datos)
-      const barWidth = Math.max((width - 100) / datos.length, 15)
       const chartHeight = height - 80
+      const slotWidth = chartWidth / datos.length
+      const preferredBarWidth = slotWidth * 0.68
+      const minBarWidth = datos.length > 36 ? 5 : datos.length > 24 ? 8 : 14
+      const maxBarWidth = 32
+      const barWidth = clamp(preferredBarWidth, minBarWidth, maxBarWidth)
+      const barOffset = (slotWidth - barWidth) / 2
+      const barRadius = Math.min(6, barWidth / 2)
 
       const bgGradient = ctx.createLinearGradient(0, 0, 0, height)
-      bgGradient.addColorStop(0, "rgba(59, 130, 246, 0.04)")
-      bgGradient.addColorStop(1, "rgba(59, 130, 246, 0.01)")
+      bgGradient.addColorStop(0, "rgba(59, 130, 246, 0.05)")
+      bgGradient.addColorStop(1, "rgba(59, 130, 246, 0.02)")
       ctx.fillStyle = bgGradient
       ctx.fillRect(0, 0, width, height)
 
       ctx.strokeStyle = "rgba(148, 163, 184, 0.12)"
       ctx.lineWidth = 1
       for (let i = 1; i <= 4; i++) {
-        const gridY = height - 40 - (chartHeight / 4) * i
+        const gridY = chartBottomY - (chartHeight / 4) * i
         ctx.beginPath()
-        ctx.moveTo(50, gridY)
-        ctx.lineTo(width - 50, gridY)
+        ctx.moveTo(chartOriginX, gridY)
+        ctx.lineTo(chartOriginX + chartWidth, gridY)
         ctx.stroke()
       }
 
       datos.forEach((value, index) => {
         const barHeight = (value / maxValue) * chartHeight
-        const x = 50 + index * barWidth
-        const y = height - 40 - barHeight
+        const x = chartOriginX + index * slotWidth + barOffset
+        const y = chartBottomY - barHeight
         const baseColor = modernColors[index % modernColors.length]
+        const barTopColor = lightenColor(baseColor, 0.25)
+        const barBottomColor = deepenColor(baseColor, 0.35)
 
         const barGradient = ctx.createLinearGradient(x, y, x, y + barHeight)
-        barGradient.addColorStop(0, baseColor)
-        barGradient.addColorStop(0.65, baseColor + "DD")
-        barGradient.addColorStop(1, baseColor + "99")
+        barGradient.addColorStop(0, barTopColor)
+        barGradient.addColorStop(0.55, baseColor)
+        barGradient.addColorStop(1, barBottomColor)
 
         ctx.save()
-        ctx.shadowColor = baseColor + "35"
+        ctx.shadowColor = hexToRgba(lightenColor(baseColor, 0.25), 0.45)
         ctx.shadowBlur = 10
         ctx.shadowOffsetX = 0
         ctx.shadowOffsetY = 4
-
         ctx.fillStyle = barGradient
         ctx.beginPath()
-        ctx.roundRect(x, y, barWidth - 8, barHeight, 6)
+        ctx.roundRect(x, y, barWidth, barHeight, barRadius)
         ctx.fill()
+        ctx.restore()
 
-        ctx.strokeStyle = baseColor + "80"
+        ctx.save()
+        ctx.strokeStyle = hexToRgba(lightenColor(baseColor, 0.45), 0.5)
         ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.roundRect(x, y, barWidth, barHeight, barRadius)
         ctx.stroke()
         ctx.restore()
 
@@ -558,15 +622,20 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       ctx.strokeStyle = "rgba(148, 163, 184, 0.3)"
       ctx.lineWidth = 2
       ctx.beginPath()
-      ctx.moveTo(50, height - 40)
-      ctx.lineTo(width - 50, height - 40)
+      ctx.moveTo(chartOriginX, chartBottomY)
+      ctx.lineTo(chartOriginX + chartWidth, chartBottomY)
       ctx.stroke()
 
+      const labelStep = datos.length > 45 ? 4 : datos.length > 28 ? 2 : 1
+
       labels.forEach((label, index) => {
+        if (index % labelStep !== 0 && index !== labels.length - 1) {
+          return
+        }
         ctx.fillStyle = "#cbd5e1"
         ctx.font = "11px Inter"
         ctx.textAlign = "center"
-        ctx.fillText(label, 50 + index * barWidth + barWidth / 2, height - 18)
+        ctx.fillText(label, chartOriginX + index * slotWidth + slotWidth / 2, height - 18)
       })
     } else {
       ctx.fillStyle = "#666"
@@ -580,11 +649,11 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     if (asesoresValores.length > 0 && estadisticas.totalVentas > 0) {
       const centerX = width / 2
       const centerY = height / 2
-      const baseOuterRadius = Math.min(width, height) * 0.32
+      const baseOuterRadius = Math.min(width, height) * 0.34
       const baseInnerRadius = baseOuterRadius * 0.58
       let startAngle = -Math.PI / 2
 
-      const backgroundGlow = pieCtx.createRadialGradient(centerX, centerY, baseInnerRadius * 0.4, centerX, centerY, baseOuterRadius * 2.2)
+      const backgroundGlow = pieCtx.createRadialGradient(centerX, centerY, baseInnerRadius * 0.25, centerX, centerY, baseOuterRadius * 2.2)
       backgroundGlow.addColorStop(0, "rgba(15, 23, 42, 0.55)")
       backgroundGlow.addColorStop(1, "rgba(15, 23, 42, 0)")
       pieCtx.fillStyle = backgroundGlow
@@ -597,9 +666,12 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         const midAngle = startAngle + sliceAngle / 2
         const normalizedMid = normalizeAngle(midAngle)
         const isHovered = hoveredPieIndex === index
-        const outerRadius = baseOuterRadius + (isHovered ? 18 : 8)
-        const innerRadius = Math.max(baseInnerRadius - (isHovered ? 8 : 0), baseInnerRadius * 0.65)
+        const outerRadius = baseOuterRadius + (isHovered ? 20 : 10)
+        const innerRadius = Math.max(baseInnerRadius - (isHovered ? 6 : 0), baseInnerRadius * 0.68)
         const baseColor = modernColors[index % modernColors.length]
+        const highlightColor = lightenColor(baseColor, 0.45)
+        const rimColor = lightenColor(baseColor, 0.15)
+        const shadowColor = deepenColor(baseColor, 0.45)
         const percentage = estadisticas.totalVentas > 0 ? (value / estadisticas.totalVentas) * 100 : 0
 
         const gradient = pieCtx.createLinearGradient(
@@ -608,9 +680,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           centerX + Math.cos(midAngle + Math.PI / 2) * outerRadius,
           centerY + Math.sin(midAngle + Math.PI / 2) * outerRadius
         )
-        gradient.addColorStop(0, baseColor + "33")
-        gradient.addColorStop(0.5, baseColor)
-        gradient.addColorStop(1, baseColor + "F0")
+        gradient.addColorStop(0, highlightColor)
+        gradient.addColorStop(0.45, baseColor)
+        gradient.addColorStop(1, shadowColor)
 
         pieCtx.save()
         pieCtx.beginPath()
@@ -618,8 +690,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         pieCtx.arc(centerX, centerY, innerRadius, startAngle + sliceAngle, startAngle, true)
         pieCtx.closePath()
 
-        pieCtx.shadowColor = baseColor + (isHovered ? "90" : "40")
-        pieCtx.shadowBlur = isHovered ? 26 : 12
+        pieCtx.shadowColor = hexToRgba(highlightColor, isHovered ? 0.75 : 0.45)
+        pieCtx.shadowBlur = isHovered ? 30 : 16
         pieCtx.shadowOffsetX = 0
         pieCtx.shadowOffsetY = 0
 
@@ -627,12 +699,12 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         pieCtx.fill()
 
         pieCtx.lineWidth = isHovered ? 3 : 1.6
-        pieCtx.strokeStyle = isHovered ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.2)"
+        pieCtx.strokeStyle = hexToRgba(rimColor, isHovered ? 0.9 : 0.55)
         pieCtx.stroke()
         pieCtx.restore()
 
-        const connectorRadius = outerRadius + 6
-        const labelRadius = outerRadius + 36
+        const connectorRadius = outerRadius + 8
+        const labelRadius = outerRadius + 40
         const connectorX = centerX + Math.cos(midAngle) * connectorRadius
         const connectorY = centerY + Math.sin(midAngle) * connectorRadius
         const labelX = centerX + Math.cos(midAngle) * labelRadius
@@ -643,8 +715,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         pieCtx.beginPath()
         pieCtx.moveTo(connectorX, connectorY)
         pieCtx.lineTo(labelX, labelY)
-        pieCtx.strokeStyle = baseColor + (isHovered ? "B0" : "70")
-        pieCtx.lineWidth = isHovered ? 1.5 : 1
+        pieCtx.strokeStyle = hexToRgba(highlightColor, isHovered ? 0.9 : 0.55)
+        pieCtx.lineWidth = isHovered ? 1.8 : 1.2
         pieCtx.stroke()
         pieCtx.restore()
 
@@ -652,7 +724,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         pieCtx.font = "600 10px Inter"
         pieCtx.textAlign = drawLeft ? "end" : "start"
         pieCtx.textBaseline = "middle"
-        const labelText = `${asesoresNombres[index]} - ${value} (${percentage.toFixed(1)}%)`
+        const labelText = `${asesoresNombres[index]} (${percentage.toFixed(1)}%)`
         const textWidth = pieCtx.measureText(labelText).width
         const paddingX = 10
         const paddingY = 6
@@ -662,17 +734,15 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         const bgY = labelY - bgHeight / 2
 
         const labelGradient = pieCtx.createLinearGradient(bgX, bgY, bgX, bgY + bgHeight)
-        labelGradient.addColorStop(0, baseColor + "E0")
-        labelGradient.addColorStop(1, baseColor + "B0")
+        labelGradient.addColorStop(0, hexToRgba(lightenColor(baseColor, 0.5), 0.9))
+        labelGradient.addColorStop(1, hexToRgba(deepenColor(baseColor, 0.2), 0.9))
 
-        pieCtx.globalAlpha = isHovered ? 0.98 : 0.88
         pieCtx.beginPath()
         pieCtx.roundRect(bgX, bgY, bgWidth, bgHeight, 10)
         pieCtx.fillStyle = labelGradient
         pieCtx.fill()
-        pieCtx.globalAlpha = 1
 
-        pieCtx.strokeStyle = baseColor + "75"
+        pieCtx.strokeStyle = hexToRgba(lightenColor(baseColor, 0.45), 0.7)
         pieCtx.lineWidth = 1
         pieCtx.stroke()
 
@@ -702,11 +772,16 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         setHoveredPieIndex(null)
       }
 
+      const focusColor = hoveredPieIndex !== null
+        ? modernColors[hoveredPieIndex % modernColors.length]
+        : "#38bdf8"
+
       const selectedSlice = hoveredPieIndex !== null ? asesoresProcesados[hoveredPieIndex] : undefined
-      const centerRadius = Math.max(baseInnerRadius - 6, baseInnerRadius * 0.82)
-      const centerGradient = pieCtx.createRadialGradient(centerX, centerY, centerRadius * 0.25, centerX, centerY, centerRadius)
-      centerGradient.addColorStop(0, selectedSlice ? "rgba(255, 255, 255, 0.35)" : "rgba(255, 255, 255, 0.22)")
-      centerGradient.addColorStop(1, "rgba(15, 23, 42, 0.92)")
+      const centerRadius = Math.max(baseInnerRadius - 6, baseInnerRadius * 0.84)
+      const centerGradient = pieCtx.createRadialGradient(centerX, centerY, centerRadius * 0.1, centerX, centerY, centerRadius)
+      centerGradient.addColorStop(0, hexToRgba(lightenColor(focusColor, 0.6), selectedSlice ? 0.95 : 0.65))
+      centerGradient.addColorStop(0.7, hexToRgba(deepenColor(focusColor, 0.2), 0.9))
+      centerGradient.addColorStop(1, "rgba(8, 11, 19, 0.95)")
 
       pieCtx.save()
       pieCtx.beginPath()
@@ -726,29 +801,29 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           ? Math.round((selectedSlice.ventas / estadisticas.totalVentas) * 1000) / 10
           : 0
 
-        pieCtx.fillStyle = "#cbd5f5"
+        pieCtx.fillStyle = "#e0e7ff"
         pieCtx.font = "600 13px Inter"
-        pieCtx.fillText(selectedSlice.nombre, centerX, centerY - 24)
+        pieCtx.fillText(selectedSlice.nombre, centerX, centerY - 26)
 
         pieCtx.fillStyle = "#f8fafc"
-        pieCtx.font = "700 28px Inter"
-        pieCtx.fillText(String(selectedSlice.ventas), centerX, centerY + 4)
+        pieCtx.font = "700 30px Inter"
+        pieCtx.fillText(String(selectedSlice.ventas), centerX, centerY + 2)
 
-        pieCtx.fillStyle = "rgba(148, 163, 184, 0.92)"
+        pieCtx.fillStyle = "rgba(148, 163, 184, 0.9)"
         pieCtx.font = "500 12px Inter"
-        pieCtx.fillText(`${porcentaje}% del total`, centerX, centerY + 28)
+        pieCtx.fillText(`${porcentaje}% del total`, centerX, centerY + 30)
       } else {
-        pieCtx.fillStyle = "#cbd5f5"
+        pieCtx.fillStyle = "#e0e7ff"
         pieCtx.font = "600 13px Inter"
         pieCtx.fillText("Total de ventas", centerX, centerY - 20)
 
         pieCtx.fillStyle = "#f8fafc"
-        pieCtx.font = "700 30px Inter"
+        pieCtx.font = "700 32px Inter"
         pieCtx.fillText(String(estadisticas.totalVentas), centerX, centerY + 6)
 
         pieCtx.fillStyle = "rgba(148, 163, 184, 0.9)"
         pieCtx.font = "500 12px Inter"
-        pieCtx.fillText(`${asesoresProcesados.length} asesores activos`, centerX, centerY + 30)
+        pieCtx.fillText(`${asesoresProcesados.length} asesores activos`, centerX, centerY + 32)
       }
       pieCtx.restore()
     } else {
