@@ -42,7 +42,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     const updateSize = () => {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        const newDimensions = {
+        const newDimensions = { 
           width: Math.max(rect.width, 300), // Mínimo 300px
           height: Math.max(rect.height, 200) // Mínimo 200px
         };
@@ -50,19 +50,19 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         setDimensions(newDimensions);
       }
     };
-
+    
     // Esperar un poco antes de la primera medición
     const initialTimeout = setTimeout(updateSize, 100);
-
+    
     const observer = new ResizeObserver(() => {
       // Debounce para evitar múltiples actualizaciones
       setTimeout(updateSize, 50);
     });
-
+    
     if (containerRef.current) {
       observer.observe(containerRef.current);
     }
-
+    
     return () => {
       clearTimeout(initialTimeout);
       observer.disconnect();
@@ -94,7 +94,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   }
 
   const { ventas, loading: loadingVentas } = useVentas(cliente.toLowerCase())
-
+  
   // Debug: Log para verificar que se están cargando todas las ventas para "general"
   useEffect(() => {
     console.log(`📊 ClienteVentasCharts - Cliente: "${cliente}"`);
@@ -110,27 +110,27 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const getSemanaISO = (fecha: Date) => {
     // Crear una copia en UTC para evitar problemas de zona horaria
     const fechaUTC = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()))
-
+    
     // Encontrar el jueves de la semana (el jueves siempre está en la semana correcta)
     // El día de la semana: 0=domingo, 1=lunes, ..., 6=sábado
     // Para ISO: 1=lunes, 2=martes, ..., 7=domingo
     const diaDeSemanaTrans = (fechaUTC.getUTCDay() + 6) % 7  // Convertir domingo=0 a domingo=6
     const juevesDeEstaSemana = new Date(fechaUTC)
     juevesDeEstaSemana.setUTCDate(fechaUTC.getUTCDate() - diaDeSemanaTrans + 3)  // +3 para llegar al jueves
-
+    
     // El año ISO es el año del jueves
     const yearISO = juevesDeEstaSemana.getUTCFullYear()
-
+    
     // Encontrar el primer jueves del año ISO
     const enero4 = new Date(Date.UTC(yearISO, 0, 4))  // 4 de enero siempre está en la semana 1
     const diaDeEnero4 = (enero4.getUTCDay() + 6) % 7
     const primerJueves = new Date(enero4)
     primerJueves.setUTCDate(enero4.getUTCDate() - diaDeEnero4 + 3)
-
+    
     // Calcular la diferencia en días y convertir a semanas
     const diferenciaDias = (juevesDeEstaSemana.getTime() - primerJueves.getTime()) / (1000 * 60 * 60 * 24)
     const semanaISO = Math.floor(diferenciaDias / 7) + 1
-
+    
     return {
       year: yearISO,
       week: semanaISO
@@ -142,7 +142,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     // Un año tiene 53 semanas si el 1 de enero o el 31 de diciembre cae en jueves
     const enero1 = new Date(year, 0, 1)
     const diciembre31 = new Date(year, 11, 31)
-
+    
     // Si el 1 de enero es jueves (día 4) o si es año bisiesto y empieza en miércoles
     if (enero1.getDay() === 4 || (diciembre31.getDay() === 4)) {
       return 53
@@ -162,11 +162,11 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   // Procesar datos según el filtro seleccionado
   const procesarDatos = () => {
     console.log('📊 Procesando datos con ventas:', ventas?.length || 0);
-
+    
     const ventasPorMes = Array(12).fill(0)
     const ventasPorAsesor: Record<string, number> = {}
     const ventasPorPrograma: Record<string, number> = {}
-
+    
     // Verificación defensiva: si ventas no está definido o no es un array, retornar valores por defecto
     if (!ventas || !Array.isArray(ventas)) {
       console.log('⚠️ Ventas no disponibles, usando datos por defecto');
@@ -177,14 +177,14 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         programas: ventasPorPrograma
       }
     }
-
+    
     // Caso especial: si no hay ventas pero es un array válido, aún crear estructura
     if (ventas.length === 0) {
       console.log('📭 Array de ventas vacío, creando estructura vacía');
-      const labels = activeTab === "mensual"
+      const labels = activeTab === "mensual" 
         ? ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
         : Array.from({ length: semanaFin - semanaInicio + 1 }, (_, i) => `S${semanaInicio + i}`);
-
+        
       return {
         datos: activeTab === "mensual" ? Array(12).fill(0) : Array(semanaFin - semanaInicio + 1).fill(0),
         labels,
@@ -192,24 +192,24 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         programas: ventasPorPrograma
       }
     }
-
+    
     if (activeTab === "mensual") {
       // Datos mensuales del año seleccionado
       ventas.forEach((v) => {
         const fecha = new Date(v.fecha_venta)
         if (isNaN(fecha.getTime()) || fecha.getFullYear() !== selectedYear) return
-
+        
         ventasPorMes[fecha.getMonth()]++
-
+        
         if (v.asesor) {
           ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
         }
-
+        
         // Procesar programa de interés
         const programa = v.campos_adicionales?.programa_interes || 'Sin programa especificado'
         ventasPorPrograma[programa] = (ventasPorPrograma[programa] || 0) + 1
       })
-
+      
       return {
         datos: ventasPorMes,
         labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
@@ -220,33 +220,33 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       // Datos semanales ISO del año seleccionado (filtrado por rango)
       const rangoSemanas = semanaFin - semanaInicio + 1
       const ventasPorSemana = Array(rangoSemanas).fill(0)
-
+      
       ventas.forEach((v) => {
         const fecha = new Date(v.fecha_venta)
         if (isNaN(fecha.getTime())) return
-
+        
         const semanaInfo = getSemanaISO(fecha)
-
+        
         // Solo procesar ventas del año y rango de semanas seleccionado
-        if (semanaInfo.year === selectedYear &&
-            semanaInfo.week >= semanaInicio &&
+        if (semanaInfo.year === selectedYear && 
+            semanaInfo.week >= semanaInicio && 
             semanaInfo.week <= semanaFin) {
           const indice = semanaInfo.week - semanaInicio  // Ajustar índice al rango
           ventasPorSemana[indice]++
-
+          
           if (v.asesor) {
             ventasPorAsesor[v.asesor] = (ventasPorAsesor[v.asesor] || 0) + 1
           }
-
+          
           // Procesar programa de interés
           const programa = v.campos_adicionales?.programa_interes || 'Sin programa especificado'
           ventasPorPrograma[programa] = (ventasPorPrograma[programa] || 0) + 1
         }
       })
-
+      
       // Generar labels para el rango de semanas seleccionado
       const labels = Array.from({ length: rangoSemanas }, (_, i) => `S${semanaInicio + i}`)
-
+      
       return {
         datos: ventasPorSemana,
         labels: labels,
@@ -269,8 +269,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   // Generar tooltips dinámicos según el modo actual
   const getTooltips = () => {
     const tipoPerido = activeTab === "mensual" ? "mes" : "semana"
-    const rangoPeriodo = activeTab === "mensual"
-      ? `año ${selectedYear}`
+    const rangoPeriodo = activeTab === "mensual" 
+      ? `año ${selectedYear}` 
       : `semanas ${semanaInicio} a ${semanaFin} de ${selectedYear}`
 
     return {
@@ -294,14 +294,14 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       const topAsesores = asesoresArray.slice(0, 7)
       const otrosAsesores = asesoresArray.slice(7)
       const totalOtros = otrosAsesores.reduce((sum, asesor) => sum + asesor.ventas, 0)
-
+      
       if (totalOtros > 0) {
         topAsesores.push({ nombre: `Otros (${otrosAsesores.length})`, ventas: totalOtros })
       }
-
+      
       return topAsesores
     }
-
+    
     return asesoresArray
   }
 
@@ -327,12 +327,12 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   // Obtener años disponibles en los datos
   const getYearsAvailable = () => {
     const years = new Set<number>()
-
+    
     // Verificación defensiva: si ventas no está definido o no es un array, retornar año actual
     if (!ventas || !Array.isArray(ventas)) {
       return [new Date().getFullYear()]
     }
-
+    
     ventas.forEach(v => {
       const fecha = new Date(v.fecha_venta)
       if (!isNaN(fecha.getTime())) {
@@ -391,7 +391,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   // Paleta MODERNA 2025 - Colores vibrantes con cohesión dark theme
   const modernColors = [
     "#8b5cf6", // Violeta vibrante (principal)
-    "#06b6d4", // Cyan brillante
+    "#06b6d4", // Cyan brillante 
     "#10b981", // Esmeralda moderno
     "#f59e0b", // Ámbar dorado
     "#ef4444", // Rojo coral dinámico
@@ -404,7 +404,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     "#06b6d4", // Turquesa premium
     "#d946ef", // Fucsia moderno
   ]
-
+  
   // Gradientes para depth y modernidad
   const gradientColors = [
     "linear-gradient(135deg, #8b5cf6, #a78bfa)", // Violeta
@@ -484,9 +484,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       ctx.scale(dpr, dpr)
       pieCtx.scale(dpr, dpr)
 
-      // Limpiar canvas
-      ctx.clearRect(0, 0, width, height)
-      pieCtx.clearRect(0, 0, width, height)
+    // Limpiar canvas
+    ctx.clearRect(0, 0, width, height)
+    pieCtx.clearRect(0, 0, width, height)
 
       // Dibujar gráfico de barras
       if (datos.length > 0 && Math.max(...datos) > 0) {
@@ -494,8 +494,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         const maxValue = Math.max(...datos)
         const barWidth = Math.max((width - 100) / datos.length, 10)
         const chartHeight = height - 80
-
-        datos.forEach((value, index) => {
+    
+    datos.forEach((value, index) => {
           const barHeight = (value / maxValue) * chartHeight
           const x = 50 + index * barWidth
           const y = height - 40 - barHeight
@@ -515,11 +515,11 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
         // Dibujar eje X
         ctx.strokeStyle = '#666'
-        ctx.lineWidth = 1
-        ctx.beginPath()
+    ctx.lineWidth = 1
+    ctx.beginPath()
         ctx.moveTo(50, height - 40)
         ctx.lineTo(width - 50, height - 40)
-        ctx.stroke()
+    ctx.stroke()
 
         // Dibujar labels
         labels.forEach((label, index) => {
@@ -541,28 +541,28 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       if (asesoresValores.length > 0 && estadisticas.totalVentas > 0) {
         console.log('🥧 Dibujando gráfico circular con asesores:', asesoresValores)
         const centerX = width / 2
-        const centerY = height / 2
+    const centerY = height / 2
         const radius = Math.min(width, height) / 3
-        let startAngle = 0
+    let startAngle = 0
 
-        asesoresValores.forEach((value, index) => {
+    asesoresValores.forEach((value, index) => {
           const sliceAngle = (value / estadisticas.totalVentas) * 2 * Math.PI
           
           // Dibujar sector
-          pieCtx.beginPath()
+      pieCtx.beginPath()
           pieCtx.moveTo(centerX, centerY)
           pieCtx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle)
-          pieCtx.closePath()
-          pieCtx.fillStyle = modernColors[index % modernColors.length]
-          pieCtx.fill()
+      pieCtx.closePath()
+      pieCtx.fillStyle = modernColors[index % modernColors.length]
+      pieCtx.fill()
 
           // Dibujar borde
           pieCtx.strokeStyle = '#333'
           pieCtx.lineWidth = 2
-          pieCtx.stroke()
-
-          startAngle += sliceAngle
-        })
+        pieCtx.stroke()
+      
+      startAngle += sliceAngle
+    })
       } else {
         console.log('📭 No hay datos para dibujar gráfico circular')
         // Dibujar mensaje de "sin datos"
@@ -578,43 +578,43 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     return () => clearTimeout(timeoutId)
   }, [datos, labels, asesoresValores, estadisticas, loadingVentas, modernColors])
 
-  return (
+    return (
     <TooltipProvider>
-      <div className="w-full space-y-8 px-2">
+      <div className="w-full space-y-4 px-2">
         {/* Mostrar estado de carga si esta cargando */}
         {loadingVentas ? (
           <div className="grid gap-6 grid-cols-1">
-            <Card className="border-2 border-dashed border-border bg-card/50">
+        <Card className="border-2 border-dashed border-border bg-card/50">
               <CardContent className="flex items-center justify-center h-96">
-                <div className="text-center space-y-2">
+            <div className="text-center space-y-2">
                   <CalendarDays className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
                   <p className="text-muted-foreground">Cargando datos de ventas...</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-2 border-dashed border-border bg-card/50">
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-2 border-dashed border-border bg-card/50">
               <CardContent className="flex items-center justify-center h-96">
-                <div className="text-center space-y-2">
+            <div className="text-center space-y-2">
                   <Users className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
                   <p className="text-muted-foreground">Cargando distribución por asesor...</p>
-                </div>
-              </CardContent>
-            </Card>
+            </div>
+          </CardContent>
+        </Card>
             <Card className="border-2 border-dashed border-border bg-card/50">
               <CardContent className="flex items-center justify-center h-96">
                 <div className="text-center space-y-2">
                   <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto animate-pulse" />
                   <p className="text-muted-foreground">Cargando distribución por programa...</p>
-                </div>
+      </div>
               </CardContent>
             </Card>
           </div>
         ) : (
           <div>
             {/* Estadisticas destacadas - Responsive al tema */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-500/30 backdrop-blur-sm">
-                <CardContent className="p-4">
+                <CardContent className="p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -634,7 +634,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               </Card>
 
               <Card className="bg-gradient-to-br from-green-500/20 to-green-600/20 border-green-500/30 backdrop-blur-sm">
-                <CardContent className="p-4">
+                <CardContent className="p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <CalendarDays className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -654,7 +654,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               </Card>
 
               <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-purple-500/30 backdrop-blur-sm">
-                <CardContent className="p-4">
+                <CardContent className="p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -674,7 +674,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
               </Card>
 
               <Card className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border-orange-500/30 backdrop-blur-sm">
-                <CardContent className="p-4">
+                <CardContent className="p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <Users className="h-5 w-5 text-orange-600 dark:text-orange-400" />
@@ -695,9 +695,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             </div>
 
             {/* Gráfico principal de ventas - Centrado y amplio */}
-            <div className="grid gap-6 grid-cols-1">
+            <div className="grid gap-4 grid-cols-1">
               <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
-                <CardHeader className="pb-4">
+                <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="text-3xl font-bold text-foreground mb-2">
@@ -825,8 +825,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="pb-12 flex justify-center">
-                  <div ref={containerRef} className="w-full max-w-5xl h-[800px] relative">
+                <CardContent className="pb-4 flex justify-center">
+                  <div ref={containerRef} className="w-full max-w-5xl h-[350px] relative">
                     <canvas ref={chartRef} className="w-full h-full rounded-lg" />
                   </div>
                 </CardContent>
@@ -834,7 +834,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             </div>
 
             {/* Gráficos secundarios - Cada uno ocupa toda la fila */}
-            <div className="grid gap-6 grid-cols-1">
+            <div className="grid gap-4 grid-cols-1">
               <Card className="bg-card border-border backdrop-blur-sm shadow-lg">
                 <CardHeader className="text-center">
                   <CardTitle className="text-foreground text-3xl font-bold">Distribución por Asesor</CardTitle>
@@ -844,8 +844,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                   } - {getNombreCliente()}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="pb-16 flex justify-center">
-                  <div className="relative w-full max-w-4xl h-[600px]" ref={containerRef}>
+                <CardContent className="pb-4 flex justify-center">
+                  <div className="relative w-full max-w-4xl h-[300px]" ref={containerRef}>
                     <canvas ref={pieChartRef} className="w-full h-full rounded-lg cursor-pointer" />
                     {tooltip && (
                       <div
