@@ -721,7 +721,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         pieCtx.restore()
 
         pieCtx.save()
-        pieCtx.font = "600 10px Inter"
+        pieCtx.font = "600 10px 'Space Grotesk', 'Inter', sans-serif"
         pieCtx.textAlign = drawLeft ? "end" : "start"
         pieCtx.textBaseline = "middle"
         const labelText = `${asesoresNombres[index]} (${percentage.toFixed(1)}%)`
@@ -747,7 +747,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         pieCtx.stroke()
 
         const textX = drawLeft ? bgX + bgWidth - paddingX : bgX + paddingX
-        pieCtx.fillStyle = "#ffffff"
+        pieCtx.fillStyle = "#f8fafc"
         pieCtx.fillText(labelText, textX, labelY)
         pieCtx.restore()
 
@@ -801,28 +801,28 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           ? Math.round((selectedSlice.ventas / estadisticas.totalVentas) * 1000) / 10
           : 0
 
-        pieCtx.fillStyle = "#e0e7ff"
-        pieCtx.font = "600 13px Inter"
+        pieCtx.fillStyle = "#f1f5ff"
+        pieCtx.font = "600 13px 'Space Grotesk', 'Inter', sans-serif"
         pieCtx.fillText(selectedSlice.nombre, centerX, centerY - 26)
 
-        pieCtx.fillStyle = "#f8fafc"
-        pieCtx.font = "700 30px Inter"
+        pieCtx.fillStyle = "#ffffff"
+        pieCtx.font = "700 30px 'Space Grotesk', 'Inter', sans-serif"
         pieCtx.fillText(String(selectedSlice.ventas), centerX, centerY + 2)
 
         pieCtx.fillStyle = "rgba(148, 163, 184, 0.9)"
-        pieCtx.font = "500 12px Inter"
+        pieCtx.font = "500 12px 'Space Grotesk', 'Inter', sans-serif"
         pieCtx.fillText(`${porcentaje}% del total`, centerX, centerY + 30)
       } else {
-        pieCtx.fillStyle = "#e0e7ff"
-        pieCtx.font = "600 13px Inter"
+        pieCtx.fillStyle = "#f1f5ff"
+        pieCtx.font = "600 13px 'Space Grotesk', 'Inter', sans-serif"
         pieCtx.fillText("Total de ventas", centerX, centerY - 20)
 
-        pieCtx.fillStyle = "#f8fafc"
-        pieCtx.font = "700 32px Inter"
+        pieCtx.fillStyle = "#ffffff"
+        pieCtx.font = "700 32px 'Space Grotesk', 'Inter', sans-serif"
         pieCtx.fillText(String(estadisticas.totalVentas), centerX, centerY + 6)
 
         pieCtx.fillStyle = "rgba(148, 163, 184, 0.9)"
-        pieCtx.font = "500 12px Inter"
+        pieCtx.font = "500 12px 'Space Grotesk', 'Inter', sans-serif"
         pieCtx.fillText(`${asesoresProcesados.length} asesores activos`, centerX, centerY + 32)
       }
       pieCtx.restore()
