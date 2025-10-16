@@ -70,7 +70,7 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
   }
 
   const handleSearch = () => {
-    onSearch({ ...filters })
+    onSearch(filters)
   }
 
   const handleReset = () => {
@@ -81,23 +81,6 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
     setFilters(resetFilters)
     onSearch(resetFilters)
   }
-
-  // Lanzar búsqueda con Enter en el input principal
-  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      onSearch({ ...filters })
-    }
-  }
-
-  // Búsqueda automática con debounce simple al tipear (solo campo texto)
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (filters.busqueda && filters.busqueda.length >= 2) {
-        onSearch({ ...filters })
-      }
-    }, 500)
-    return () => clearTimeout(id)
-  }, [filters.busqueda])
 
   return (
     <div className="bg-card border border-card rounded-lg p-6">
@@ -116,7 +99,6 @@ export function SearchFilters({ onSearch, filtrosDisponibles, loading = false }:
             placeholder="Buscar por nombre, documento, etc."
             value={filters.busqueda || ""}
             onChange={(e) => handleInputChange("busqueda", e.target.value)}
-            onKeyDown={onKeyDown}
             className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-purple-500"
           />
         </div>
