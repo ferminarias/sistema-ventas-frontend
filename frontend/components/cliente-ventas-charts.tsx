@@ -17,6 +17,28 @@ interface ClienteVentasChartsProps {
   nombreCliente?: string
 }
 
+interface PieSliceMeta {
+  start: number
+  end: number
+  startNormalized: number
+  endNormalized: number
+  value: number
+  label: string
+  innerRadius: number
+  outerRadius: number
+  percentage: number
+}
+
+const TAU = Math.PI * 2
+
+const normalizeAngle = (angle: number) => {
+  let normalized = angle % TAU
+  if (normalized < 0) {
+    normalized += TAU
+  }
+  return normalized
+}
+
 export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: ClienteVentasChartsProps) {
   const [activeTab, setActiveTab] = useState("mensual")
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
@@ -25,8 +47,9 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
   const [showFilters, setShowFilters] = useState(false)
   const chartRef = useRef<HTMLCanvasElement>(null)
   const pieChartRef = useRef<HTMLCanvasElement>(null)
+  const pieSlicesRef = useRef<PieSliceMeta[]>([])
   const [hoveredPieIndex, setHoveredPieIndex] = useState<number | null>(null)
-  const [tooltip, setTooltip] = useState<{x: number, y: number, label: string, value: number} | null>(null)
+  const [tooltip, setTooltip] = useState<{x: number, y: number, label: string, value: number, percentage: number} | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 500, height: 300 })
 
@@ -436,340 +459,417 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     "#d946ef", // Fucsia moderno
   ]
 
-  // Efecto para dibujar los gráficos
+  // Efecto para dibujar los graficos
   useEffect(() => {
-    console.log('🎨 Iniciando dibujo de gráficos:', {
-      loadingVentas,
-      datosLength: datos.length,
-      asesoresLength: asesoresValores.length,
-      chartRef: !!chartRef.current,
-      pieChartRef: !!pieChartRef.current
-    })
-
     if (loadingVentas || !chartRef.current || !pieChartRef.current) {
-      console.log('⏳ Esperando carga o canvas...')
+      console.log("[charts] esperando carga o canvas")
       return
     }
 
-    const timeoutId = setTimeout(() => {
-      const canvas = chartRef.current
-      const pieCanvas = pieChartRef.current
-      
-      if (!canvas || !pieCanvas) {
-        console.log('❌ Canvas no disponibles')
-        return
-      }
+    const canvas = chartRef.current
+    const pieCanvas = pieChartRef.current
 
-      const ctx = canvas.getContext('2d')
-      const pieCtx = pieCanvas.getContext('2d')
-      
-      if (!ctx || !pieCtx) {
-        console.log('❌ Contexto de canvas no disponible')
-        return
-      }
+    const ctx = canvas.getContext("2d")
+    const pieCtx = pieCanvas.getContext("2d")
 
-      // Configurar dimensiones y DPI
-      const dpr = window.devicePixelRatio || 1
-      const rect = canvas.getBoundingClientRect()
-      const width = rect.width
-      const height = rect.height
+    if (!ctx || !pieCtx) {
+      console.log("[charts] contexto de canvas no disponible")
+      return
+    }
 
-      console.log('📐 Dimensiones del canvas:', { width, height, dpr })
+    const dpr = window.devicePixelRatio || 1
+    const rect = canvas.getBoundingClientRect()
+    const width = rect.width || canvas.width
+    const height = rect.height || canvas.height
 
-      canvas.width = width * dpr
-      canvas.height = height * dpr
-      pieCanvas.width = width * dpr
-      pieCanvas.height = height * dpr
+    canvas.width = width * dpr
+    canvas.height = height * dpr
+    pieCanvas.width = width * dpr
+    pieCanvas.height = height * dpr
 
-      ctx.scale(dpr, dpr)
-      pieCtx.scale(dpr, dpr)
+    ctx.scale(dpr, dpr)
+    pieCtx.scale(dpr, dpr)
 
-    // Limpiar canvas
     ctx.clearRect(0, 0, width, height)
     pieCtx.clearRect(0, 0, width, height)
 
-      // Dibujar gráfico de barras con efectos profesionales
-      if (datos.length > 0 && Math.max(...datos) > 0) {
-        console.log('📊 Dibujando gráfico de barras con datos:', datos)
-        const maxValue = Math.max(...datos)
-        const barWidth = Math.max((width - 100) / datos.length, 15)
-        const chartHeight = height - 80
+    if (datos.length > 0 && Math.max(...datos) > 0) {
+      const maxValue = Math.max(...datos)
+      const barWidth = Math.max((width - 100) / datos.length, 15)
+      const chartHeight = height - 80
 
-        // Fondo con gradiente sutil
-        const bgGradient = ctx.createLinearGradient(0, 0, 0, height)
-        bgGradient.addColorStop(0, 'rgba(59, 130, 246, 0.03)')
-        bgGradient.addColorStop(1, 'rgba(59, 130, 246, 0.01)')
-        ctx.fillStyle = bgGradient
-        ctx.fillRect(0, 0, width, height)
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, height)
+      bgGradient.addColorStop(0, "rgba(59, 130, 246, 0.04)")
+      bgGradient.addColorStop(1, "rgba(59, 130, 246, 0.01)")
+      ctx.fillStyle = bgGradient
+      ctx.fillRect(0, 0, width, height)
 
-        // Líneas de cuadrícula sutiles
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.1)'
-        ctx.lineWidth = 1
-        for (let i = 1; i <= 4; i++) {
-          const gridY = height - 40 - (chartHeight / 4) * i
-          ctx.beginPath()
-          ctx.moveTo(50, gridY)
-          ctx.lineTo(width - 50, gridY)
-          ctx.stroke()
-        }
-    
-    datos.forEach((value, index) => {
-          const barHeight = (value / maxValue) * chartHeight
-          const x = 50 + index * barWidth
-          const y = height - 40 - barHeight
-          const baseColor = modernColors[index % modernColors.length]
-
-          // Crear gradiente para la barra
-          const barGradient = ctx.createLinearGradient(x, y, x, y + barHeight)
-          barGradient.addColorStop(0, baseColor)
-          barGradient.addColorStop(0.7, baseColor + 'DD')
-          barGradient.addColorStop(1, baseColor + 'AA')
-
-          // Sombra sutil
-          ctx.save()
-          ctx.shadowColor = baseColor + '30'
-          ctx.shadowBlur = 8
-          ctx.shadowOffsetX = 0
-          ctx.shadowOffsetY = 3
-
-          // Dibujar barra con bordes redondeados
-          ctx.fillStyle = barGradient
-          const radius = 6
-          ctx.beginPath()
-          ctx.roundRect(x, y, barWidth - 8, barHeight, radius)
-          ctx.fill()
-
-          // Borde superior brillante
-          ctx.strokeStyle = baseColor + '80'
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.12)"
       ctx.lineWidth = 1
-          ctx.stroke()
-          ctx.restore()
+      for (let i = 1; i <= 4; i++) {
+        const gridY = height - 40 - (chartHeight / 4) * i
+        ctx.beginPath()
+        ctx.moveTo(50, gridY)
+        ctx.lineTo(width - 50, gridY)
+        ctx.stroke()
+      }
 
-          // Dibujar valor con estilo profesional
-          if (value > 0) {
+      datos.forEach((value, index) => {
+        const barHeight = (value / maxValue) * chartHeight
+        const x = 50 + index * barWidth
+        const y = height - 40 - barHeight
+        const baseColor = modernColors[index % modernColors.length]
+
+        const barGradient = ctx.createLinearGradient(x, y, x, y + barHeight)
+        barGradient.addColorStop(0, baseColor)
+        barGradient.addColorStop(0.65, baseColor + "DD")
+        barGradient.addColorStop(1, baseColor + "99")
+
         ctx.save()
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'
-            ctx.shadowBlur = 2
-            ctx.shadowOffsetX = 1
-            ctx.shadowOffsetY = 1
-            ctx.fillStyle = '#ffffff'
-            ctx.font = 'bold 11px Inter'
-            ctx.textAlign = 'center'
-            ctx.fillText(value.toString(), x + barWidth/2, y - 8)
+        ctx.shadowColor = baseColor + "35"
+        ctx.shadowBlur = 10
+        ctx.shadowOffsetX = 0
+        ctx.shadowOffsetY = 4
+
+        ctx.fillStyle = barGradient
+        ctx.beginPath()
+        ctx.roundRect(x, y, barWidth - 8, barHeight, 6)
+        ctx.fill()
+
+        ctx.strokeStyle = baseColor + "80"
+        ctx.lineWidth = 1
+        ctx.stroke()
         ctx.restore()
-      }
-        })
 
-        // Dibujar eje X con estilo
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)'
-        ctx.lineWidth = 2
-    ctx.beginPath()
-        ctx.moveTo(50, height - 40)
-        ctx.lineTo(width - 50, height - 40)
-    ctx.stroke()
+        if (value > 0) {
+          ctx.save()
+          ctx.shadowColor = "rgba(15, 23, 42, 0.45)"
+          ctx.shadowBlur = 2
+          ctx.shadowOffsetX = 1
+          ctx.shadowOffsetY = 1
+          ctx.fillStyle = "#ffffff"
+          ctx.font = "bold 11px Inter"
+          ctx.textAlign = "center"
+          ctx.fillText(value.toString(), x + barWidth / 2, y - 8)
+          ctx.restore()
+        }
+      })
 
-        // Dibujar labels con estilo
-        labels.forEach((label, index) => {
-          ctx.fillStyle = '#cbd5e1'
-          ctx.font = '11px Inter'
-          ctx.textAlign = 'center'
-          ctx.fillText(label, 50 + index * barWidth + barWidth/2, height - 18)
-        })
-      } else {
-        console.log('📭 No hay datos para dibujar gráfico de barras')
-        // Dibujar mensaje de "sin datos"
-        ctx.fillStyle = '#666'
-        ctx.font = '16px Inter'
-        ctx.textAlign = 'center'
-        ctx.fillText('No hay datos de ventas para mostrar', width/2, height/2)
-      }
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.3)"
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(50, height - 40)
+      ctx.lineTo(width - 50, height - 40)
+      ctx.stroke()
 
-      // Dibujar gráfico circular de asesores con efectos profesionales
-      if (asesoresValores.length > 0 && estadisticas.totalVentas > 0) {
-        console.log('🥧 Dibujando gráfico circular con asesores:', asesoresValores)
-        const centerX = width / 2
-    const centerY = height / 2
-        const radius = Math.min(width, height) / 3
-    let startAngle = 0
+      labels.forEach((label, index) => {
+        ctx.fillStyle = "#cbd5e1"
+        ctx.font = "11px Inter"
+        ctx.textAlign = "center"
+        ctx.fillText(label, 50 + index * barWidth + barWidth / 2, height - 18)
+      })
+    } else {
+      ctx.fillStyle = "#666"
+      ctx.font = "16px Inter"
+      ctx.textAlign = "center"
+      ctx.fillText("No hay datos de ventas para mostrar", width / 2, height / 2)
+    }
 
-        // Sombra general del gráfico
+    pieSlicesRef.current = []
+
+    if (asesoresValores.length > 0 && estadisticas.totalVentas > 0) {
+      const centerX = width / 2
+      const centerY = height / 2
+      const baseOuterRadius = Math.min(width, height) * 0.32
+      const baseInnerRadius = baseOuterRadius * 0.58
+      let startAngle = -Math.PI / 2
+
+      const backgroundGlow = pieCtx.createRadialGradient(centerX, centerY, baseInnerRadius * 0.4, centerX, centerY, baseOuterRadius * 2.2)
+      backgroundGlow.addColorStop(0, "rgba(15, 23, 42, 0.55)")
+      backgroundGlow.addColorStop(1, "rgba(15, 23, 42, 0)")
+      pieCtx.fillStyle = backgroundGlow
+      pieCtx.fillRect(0, 0, width, height)
+
+      const slicesMeta: PieSliceMeta[] = []
+
+      asesoresValores.forEach((value, index) => {
+        const sliceAngle = (value / estadisticas.totalVentas) * TAU
+        const midAngle = startAngle + sliceAngle / 2
+        const normalizedMid = normalizeAngle(midAngle)
+        const isHovered = hoveredPieIndex === index
+        const outerRadius = baseOuterRadius + (isHovered ? 18 : 8)
+        const innerRadius = Math.max(baseInnerRadius - (isHovered ? 8 : 0), baseInnerRadius * 0.65)
+        const baseColor = modernColors[index % modernColors.length]
+        const percentage = estadisticas.totalVentas > 0 ? (value / estadisticas.totalVentas) * 100 : 0
+
+        const gradient = pieCtx.createLinearGradient(
+          centerX + Math.cos(midAngle - Math.PI / 2) * innerRadius,
+          centerY + Math.sin(midAngle - Math.PI / 2) * innerRadius,
+          centerX + Math.cos(midAngle + Math.PI / 2) * outerRadius,
+          centerY + Math.sin(midAngle + Math.PI / 2) * outerRadius
+        )
+        gradient.addColorStop(0, baseColor + "33")
+        gradient.addColorStop(0.5, baseColor)
+        gradient.addColorStop(1, baseColor + "F0")
+
         pieCtx.save()
-        pieCtx.shadowColor = 'rgba(0, 0, 0, 0.2)'
-        pieCtx.shadowBlur = 15
-        pieCtx.shadowOffsetX = 0
-        pieCtx.shadowOffsetY = 5
-
-        asesoresValores.forEach((value, index) => {
-          const sliceAngle = (value / estadisticas.totalVentas) * 2 * Math.PI
-          const baseColor = modernColors[index % modernColors.length]
-          
-          // Crear gradiente radial para el sector
-          const gradient = pieCtx.createRadialGradient(
-            centerX - radius * 0.2, centerY - radius * 0.2, 0,
-            centerX, centerY, radius
-          )
-          gradient.addColorStop(0, baseColor)
-          gradient.addColorStop(0.8, baseColor + 'DD')
-          gradient.addColorStop(1, baseColor + 'AA')
-
-          // Dibujar sector con gradiente
-      pieCtx.beginPath()
-          pieCtx.moveTo(centerX, centerY)
-          pieCtx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle)
-      pieCtx.closePath()
-          pieCtx.fillStyle = gradient
-      pieCtx.fill()
-
-          // Borde con estilo
-          pieCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
-          pieCtx.lineWidth = 2
-      pieCtx.stroke()
-      
-          // Líneas hacia los labels
-          const labelRadius = radius + 25
-          const midAngle = startAngle + sliceAngle / 2
-          const labelX = centerX + Math.cos(midAngle) * labelRadius
-          const labelY = centerY + Math.sin(midAngle) * labelRadius
-
-          // Línea conectora sutil
-          pieCtx.beginPath()
-          pieCtx.moveTo(centerX + Math.cos(midAngle) * radius, centerY + Math.sin(midAngle) * radius)
-          pieCtx.lineTo(labelX, labelY)
-          pieCtx.strokeStyle = 'rgba(148, 163, 184, 0.4)'
-        pieCtx.lineWidth = 1
-        pieCtx.stroke()
-
-          // Label con estilo profesional
-          const labelText = `${asesoresNombres[index]}: ${value}`
-          pieCtx.font = 'bold 10px Inter'
-          pieCtx.textAlign = midAngle > Math.PI / 2 && midAngle < 3 * Math.PI / 2 ? 'end' : 'start'
-          
-          // Fondo del label con estilo
-          const textWidth = pieCtx.measureText(labelText).width
-          const labelPadding = 6
-          const labelBgX = midAngle > Math.PI / 2 && midAngle < 3 * Math.PI / 2 ? labelX - textWidth - labelPadding : labelX + labelPadding
-          const labelBgY = labelY - 5
-          
-          // Fondo con gradiente sutil
-          const labelGradient = pieCtx.createLinearGradient(labelBgX - 4, labelBgY - 10, labelBgX - 4, labelBgY + 10)
-          labelGradient.addColorStop(0, baseColor + 'E6')
-          labelGradient.addColorStop(1, baseColor + 'CC')
-          
-          pieCtx.fillStyle = labelGradient
-          pieCtx.fillRect(labelBgX - 4, labelBgY - 10, textWidth + 8, 16)
-          
-          // Borde del label
-          pieCtx.strokeStyle = baseColor + '80'
-          pieCtx.lineWidth = 1
-          pieCtx.strokeRect(labelBgX - 4, labelBgY - 10, textWidth + 8, 16)
-          
-          // Texto del label
-          pieCtx.fillStyle = '#ffffff'
-          pieCtx.fillText(labelText, labelX, labelY)
-
-      startAngle += sliceAngle
-    })
-
-        pieCtx.restore()
-
-        // Centro con efecto glassmorphism sutil
-        pieCtx.save()
-        const centerGradient = pieCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 0.3)
-        centerGradient.addColorStop(0, 'rgba(255, 255, 255, 0.15)')
-        centerGradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)')
-        
-        pieCtx.fillStyle = centerGradient
         pieCtx.beginPath()
-        pieCtx.arc(centerX, centerY, radius * 0.3, 0, 2 * Math.PI)
+        pieCtx.arc(centerX, centerY, outerRadius, startAngle, startAngle + sliceAngle)
+        pieCtx.arc(centerX, centerY, innerRadius, startAngle + sliceAngle, startAngle, true)
+        pieCtx.closePath()
+
+        pieCtx.shadowColor = baseColor + (isHovered ? "90" : "40")
+        pieCtx.shadowBlur = isHovered ? 26 : 12
+        pieCtx.shadowOffsetX = 0
+        pieCtx.shadowOffsetY = 0
+
+        pieCtx.fillStyle = gradient
         pieCtx.fill()
-        
-        pieCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
-        pieCtx.lineWidth = 1
+
+        pieCtx.lineWidth = isHovered ? 3 : 1.6
+        pieCtx.strokeStyle = isHovered ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.2)"
         pieCtx.stroke()
         pieCtx.restore()
-        
-        // Texto central con estilo
+
+        const connectorRadius = outerRadius + 6
+        const labelRadius = outerRadius + 36
+        const connectorX = centerX + Math.cos(midAngle) * connectorRadius
+        const connectorY = centerY + Math.sin(midAngle) * connectorRadius
+        const labelX = centerX + Math.cos(midAngle) * labelRadius
+        const labelY = centerY + Math.sin(midAngle) * labelRadius
+        const drawLeft = normalizedMid > Math.PI / 2 && normalizedMid < (3 * Math.PI) / 2
+
         pieCtx.save()
-        pieCtx.shadowColor = 'rgba(0, 0, 0, 0.4)'
-        pieCtx.shadowBlur = 2
-        pieCtx.shadowOffsetX = 1
-        pieCtx.shadowOffsetY = 1
-        pieCtx.fillStyle = '#ffffff'
-        pieCtx.font = 'bold 14px Inter'
-        pieCtx.textAlign = 'center'
-        pieCtx.fillText('Total', centerX, centerY - 3)
-        pieCtx.font = 'bold 18px Inter'
-        pieCtx.fillText(estadisticas.totalVentas.toString(), centerX, centerY + 12)
+        pieCtx.beginPath()
+        pieCtx.moveTo(connectorX, connectorY)
+        pieCtx.lineTo(labelX, labelY)
+        pieCtx.strokeStyle = baseColor + (isHovered ? "B0" : "70")
+        pieCtx.lineWidth = isHovered ? 1.5 : 1
+        pieCtx.stroke()
         pieCtx.restore()
-      } else {
-        console.log('📭 No hay datos para dibujar gráfico circular')
-        // Dibujar mensaje de "sin datos"
-        pieCtx.fillStyle = '#666'
-        pieCtx.font = '16px Inter'
-        pieCtx.textAlign = 'center'
-        pieCtx.fillText('No hay datos de asesores para mostrar', width/2, height/2)
+
+        pieCtx.save()
+        pieCtx.font = "600 10px Inter"
+        pieCtx.textAlign = drawLeft ? "end" : "start"
+        pieCtx.textBaseline = "middle"
+        const labelText = `${asesoresNombres[index]} - ${value} (${percentage.toFixed(1)}%)`
+        const textWidth = pieCtx.measureText(labelText).width
+        const paddingX = 10
+        const paddingY = 6
+        const bgWidth = textWidth + paddingX * 2
+        const bgHeight = 22
+        const bgX = drawLeft ? labelX - bgWidth : labelX
+        const bgY = labelY - bgHeight / 2
+
+        const labelGradient = pieCtx.createLinearGradient(bgX, bgY, bgX, bgY + bgHeight)
+        labelGradient.addColorStop(0, baseColor + "E0")
+        labelGradient.addColorStop(1, baseColor + "B0")
+
+        pieCtx.globalAlpha = isHovered ? 0.98 : 0.88
+        pieCtx.beginPath()
+        pieCtx.roundRect(bgX, bgY, bgWidth, bgHeight, 10)
+        pieCtx.fillStyle = labelGradient
+        pieCtx.fill()
+        pieCtx.globalAlpha = 1
+
+        pieCtx.strokeStyle = baseColor + "75"
+        pieCtx.lineWidth = 1
+        pieCtx.stroke()
+
+        const textX = drawLeft ? bgX + bgWidth - paddingX : bgX + paddingX
+        pieCtx.fillStyle = "#ffffff"
+        pieCtx.fillText(labelText, textX, labelY)
+        pieCtx.restore()
+
+        slicesMeta.push({
+          start: startAngle,
+          end: startAngle + sliceAngle,
+          startNormalized: normalizeAngle(startAngle),
+          endNormalized: normalizeAngle(startAngle + sliceAngle),
+          value,
+          label: asesoresNombres[index],
+          innerRadius,
+          outerRadius,
+          percentage
+        })
+
+        startAngle += sliceAngle
+      })
+
+      pieSlicesRef.current = slicesMeta
+
+      if (hoveredPieIndex !== null && hoveredPieIndex >= slicesMeta.length) {
+        setHoveredPieIndex(null)
       }
 
-      console.log('✅ Gráficos dibujados exitosamente')
-    }, 500)
+      const selectedSlice = hoveredPieIndex !== null ? asesoresProcesados[hoveredPieIndex] : undefined
+      const centerRadius = Math.max(baseInnerRadius - 6, baseInnerRadius * 0.82)
+      const centerGradient = pieCtx.createRadialGradient(centerX, centerY, centerRadius * 0.25, centerX, centerY, centerRadius)
+      centerGradient.addColorStop(0, selectedSlice ? "rgba(255, 255, 255, 0.35)" : "rgba(255, 255, 255, 0.22)")
+      centerGradient.addColorStop(1, "rgba(15, 23, 42, 0.92)")
 
-    return () => clearTimeout(timeoutId)
-  }, [datos, labels, asesoresValores, estadisticas, loadingVentas, modernColors])
+      pieCtx.save()
+      pieCtx.beginPath()
+      pieCtx.arc(centerX, centerY, centerRadius, 0, TAU)
+      pieCtx.fillStyle = centerGradient
+      pieCtx.fill()
+      pieCtx.strokeStyle = "rgba(255, 255, 255, 0.18)"
+      pieCtx.lineWidth = 1
+      pieCtx.stroke()
+      pieCtx.restore()
+
+      pieCtx.save()
+      pieCtx.textAlign = "center"
+      pieCtx.textBaseline = "middle"
+      if (selectedSlice) {
+        const porcentaje = estadisticas.totalVentas > 0
+          ? Math.round((selectedSlice.ventas / estadisticas.totalVentas) * 1000) / 10
+          : 0
+
+        pieCtx.fillStyle = "#cbd5f5"
+        pieCtx.font = "600 13px Inter"
+        pieCtx.fillText(selectedSlice.nombre, centerX, centerY - 24)
+
+        pieCtx.fillStyle = "#f8fafc"
+        pieCtx.font = "700 28px Inter"
+        pieCtx.fillText(String(selectedSlice.ventas), centerX, centerY + 4)
+
+        pieCtx.fillStyle = "rgba(148, 163, 184, 0.92)"
+        pieCtx.font = "500 12px Inter"
+        pieCtx.fillText(`${porcentaje}% del total`, centerX, centerY + 28)
+      } else {
+        pieCtx.fillStyle = "#cbd5f5"
+        pieCtx.font = "600 13px Inter"
+        pieCtx.fillText("Total de ventas", centerX, centerY - 20)
+
+        pieCtx.fillStyle = "#f8fafc"
+        pieCtx.font = "700 30px Inter"
+        pieCtx.fillText(String(estadisticas.totalVentas), centerX, centerY + 6)
+
+        pieCtx.fillStyle = "rgba(148, 163, 184, 0.9)"
+        pieCtx.font = "500 12px Inter"
+        pieCtx.fillText(`${asesoresProcesados.length} asesores activos`, centerX, centerY + 30)
+      }
+      pieCtx.restore()
+    } else {
+      pieCtx.fillStyle = "#666"
+      pieCtx.font = "16px Inter"
+      pieCtx.textAlign = "center"
+      pieCtx.fillText("No hay datos de asesores para mostrar", width / 2, height / 2)
+    }
+  }, [datos, labels, asesoresValores, estadisticas, loadingVentas, modernColors, hoveredPieIndex, asesoresNombres.join("|"), asesoresProcesados.length])
 
   // Efectos hover para interactividad profesional
   useEffect(() => {
-    if (!chartRef.current || !pieChartRef.current) return
-    
+    if (!chartRef.current || !pieChartRef.current) {
+      return
+    }
+
     const barCanvas = chartRef.current
     const pieCanvas = pieChartRef.current
 
-    // Hover para gráfico de barras
-    const handleBarHover = (e: MouseEvent) => {
-      const rect = barCanvas.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
-      
-      // Cambiar cursor a pointer cuando está sobre una barra
-      barCanvas.style.cursor = 'pointer'
-      
-      // Aquí podrías añadir lógica para destacar la barra hover
-      // Por ejemplo, redibujar con la barra destacada
+    const handleBarHover = () => {
+      barCanvas.style.cursor = datos.length > 0 ? "pointer" : "default"
     }
 
-    // Hover para gráfico circular
-    const handlePieHover = (e: MouseEvent) => {
+    const handleBarLeave = () => {
+      barCanvas.style.cursor = "default"
+    }
+
+    const handlePieHover = (event: MouseEvent) => {
       const rect = pieCanvas.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
-      
-      // Cambiar cursor a pointer cuando está sobre el gráfico
-      pieCanvas.style.cursor = 'pointer'
-      
-      // Aquí podrías añadir lógica para destacar el sector hover
-      // Por ejemplo, redibujar con el sector destacado
+      const x = event.clientX - rect.left
+      const y = event.clientY - rect.top
+
+      const centerX = rect.width / 2
+      const centerY = rect.height / 2
+      const dx = x - centerX
+      const dy = y - centerY
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      const pointAngle = Math.atan2(dy, dx)
+      const normalizedAngle = normalizeAngle(pointAngle)
+
+      const slices = pieSlicesRef.current
+      let foundIndex: number | null = null
+      let foundSlice: PieSliceMeta | null = null
+
+      for (let i = 0; i < slices.length; i++) {
+        const slice = slices[i]
+        const withinRadius = distance >= slice.innerRadius && distance <= slice.outerRadius + 6
+        if (!withinRadius) {
+          continue
+        }
+
+        const angleMatches = slice.startNormalized <= slice.endNormalized
+          ? normalizedAngle >= slice.startNormalized && normalizedAngle <= slice.endNormalized
+          : normalizedAngle >= slice.startNormalized || normalizedAngle <= slice.endNormalized
+
+        if (angleMatches) {
+          foundIndex = i
+          foundSlice = slice
+          break
+        }
+      }
+
+      if (foundSlice) {
+        pieCanvas.style.cursor = "pointer"
+        if (hoveredPieIndex !== foundIndex) {
+          setHoveredPieIndex(foundIndex)
+        }
+
+        const slice = foundSlice
+        const roundedPercentage = Math.round(slice.percentage * 10) / 10
+
+        setTooltip(prev => {
+          if (
+            prev &&
+            prev.label === slice.label &&
+            prev.value === slice.value &&
+            prev.percentage === roundedPercentage &&
+            prev.x === event.clientX &&
+            prev.y === event.clientY
+          ) {
+            return prev
+          }
+
+          return {
+            x: event.clientX,
+            y: event.clientY,
+            label: slice.label,
+            value: slice.value,
+            percentage: roundedPercentage
+          }
+        })
+      } else {
+        pieCanvas.style.cursor = "default"
+        if (hoveredPieIndex !== null) {
+          setHoveredPieIndex(null)
+        }
+        setTooltip(null)
+      }
     }
 
-    // Hover out para resetear cursor
-    const handleBarHoverOut = () => {
-      barCanvas.style.cursor = 'default'
+    const handlePieLeave = () => {
+      pieCanvas.style.cursor = "default"
+      if (hoveredPieIndex !== null) {
+        setHoveredPieIndex(null)
+      }
+      setTooltip(null)
     }
 
-    const handlePieHoverOut = () => {
-      pieCanvas.style.cursor = 'default'
-    }
+    barCanvas.addEventListener("mousemove", handleBarHover)
+    barCanvas.addEventListener("mouseleave", handleBarLeave)
+    pieCanvas.addEventListener("mousemove", handlePieHover)
+    pieCanvas.addEventListener("mouseleave", handlePieLeave)
 
-    barCanvas.addEventListener('mousemove', handleBarHover)
-    barCanvas.addEventListener('mouseleave', handleBarHoverOut)
-    pieCanvas.addEventListener('mousemove', handlePieHover)
-    pieCanvas.addEventListener('mouseleave', handlePieHoverOut)
-    
     return () => {
-      barCanvas.removeEventListener('mousemove', handleBarHover)
-      barCanvas.removeEventListener('mouseleave', handleBarHoverOut)
-      pieCanvas.removeEventListener('mousemove', handlePieHover)
-      pieCanvas.removeEventListener('mouseleave', handlePieHoverOut)
+      barCanvas.removeEventListener("mousemove", handleBarHover)
+      barCanvas.removeEventListener("mouseleave", handleBarLeave)
+      pieCanvas.removeEventListener("mousemove", handlePieHover)
+      pieCanvas.removeEventListener("mouseleave", handlePieLeave)
     }
-  }, [])
+  }, [datos, hoveredPieIndex])
+
 
     return (
     <TooltipProvider>
@@ -1053,7 +1153,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
                       >
                         <div className="font-bold text-purple-300 text-sm">{tooltip.label}</div>
                         <div className="text-cyan-100 text-xs mt-1">
-                          {tooltip.value} ventas realizadas
+                          {tooltip.value} ventas - {tooltip.percentage.toFixed(1)}%
                         </div>
                         <div className="w-full h-px bg-gradient-to-r from-purple-500 to-cyan-500 mt-2 opacity-50"></div>
                       </div>
