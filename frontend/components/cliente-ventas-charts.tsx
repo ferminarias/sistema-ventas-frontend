@@ -649,8 +649,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
     if (asesoresValores.length > 0 && estadisticas.totalVentas > 0) {
       const centerX = width / 2
       const centerY = height / 2
-      const baseOuterRadius = Math.min(width, height) * 0.36
-      const baseInnerRadius = baseOuterRadius * 0.52
+      const baseOuterRadius = Math.min(width, height) * 0.42
+      const baseInnerRadius = baseOuterRadius * 0.54
       const advisorPalette = ["#4ECDC4", "#45B7D1", "#B57BED", "#6C63FF"]
       let startAngle = -Math.PI / 2
 
@@ -672,8 +672,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         const midAngle = startAngle + sliceAngle / 2
         const normalizedMid = normalizeAngle(midAngle)
         const isHovered = hoveredPieIndex === index
-        const outerRadius = baseOuterRadius + (isHovered ? 10 : 4)
-        const innerRadius = baseInnerRadius - (isHovered ? 2 : 0)
+        const outerRadius = baseOuterRadius + (isHovered ? 8 : 2)
+        const innerRadius = baseInnerRadius - (isHovered ? 3 : 1)
         const percentage = estadisticas.totalVentas > 0 ? (value / estadisticas.totalVentas) * 100 : 0
 
         const wedgeGradient = pieCtx.createRadialGradient(centerX, centerY, innerRadius * 0.45, centerX, centerY, outerRadius)
@@ -707,7 +707,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         const displayName = asesoresNombres[index]
         const valueLabel = `${value} ventas · ${percentage.toFixed(1)}%`
 
-        const useInternalLabel = sliceAngle > 0.7
+        const useInternalLabel = percentage >= 32
         if (useInternalLabel) {
           pieCtx.save()
           pieCtx.textAlign = "center"
@@ -717,8 +717,8 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           const nameWidth = pieCtx.measureText(displayName).width
           pieCtx.font = "500 11px 'Poppins', 'Inter', sans-serif"
           const valueWidth = pieCtx.measureText(valueLabel).width
-          const boxWidth = Math.max(nameWidth, valueWidth) + 18
-          const boxHeight = 36
+          const boxWidth = Math.max(nameWidth, valueWidth) + 14
+          const boxHeight = 32
 
           pieCtx.beginPath()
           pieCtx.roundRect(labelX - boxWidth / 2, labelY - boxHeight / 2, boxWidth, boxHeight, 10)
@@ -731,17 +731,17 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
 
           pieCtx.font = "600 13px 'Poppins', 'Inter', sans-serif"
           pieCtx.fillStyle = "#F8FBFF"
-          pieCtx.fillText(displayName, labelX, labelY - 7)
+          pieCtx.fillText(displayName, labelX, labelY - 6)
 
           pieCtx.font = "500 11px 'Poppins', 'Inter', sans-serif"
           pieCtx.fillStyle = "rgba(216, 233, 255, 0.9)"
-          pieCtx.fillText(valueLabel, labelX, labelY + 8)
+          pieCtx.fillText(valueLabel, labelX, labelY + 6)
           pieCtx.restore()
         } else {
-          const connectorRadius = outerRadius + 12
+          const connectorRadius = outerRadius + 18
           const externalX = centerX + Math.cos(midAngle) * connectorRadius
           const externalY = centerY + Math.sin(midAngle) * connectorRadius
-          const labelOffset = 48
+          const labelOffset = 68
           const toLeft = normalizedMid > Math.PI / 2 && normalizedMid < (3 * Math.PI) / 2
           const boxX = externalX + (toLeft ? -labelOffset : labelOffset)
           const boxY = externalY
@@ -759,7 +759,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
             pieCtx.measureText(displayName).width,
             pieCtx.measureText(valueLabel).width
           ) + 20
-          const labelHeight = 38
+          const labelHeight = 36
 
           pieCtx.beginPath()
           pieCtx.roundRect(
@@ -778,11 +778,11 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
           const textBaseX = toLeft ? boxX - 10 : boxX + 10
           pieCtx.font = "600 13px 'Poppins', 'Inter', sans-serif"
           pieCtx.fillStyle = "#F8FBFF"
-          pieCtx.fillText(displayName, textBaseX, boxY - 6)
+          pieCtx.fillText(displayName, textBaseX, boxY - 5)
 
           pieCtx.font = "500 11px 'Poppins', 'Inter', sans-serif"
           pieCtx.fillStyle = "rgba(216, 233, 255, 0.9)"
-          pieCtx.fillText(valueLabel, textBaseX, boxY + 10)
+          pieCtx.fillText(valueLabel, textBaseX, boxY + 9)
           pieCtx.restore()
         }
 
@@ -811,7 +811,7 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
         ? advisorPalette[hoveredPieIndex % advisorPalette.length]
         : advisorPalette[1]
 
-      const coreRadius = baseInnerRadius * 0.85
+      const coreRadius = baseInnerRadius * 0.8
       const coreGradient = pieCtx.createRadialGradient(centerX, centerY, coreRadius * 0.3, centerX, centerY, coreRadius)
       coreGradient.addColorStop(0, "rgba(10, 24, 38, 0.92)")
       coreGradient.addColorStop(1, "rgba(4, 10, 18, 0.95)")
@@ -831,23 +831,23 @@ export function ClienteVentasCharts({ cliente, clientIdToName, nombreCliente }: 
       pieCtx.textBaseline = "middle"
       pieCtx.fillStyle = "#E6F3FF"
       pieCtx.font = "600 15px 'Poppins', 'Inter', sans-serif"
-      pieCtx.fillText("Total de ventas", centerX, centerY - 24)
+      pieCtx.fillText("Total de ventas", centerX, centerY - 20)
 
       pieCtx.fillStyle = "#FFFFFF"
-      pieCtx.font = "700 34px 'Poppins', 'Inter', sans-serif"
-      pieCtx.fillText(String(estadisticas.totalVentas), centerX, centerY + 2)
+      pieCtx.font = "700 32px 'Poppins', 'Inter', sans-serif"
+      pieCtx.fillText(String(estadisticas.totalVentas), centerX, centerY + 4)
 
       pieCtx.fillStyle = "rgba(198, 216, 235, 0.92)"
       pieCtx.font = "500 12px 'Poppins', 'Inter', sans-serif"
       const contextoTexto = `${asesoresProcesados.length} asesores · ${getNombreCliente()}`
-      pieCtx.fillText(contextoTexto, centerX, centerY + 30)
+      pieCtx.fillText(contextoTexto, centerX, centerY + 26)
 
       if (hoveredPieIndex !== null) {
         const slice = slicesMeta[hoveredPieIndex]
         if (slice) {
-          pieCtx.fillStyle = "rgba(198, 216, 235, 0.75)"
+          pieCtx.fillStyle = "rgba(198, 216, 235, 0.78)"
           pieCtx.font = "500 11px 'Poppins', 'Inter', sans-serif"
-          pieCtx.fillText(`${slice.label}`, centerX, centerY + 48)
+          pieCtx.fillText(`${slice.label}`, centerX, centerY + 42)
         }
       }
       pieCtx.restore()
