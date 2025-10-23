@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -30,6 +30,14 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [useBasicColumns, setUseBasicColumns] = useState(false)
   const [dynamicFieldDefs, setDynamicFieldDefs] = useState<Array<{id:string;label:string;type:string;options?:string[]}>>([])
+
+  // Cargar campos dinámicos al montar el componente
+  useEffect(() => {
+    if (clientId) {
+      console.log(`🚀 Montando componente con clientId: ${clientId}`)
+      loadDynamicDefs()
+    }
+  }, [clientId])
 
   // Validación defensiva para cliente
   if (!cliente || cliente === "null" || cliente === "undefined") {
@@ -129,12 +137,40 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
   const loadDynamicDefs = async () => {
     try {
       const id = clientId ? String(clientId) : undefined
-      if (!id) return
-      const res = await fetch(`${API_BASE}/api/clientes/${id}/campos`, { headers: getAuthHeaders(false), credentials: 'include' })
-      if (!res.ok) return
+      if (!id) {
+        console.log('❌ No hay clientId para cargar campos dinámicos')
+        return
+      }
+      
+      console.log(`🔄 Cargando campos dinámicos para cliente ${id}...`)
+      const res = await fetch(`${API_BASE}/api/clientes/${id}/campos`, { 
+        headers: getAuthHeaders(false), 
+        credentials: 'include' 
+      })
+      
+      console.log(`📡 Response status: ${res.status}`)
+      
+      if (!res.ok) {
+        console.error(`❌ Error en la respuesta: ${res.status} ${res.statusText}`)
+        const errorText = await res.text().catch(() => 'No se pudo leer el error')
+        console.error(`❌ Error details:`, errorText)
+        return
+      }
+      
       const data = await res.json()
+      console.log(`📊 Datos recibidos del backend:`, data)
+      
       const defs = Array.isArray(data?.fields) ? data.fields : data
-      const mapped = defs.map((f: any) => ({ id: String(f.id), label: String(f.label ?? f.id), type: String(f.type || 'text'), options: Array.isArray(f.options) ? f.options : undefined }))
+      console.log(`📋 Campos procesados:`, defs)
+      
+      const mapped = defs.map((f: any) => ({ 
+        id: String(f.id), 
+        label: String(f.label ?? f.id), 
+        type: String(f.type || 'text'), 
+        options: Array.isArray(f.options) ? f.options : undefined 
+      }))
+      
+      console.log(`🎯 Campos mapeados:`, mapped)
       setDynamicFieldDefs(mapped)
 
       // Asegurar que las nuevas columnas dinámicas existan en el orden del diálogo y global
@@ -143,10 +179,13 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
         .filter((def: {id:string}) => !baseIds.has(def.id))
         .map((def: {id:string}) => `campos_adicionales.${def.id}`)
 
+      console.log(`🔧 Nuevas columnas dinámicas:`, newDynamicIds)
+
       setDialogOrder((prev: string[]) => {
         const setPrev = new Set(prev)
         const merged = [...prev]
         newDynamicIds.forEach((id: string) => { if (!setPrev.has(id)) merged.push(id) })
+        console.log(`📝 Dialog order actualizado:`, merged)
         return merged
       })
 
@@ -154,9 +193,14 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
         const setPrev = new Set(prev)
         const merged = [...prev]
         newDynamicIds.forEach((id: string) => { if (!setPrev.has(id)) merged.push(id) })
+        console.log(`📝 Column order actualizado:`, merged)
         return merged
       })
-    } catch {}
+      
+      console.log(`✅ Campos dinámicos cargados exitosamente: ${mapped.length} campos`)
+    } catch (error) {
+      console.error('❌ Error cargando campos dinámicos:', error)
+    }
   }
 
   // Filtrar ventas por término de búsqueda
@@ -239,7 +283,10 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
             }}>
               Editar columnas
             </Button>
-            <Button variant="outline" onClick={() => {
+            <Button variant="outline" onClick={async () => {
+              // Asegurar que los campos dinámicos estén cargados
+              await loadDynamicDefs()
+              
               const cols = renderColumns
               const header = cols.map(c => `"${c.label.replace(/"/g, '""')}"`).join(",")
               const rows = sortedVentas.map(v => cols.map(c => `"${String(c.accessor(v) ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ")}"`).join(","))
@@ -256,7 +303,15 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
             }}>
               Exportar CSV personalizado
             </Button>
-            <Button onClick={() => { setExportMode(true); setManageColumnsOpen(true) }}>
+            <Button onClick={async () => { 
+              // Cargar campos dinámicos ANTES de abrir el diálogo
+              await loadDynamicDefs()
+              
+              setExportMode(true)
+              setDialogVisible(visibleColumns)
+              setDialogOrder(columnOrder)
+              setManageColumnsOpen(true) 
+            }}>
               Exportar Excel
             </Button>
             <Select value={itemsPerPage} onValueChange={setItemsPerPage}>
