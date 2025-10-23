@@ -33,9 +33,12 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
 
   // Cargar campos dinámicos al montar el componente
   useEffect(() => {
+    console.log(`🚀 [MOUNT] Montando componente con clientId: ${clientId}, cliente: ${cliente}`)
     if (clientId) {
-      console.log(`🚀 Montando componente con clientId: ${clientId}`)
+      console.log(`🚀 [MOUNT] Iniciando carga de campos para cliente ${clientId}`)
       loadDynamicDefs()
+    } else {
+      console.warn(`⚠️ [MOUNT] No hay clientId disponible para cargar campos dinámicos`)
     }
   }, [clientId])
 
@@ -142,26 +145,35 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
         return
       }
       
-      console.log(`🔄 Cargando campos dinámicos para cliente ${id}...`)
+      console.log(`🔄 [CLIENTE ${id}] Cargando campos dinámicos para cliente ${id}...`)
+      console.log(`🔄 [CLIENTE ${id}] URL: ${API_BASE}/api/clientes/${id}/campos`)
+      
       const res = await fetch(`${API_BASE}/api/clientes/${id}/campos`, { 
         headers: getAuthHeaders(false), 
         credentials: 'include' 
       })
       
-      console.log(`📡 Response status: ${res.status}`)
+      console.log(`📡 [CLIENTE ${id}] Response status: ${res.status}`)
+      console.log(`📡 [CLIENTE ${id}] Response headers:`, Object.fromEntries(res.headers.entries()))
       
       if (!res.ok) {
-        console.error(`❌ Error en la respuesta: ${res.status} ${res.statusText}`)
+        console.error(`❌ [CLIENTE ${id}] Error en la respuesta: ${res.status} ${res.statusText}`)
         const errorText = await res.text().catch(() => 'No se pudo leer el error')
-        console.error(`❌ Error details:`, errorText)
+        console.error(`❌ [CLIENTE ${id}] Error details:`, errorText)
         return
       }
       
       const data = await res.json()
-      console.log(`📊 Datos recibidos del backend:`, data)
+      console.log(`📊 [CLIENTE ${id}] Datos recibidos del backend:`, data)
       
       const defs = Array.isArray(data?.fields) ? data.fields : data
-      console.log(`📋 Campos procesados:`, defs)
+      console.log(`📋 [CLIENTE ${id}] Campos procesados:`, defs)
+      console.log(`📋 [CLIENTE ${id}] Cantidad de campos:`, defs.length)
+      
+      if (defs.length === 0) {
+        console.warn(`⚠️ [CLIENTE ${id}] NO HAY CAMPOS DINÁMICOS CONFIGURADOS para este cliente`)
+        console.warn(`⚠️ [CLIENTE ${id}] Esto puede ser normal si el cliente no tiene campos personalizados`)
+      }
       
       const mapped = defs.map((f: any) => ({ 
         id: String(f.id), 
@@ -170,7 +182,7 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
         options: Array.isArray(f.options) ? f.options : undefined 
       }))
       
-      console.log(`🎯 Campos mapeados:`, mapped)
+      console.log(`🎯 [CLIENTE ${id}] Campos mapeados:`, mapped)
       setDynamicFieldDefs(mapped)
 
       // Asegurar que las nuevas columnas dinámicas existan en el orden del diálogo y global
@@ -179,13 +191,14 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
         .filter((def: {id:string}) => !baseIds.has(def.id))
         .map((def: {id:string}) => `campos_adicionales.${def.id}`)
 
-      console.log(`🔧 Nuevas columnas dinámicas:`, newDynamicIds)
+      console.log(`🔧 [CLIENTE ${id}] Nuevas columnas dinámicas:`, newDynamicIds)
+      console.log(`🔧 [CLIENTE ${id}] Cantidad de columnas dinámicas:`, newDynamicIds.length)
 
       setDialogOrder((prev: string[]) => {
         const setPrev = new Set(prev)
         const merged = [...prev]
         newDynamicIds.forEach((id: string) => { if (!setPrev.has(id)) merged.push(id) })
-        console.log(`📝 Dialog order actualizado:`, merged)
+        console.log(`📝 [CLIENTE ${id}] Dialog order actualizado:`, merged)
         return merged
       })
 
@@ -193,13 +206,20 @@ export function ClienteVentasTable({ cliente, clientId }: ClienteVentasTableProp
         const setPrev = new Set(prev)
         const merged = [...prev]
         newDynamicIds.forEach((id: string) => { if (!setPrev.has(id)) merged.push(id) })
-        console.log(`📝 Column order actualizado:`, merged)
+        console.log(`📝 [CLIENTE ${id}] Column order actualizado:`, merged)
         return merged
       })
       
-      console.log(`✅ Campos dinámicos cargados exitosamente: ${mapped.length} campos`)
+      console.log(`✅ [CLIENTE ${id}] Campos dinámicos cargados exitosamente: ${mapped.length} campos`)
+      
+      // Log final del estado
+      setTimeout(() => {
+        console.log(`🏁 [CLIENTE ${id}] Estado final - dynamicFieldDefs:`, dynamicFieldDefs.length)
+        console.log(`🏁 [CLIENTE ${id}] Estado final - ALL_COLUMNS:`, ALL_COLUMNS.length)
+      }, 100)
+      
     } catch (error) {
-      console.error('❌ Error cargando campos dinámicos:', error)
+      console.error(`❌ [CLIENTE ${clientId}] Error cargando campos dinámicos:`, error)
     }
   }
 
